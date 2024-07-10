@@ -1,0 +1,26 @@
+server {
+
+	listen: 4443
+	server_name: test
+
+	root ./test 
+	index index.html 
+
+	location / {
+		method GET
+		root ./test2/test3 
+	}
+}
+
+server {
+	listen: 8000
+	server_name: default
+
+	root ./test4
+	index index2.html
+
+	location / {
+		method DELETE
+		root ./test5
+	}
+}
