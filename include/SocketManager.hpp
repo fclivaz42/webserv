@@ -29,6 +29,8 @@
 #define RED "\x1b[31m"
 #define PURPLE "\x1b[35m"
 
+#define BUFFER_SIZE 1024
+
 class SocketManager
 {
 	private:
@@ -41,6 +43,7 @@ class SocketManager
 		bool	bindSocket(int port);
 		bool	startListening(int backlog = 10);
 		int	acceptConnection();
+		int	readMessage(int clientFd);
 		int	getServerFd() const;
 };
 

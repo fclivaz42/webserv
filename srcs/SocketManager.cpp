@@ -85,6 +85,33 @@ int	SocketManager::acceptConnection()
 	return (clientFd);
 }
 
+int	SocketManager::readMessage(int clientFd)
+{
+	while (true)
+	{
+		char	buffer[BUFFER_SIZE];
+		ssize_t	bytesRead = read(clientFd, buffer, sizeof(buffer) - 1);
+		
+		if (bytesRead > 0)
+		{
+			buffer[bytesRead] = '\0';
+			std::cout << PURPLE << "Received message !! >> " << buffer << RESET << std::endl;
+		}
+		else if (bytesRead == 0)
+		{
+			std::cout << ORANGE << "Client disconnected. . ." << RESET << std::endl;
+			return (-1);
+		}
+		else
+		{
+			std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
+			return (-1);
+		}
+	}
+	close(clientFd);
+	return (0);
+}
+
 //GETTERS
 int	SocketManager::getServerFd() const
 {

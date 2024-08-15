@@ -16,10 +16,12 @@ int main (int ac, char **av)
 	while (true)
 	{
 		int clientFd = socketManager.acceptConnection();
-		if (clientFd != -1)
+		int message = socketManager.readMessage(clientFd);
+		if (clientFd != -1 || message != -1)
 		{
 			close(clientFd);
 		}
 	}
+	close(socketManager.getServerFd());
 	return (0);
 }
