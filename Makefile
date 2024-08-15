@@ -6,7 +6,7 @@
 #    By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/12 15:50:01 by fclivaz           #+#    #+#              #
-#    Updated: 2024/07/02 17:23:04 by fclivaz          ###   LAUSANNE.ch        #
+#    Updated: 2024/08/15 11:33:04 by lmedrano         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,12 +18,12 @@ SHELL	= /bin/bash
 
 CXX	= c++
 
-DEPS	=	${INCL}/-----.hpp\
-			${INCL}/-----.hpp\
+DEPS	=	${INCL}/webserv.hpp\
+			${INCL}/SocketManager.hpp\
 			${SRCS}
 
 SRCS	=	${SUBDIR}/webserv.cpp\
-			${SUBDIR}/-----.cpp
+			${SUBDIR}/SocketManager.cpp
 
 SUBDIR	= srcs
 
