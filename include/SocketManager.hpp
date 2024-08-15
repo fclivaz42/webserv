@@ -6,7 +6,7 @@
 //   By: lmedrano <your@email.com>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/15 11:07:53 by lmedrano          #+#    #+#             //
-//   Updated: 2024/08/15 11:20:08 by lmedrano         ###   ########.fr       //
+//   Updated: 2024/08/15 14:40:55 by lmedrano         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
@@ -21,6 +21,9 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <vector>
+#include <poll.h>
+#include <cstdlib>
 
 
 #define RESET "\x1b[0m"
@@ -36,15 +39,29 @@ class SocketManager
 	private:
 		int 			_serverFd;
 		struct sockaddr_in	_serverAddress;
+		int			_port;
+		std::string		_host;
+		
+		void			handleClient(int clientFd);
 	public:
 		SocketManager();
 		~SocketManager();
-		bool	createSocket();
-		bool	bindSocket(int port);
-		bool	startListening(int backlog = 10);
-		int	acceptConnection();
-		int	readMessage(int clientFd);
+
+		//METHODS
+		bool		isHttpRequest(const std::string& message);
+		bool		createSocket();
+		bool		bindSocket();
+		bool		startListening(int backlog = 10);
+		int		acceptConnection();
+		std::string	readMessage(int clientFd);
+		int		start();
+
+		//GETTERS
 		int	getServerFd() const;
+
+		//SETTERS
+		void	setPort(int port);
+		void	setHost(const std::string& host);
 };
 
 #endif

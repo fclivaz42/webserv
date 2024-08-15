@@ -4,24 +4,23 @@
 
 int main (int ac, char **av)
 {
-	(void)ac;
-	(void)av;
+	SocketManager server;
+	
+	if (ac > 1)
+	{
+		std::string configFile = av[1];
+	}
+	else
+	{
+		server.setPort(8080);
+		server.setHost("0.0.0.0");
+	}
 
-	SocketManager socketManager;
-	if (!socketManager.createSocket() || !socketManager.bindSocket(8080)
-			|| !socketManager.startListening())
+	if (!server.createSocket() || !server.bindSocket() || !server.startListening())
 	{
 		return (-1);
 	}
-	while (true)
-	{
-		int clientFd = socketManager.acceptConnection();
-		int message = socketManager.readMessage(clientFd);
-		if (clientFd != -1 || message != -1)
-		{
-			close(clientFd);
-		}
-	}
-	close(socketManager.getServerFd());
+	server.start();
+
 	return (0);
 }

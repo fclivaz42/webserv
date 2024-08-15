@@ -6,7 +6,7 @@
 #    By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/12 15:50:01 by fclivaz           #+#    #+#              #
-#    Updated: 2024/08/15 11:33:04 by lmedrano         ###   ########.fr        #
+#    Updated: 2024/08/15 14:41:34 by lmedrano         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,10 +20,12 @@ CXX	= c++
 
 DEPS	=	${INCL}/webserv.hpp\
 			${INCL}/SocketManager.hpp\
+			${INCL}/HttpRequestHandler.hpp\
 			${SRCS}
 
 SRCS	=	${SUBDIR}/webserv.cpp\
-			${SUBDIR}/SocketManager.cpp
+			${SUBDIR}/SocketManager.cpp\
+			${SUBDIR}/HttpRequestHandler.cpp\
 
 SUBDIR	= srcs
 

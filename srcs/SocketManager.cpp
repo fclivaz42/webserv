@@ -6,15 +6,19 @@
 //   By: lmedrano <your@email.com>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/15 11:15:07 by lmedrano          #+#    #+#             //
-//   Updated: 2024/08/15 11:32:36 by lmedrano         ###   ########.fr       //
+//   Updated: 2024/08/15 14:37:37 by lmedrano         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
 #include "../include/SocketManager.hpp"
+#include "../include/HttpRequestHandler.hpp"
 
-SocketManager::SocketManager() : _serverFd(-1)
+SocketManager::SocketManager() : _serverFd(-1), _port(8080)
 {
 	memset(&_serverAddress, 0, sizeof(_serverAddress));
+	_serverAddress.sin_family = AF_INET;
+	_serverAddress.sin_addr.s_addr = INADDR_ANY;
+	_serverAddress.sin_port = htons(_port);
 }
 
 SocketManager::~SocketManager()
@@ -43,11 +47,11 @@ bool	SocketManager::createSocket()
 	return (true);
 }
 
-bool	SocketManager::bindSocket(int port)
+bool	SocketManager::bindSocket()
 {
 	_serverAddress.sin_family = AF_INET;
-	_serverAddress.sin_addr.s_addr = INADDR_ANY;
-	_serverAddress.sin_port = htons(port);
+	_serverAddress.sin_addr.s_addr = inet_addr(_host.c_str());
+	_serverAddress.sin_port = htons(_port);
 
 	if (bind(_serverFd, (struct sockaddr*)&_serverAddress, sizeof(_serverAddress)) == -1)
 	{
@@ -85,35 +89,134 @@ int	SocketManager::acceptConnection()
 	return (clientFd);
 }
 
-int	SocketManager::readMessage(int clientFd)
+std::string	SocketManager::readMessage(int clientFd)
 {
+	char		buffer[BUFFER_SIZE];
+
+	ssize_t	bytesRead = read(clientFd, buffer, sizeof(buffer) - 1);
+	
+	if (bytesRead > 0)
+	{
+		buffer[bytesRead] = '\0';
+		std::cout << PURPLE << "Received Message!! >> " << buffer << RESET << std::endl;
+	}
+	else if (bytesRead == 0)
+	{
+		std::cout << ORANGE << "Client disconnected. . ." << RESET << std::endl;
+		return ("");
+	}
+	else
+	{
+		std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
+		return ("");
+	}
+	return (buffer);
+}
+
+int	SocketManager::start()
+{
+	std::vector<struct pollfd> fds;
+
+	struct pollfd serverPollFd;
+
+	serverPollFd.fd = _serverFd;
+	serverPollFd.events = POLLIN;
+	serverPollFd.revents = 0;
+
+	fds.push_back(serverPollFd);
+
 	while (true)
 	{
-		char	buffer[BUFFER_SIZE];
-		ssize_t	bytesRead = read(clientFd, buffer, sizeof(buffer) - 1);
-		
-		if (bytesRead > 0)
+		int pollCount = poll(fds.data(), fds.size(), -1);
+		if (pollCount < 0)
 		{
-			buffer[bytesRead] = '\0';
-			std::cout << PURPLE << "Received message !! >> " << buffer << RESET << std::endl;
-		}
-		else if (bytesRead == 0)
-		{
-			std::cout << ORANGE << "Client disconnected. . ." << RESET << std::endl;
+			std::cerr << RED << "ERROR: poll() failure" << RESET << std::endl;
 			return (-1);
 		}
-		else
+		if (fds[0].revents & POLLIN)
 		{
-			std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
-			return (-1);
+			int clientFd = acceptConnection();
+			if (clientFd >= 0)
+			{
+				struct pollfd clientPollFd;
+
+				clientPollFd.fd = clientFd;
+				clientPollFd.events = POLLIN;
+				clientPollFd.revents = 0;
+
+				fds.push_back(clientPollFd);
+			}
+		}
+		for (size_t i = 1; i < fds.size(); i++)
+		{
+			if (fds[i].revents & POLLIN)
+			{
+				std::string request = readMessage(fds[i].fd);
+				if (request.empty())
+				{
+					close(fds[i].fd);
+					fds.erase(fds.begin() + i);
+					i--;
+				}
+				else
+				{
+					handleClient((fds[i].fd));
+				}
+			}
 		}
 	}
-	close(clientFd);
-	return (0);
+}
+
+bool	SocketManager::isHttpRequest(const std::string& message)
+{
+	return (message.find("GET ") == 0 ||
+			message.find("POST ") == 0 ||
+			message.find("DELETE ") == 0 ||
+			message.find("PUT ") == 0 ||
+			message.find("HEAD ") == 0 ||
+			message.find("OPTIONS ") == 0);
+}
+
+void	SocketManager::handleClient(int clientFd)
+{
+	std::string message = readMessage(clientFd);
+	if (message.empty())
+	{
+		close(clientFd);
+		return ;
+	}
+
+	if (isHttpRequest(message))
+	{
+		std::cout << "cc" << std::endl;
+		std::string response = HttpRequestHandler::handleRequest(message);
+
+		ssize_t bytesWritten = write(clientFd, response.c_str(), response.length());
+
+		if (bytesWritten == -1)
+		{
+			std::cerr << RED << "ERROR: Write() failure" << RESET << std::endl;
+		}
+		if (message.find("Connection: close") != std::string::npos)
+			close(clientFd);
+	}
+	else
+		std::cout << "Not an HTTP request" << std::endl;
 }
 
 //GETTERS
 int	SocketManager::getServerFd() const
 {
 	return (_serverFd);
+}
+
+//SETTERS
+void	SocketManager::setPort(int port)
+{
+	_port = port;
+}
+
+void	SocketManager::setHost(const std::string& host)
+{
+	_host = host;
 }
