@@ -11,6 +11,19 @@
 // ************************************************************************** //
 
 #include "../include/HttpRequestHandler.hpp"
+#include "../include/SocketManager.hpp"
+
+std::string	trim(const std::string& str)
+{
+	size_t	start = str.find_first_not_of(" \t");
+
+	if (start == std::string::npos)
+	{
+		return ("");
+	}
+	size_t end = str.find_last_not_of(" \t");
+	return (str.substr(start, end - start + 1));
+}
 
 std::string	HttpRequestHandler::handleRequest(const std::string& request)
 {
@@ -20,18 +33,28 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 	iss >> method >> path >> version;
 
 	std::cout << RED << "Server received request: " << request << RESET << std::endl;
+	if (path.find("file://") == 0)
+		path.substr(7);
+
 	if (method == "POST")
 	{
-		std::string headers;
-		std::string body;
-		while (std::getline(iss, headers) && headers != "\r")
+		std::string 	headers;
+		std::string 	body;
+		bool		contentLengthFound = false;
+		int		contentLength = 0;
+
+		while (std::getline(iss, headers) && headers != "\r" && !headers.empty())
 		{
-			// do smth with headers
+			if (headers.find("Content-Length:") == 0)
+			{
+				contentLengthFound = true;
+				std::string contentLengthStr = headers.substr(headers.find(":") + 1);
+				contentLengthStr = trim(contentLengthStr);
+				contentLength = std::atoi(contentLengthStr.c_str());
+			}
 		}
-		if (headers.find("Content-Length:") != std::string::npos)
+		if (contentLengthFound)
 		{
-			std::string trim = headers.substr(headers.find(":") + 1);
-			int	contentLength = std::atoi(trim.c_str());
 			body.resize(contentLength);
 			iss.read(&body[0], contentLength);
 			if (iss.gcount() < contentLength)
@@ -44,6 +67,8 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 
 	if (method == "GET")
 	{
+		if (path == "/") path = "/pages/index.html";
+		std::string fileContent = SocketManager::readFile("." + path);
 		return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nGET request received");
 	}
 	if (method == "DELETE")

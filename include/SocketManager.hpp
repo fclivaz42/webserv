@@ -25,6 +25,8 @@
 #include <poll.h>
 #include <cstdlib>
 #include <algorithm>
+#include <fstream>
+#include <string>
 
 
 #define RESET "\x1b[0m"
@@ -49,13 +51,14 @@ class SocketManager
 		~SocketManager();
 
 		//METHODS
-		bool		isHttpRequest(const std::string& message);
-		bool		createSocket();
-		bool		bindSocket();
-		bool		startListening(int backlog = 10);
-		int		acceptConnection();
-		std::string	readMessage(int clientFd);
-		int		start();
+		bool			isHttpRequest(const std::string& message);
+		bool			createSocket();
+		bool			bindSocket();
+		bool			startListening(int backlog = 10);
+		int			acceptConnection();
+		std::string		readMessage(int clientFd);
+		int			start();
+		static std::string	readFile(const std::string& filePath);
 
 		//GETTERS
 		int	getServerFd() const;

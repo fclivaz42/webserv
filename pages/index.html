@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Server</title>
+</head>
+<body>
+	<h1 style="font-family: 'Courier New', monospace;" >Testing some HTTP Requests</h1>
+	<h3 style="font-family: 'Courier New', monospace;">Like a queeeeeen</h3>
+
+    <button style="font-family:'Courier New', monospace;cursor:pointer;background-color: #cebfd4;padding:15px;margin: 0 10px;" onclick="sendGetRequest()">Send GET Request</button>
+    <button style="font-family:'Courier New', monospace;cursor:pointer;background-color: #bfc5d4;padding:15px;margin: 0 10px;" onclick="sendPostRequest()">Send POST Request</button>
+    <button style="font-family:'Courier New', monospace;cursor:pointer;background-color: #e1ccd7;padding:15px;margin: 0 10px;" onclick="sendDeleteRequest()">Send DELETE Request</button>
+
+    <script>
+        function sendGetRequest() {
+            fetch('http://localhost:8080', {
+                method: 'GET',
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log('GET Response:', data);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function sendPostRequest() {
+            fetch('http://localhost:8080', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'body': 'This is a POST request body',
+                }),
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log('POST Response:', data);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function sendDeleteRequest() {
+            fetch('http://localhost:8080', {
+                method: 'DELETE',
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log('DELETE Response:', data);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

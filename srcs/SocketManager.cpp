@@ -109,6 +109,7 @@ std::string	SocketManager::readMessage(int clientFd)
 		std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
 		return ("");
 	}
+	return (std::string(buffer));
 }
 
 int	SocketManager::start()
@@ -180,7 +181,8 @@ bool	SocketManager::isHttpRequest(const std::string& message)
 
 void	SocketManager::handleClient(int clientFd)
 {
-	while (true)
+	bool keepAlive = true;
+	while (keepAlive)
 	{
 		std::string message = readMessage(clientFd);
 		if (message.empty())
@@ -198,19 +200,52 @@ void	SocketManager::handleClient(int clientFd)
 			if (bytesWritten == -1)
 			{
 				std::cerr << RED << "ERROR: Write() failure" << RESET << std::endl;
+				close(clientFd);
+				break ;
+			}
+			else if (bytesWritten != static_cast<ssize_t>(response.length())) 
+			{
+				std::cerr << RED << "ERROR: Failure to write all datas" << RESET << std::endl;
+				close(clientFd);
+				break ;
 			}
 			if (message.find("Connection: close") != std::string::npos)
 			{
-				close(clientFd);
-				break ;
+				keepAlive = false;
 			}
 		}
 		else
 		{
-			std::cout << PURPLE << "Server received new message:" << std::endl;
-			std::cout << message << RESET << std::endl;
+			std::string fileContent = readFile("index.html");
+			std::string response = "HTTP/1.1 200 OK\r\n Content-Type: text/htmlr\n\r\n" + fileContent;
+			ssize_t bytesWritten = write(clientFd, response.c_str(), response.length());
+			if (bytesWritten == -1)
+			{
+				std::cerr << RED << "ERROR: write() failure" << RESET << std::endl;
+				close(clientFd);
+				break ;
+			}
+			else if (bytesWritten != static_cast<ssize_t>(response.length())) 
+			{
+				std::cerr << RED << "ERROR: Failure to write all datas" << RESET << std::endl;
+				close(clientFd);
+				break ;
+			}
+			keepAlive = false;
 		}
 	}
+}
+
+std::string	SocketManager::readFile(const std::string& filePath)
+{
+	std::ifstream file(filePath.c_str(), std::ios::in | std::ios::binary);
+	if (!file)
+	{
+		std::cerr << "ERROR: Could not open file " << filePath << std::endl;
+		return ("");
+	}
+	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	return (content);
 }
 
 //GETTERS
