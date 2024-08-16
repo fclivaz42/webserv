@@ -16,6 +16,8 @@
 
 #include <string>
 #include <sstream>
+#include <iostream>
+#include <cstdlib>
 
 class HttpRequestHandler
 {

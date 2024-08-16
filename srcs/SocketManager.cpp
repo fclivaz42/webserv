@@ -92,13 +92,14 @@ int	SocketManager::acceptConnection()
 std::string	SocketManager::readMessage(int clientFd)
 {
 	char		buffer[BUFFER_SIZE];
-
 	ssize_t	bytesRead = read(clientFd, buffer, sizeof(buffer) - 1);
 	
 	if (bytesRead > 0)
 	{
 		buffer[bytesRead] = '\0';
-		std::cout << PURPLE << "Received Message!! >> " << buffer << RESET << std::endl;
+		std::cout << PURPLE << "Server received new message" << std::endl;
+		std::cout << buffer << RESET << std::endl;
+		return (std::string(buffer));
 	}
 	else if (bytesRead == 0)
 	{
@@ -110,7 +111,6 @@ std::string	SocketManager::readMessage(int clientFd)
 		std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
 		return ("");
 	}
-	return (buffer);
 }
 
 int	SocketManager::start()
@@ -147,21 +147,24 @@ int	SocketManager::start()
 				fds.push_back(clientPollFd);
 			}
 		}
+		std::vector<int> closedFds;
 		for (size_t i = 1; i < fds.size(); i++)
 		{
 			if (fds[i].revents & POLLIN)
 			{
-				std::string request = readMessage(fds[i].fd);
-				if (request.empty())
-				{
-					close(fds[i].fd);
-					fds.erase(fds.begin() + i);
-					i--;
-				}
+				handleClient(fds[i].fd);
+				closedFds.push_back(fds[i].fd);
+				fds[i].fd = -1;
+			}
+		}
+		for (std::vector<int>::iterator iter = closedFds.begin(); iter != closedFds.end(); iter++)
+		{
+			for (std::vector<struct pollfd>::iterator fdIter = fds.begin(); fdIter != fds.end(); fdIter++)
+			{
+				if (fdIter->fd == *iter)
+					fdIter = fds.erase(fdIter);
 				else
-				{
-					handleClient((fds[i].fd));
-				}
+					fdIter++;
 			}
 		}
 	}
@@ -179,29 +182,32 @@ bool	SocketManager::isHttpRequest(const std::string& message)
 
 void	SocketManager::handleClient(int clientFd)
 {
-	std::string message = readMessage(clientFd);
-	if (message.empty())
+	while (true)
 	{
-		close(clientFd);
-		return ;
-	}
-
-	if (isHttpRequest(message))
-	{
-		std::cout << "cc" << std::endl;
-		std::string response = HttpRequestHandler::handleRequest(message);
-
-		ssize_t bytesWritten = write(clientFd, response.c_str(), response.length());
-
-		if (bytesWritten == -1)
+		std::string message = readMessage(clientFd);
+		if (message.empty())
 		{
-			std::cerr << RED << "ERROR: Write() failure" << RESET << std::endl;
-		}
-		if (message.find("Connection: close") != std::string::npos)
 			close(clientFd);
+			break ;
+		}
+
+		if (isHttpRequest(message))
+		{
+			std::string response = HttpRequestHandler::handleRequest(message);
+
+			ssize_t bytesWritten = write(clientFd, response.c_str(), response.length());
+
+			if (bytesWritten == -1)
+			{
+				std::cerr << RED << "ERROR: Write() failure" << RESET << std::endl;
+			}
+			if (message.find("Connection: close") != std::string::npos)
+			{
+				close(clientFd);
+				break ;
+			}
+		}
 	}
-	else
-		std::cout << "Not an HTTP request" << std::endl;
 }
 
 //GETTERS
