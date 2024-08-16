@@ -19,6 +19,7 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 	
 	iss >> method >> path >> version;
 
+	std::cout << RED << "Server received request: " << request << RESET << std::endl;
 	if (method == "POST")
 	{
 		std::string headers;

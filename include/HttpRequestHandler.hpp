@@ -19,6 +19,12 @@
 #include <iostream>
 #include <cstdlib>
 
+#define RESET "\x1b[0m"
+#define GREEN "\x1b[32m"
+#define ORANGE "\x1b[38;5;208m"
+#define RED "\x1b[31m"
+#define PURPLE "\x1b[35m"
+
 class HttpRequestHandler
 {
 	public:

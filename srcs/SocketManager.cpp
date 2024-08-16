@@ -97,8 +97,6 @@ std::string	SocketManager::readMessage(int clientFd)
 	if (bytesRead > 0)
 	{
 		buffer[bytesRead] = '\0';
-		std::cout << PURPLE << "Server received new message" << std::endl;
-		std::cout << buffer << RESET << std::endl;
 		return (std::string(buffer));
 	}
 	else if (bytesRead == 0)
@@ -206,6 +204,11 @@ void	SocketManager::handleClient(int clientFd)
 				close(clientFd);
 				break ;
 			}
+		}
+		else
+		{
+			std::cout << PURPLE << "Server received new message:" << std::endl;
+			std::cout << message << RESET << std::endl;
 		}
 	}
 }
