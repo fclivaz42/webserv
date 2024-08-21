@@ -18,6 +18,7 @@ ServerConf  &ServerConf::operator=(ServerConf const &rhs){
     return (*this);
 }
 
+                /* GETTERS */
 std::string ServerConf::getServerName(void) const{
     return (this->_serverName);
 }
@@ -38,6 +39,7 @@ std::map<std::string, Location> ServerConf::getLocation(void) const{
     return (this->_location);
 }
 
+                /* SETTERS */
 void    ServerConf::setServerName(const std::string &serverName){
     this->_serverName = serverName;
 }
@@ -62,6 +64,7 @@ void    ServerConf::setErrorPage(const std::string &error){
     this->_errorPage = error;
 }
 
+/* Fonction permettant de print les attributs de la class ServerConf. */
 void    ServerConf::print(void) const {
         std::cout << "  Server: " << this->_serverName << std::endl;
         std::cout << "  Port: " << this->_port << std::endl;

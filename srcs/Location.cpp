@@ -21,10 +21,11 @@ Location    &Location::operator=(Location const &rhs){
 	this->_fastcgiIndex = rhs._fastcgiIndex;
 	this->_autoIndex = rhs._autoIndex;
 	this->_upload = rhs._upload;
-	
+
 	return (*this);
 }
 
+				/* GETTERS */
 std::vector<std::string>    Location::getAllowMethods(void) const{
 	return (this->_allowMethods);
 }
@@ -65,6 +66,7 @@ bool	Location::getUpload(void) const{
 	return (this->_upload);
 }
 
+				/* SETTERS */
 void	Location::setAllowMethods(const std::string &methods){
 	std::string	method;
 	std::istringstream	iss(methods);
@@ -114,6 +116,7 @@ void	Location::setUpload(const std::string &upload){
 		this->_upload = false;
 }
 
+/* Fonction permettant de print les attributs de la class Location. */
 void Location::print() const {
 		std::cout << "  Location: " << _path << std::endl;
 		std::vector<std::string>::const_iterator it;
