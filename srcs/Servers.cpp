@@ -2,10 +2,6 @@
 
 Servers::Servers(const std::string &conf_file){
 		loadConfig(conf_file);
-		for (size_t i = 0; i < _servConf.size(); ++i) {
-        std::cout << "Server Configuration " << (i + 1) << ":" << std::endl;
-        _servConf[i].print();
-    }
 }
 
 Servers::Servers(Servers const &cpy){
@@ -49,11 +45,8 @@ void    Servers::loadConfig(std::string const &conf_file){
 				currentServer.setLocation(currentLocation.getPath(), currentLocation);
 				locationFlag = false;
 			}
-			else {
-				std::cout << "GOOOOOOOOOOOOOOOOOOOOOOD" << std::endl;
+			else
 				this->_servConf.push_back(currentServer);
-
-			}
 		}
 		else if (line.find("location ")!= std::string::npos){
 			if (locationFlag)
@@ -64,7 +57,6 @@ void    Servers::loadConfig(std::string const &conf_file){
 		}
 		else{
 			std::pair<std::string, std::string> keyValue = pairConf(line);
-			std::cout << "First : " << keyValue.first << " Second : " << keyValue.second << std::endl;
 			if (!locationFlag)
 				setConf(keyValue, currentServer);
 			else
@@ -86,10 +78,8 @@ std::pair<std::string, std::string>	Servers::pairConf(std::string line){
 }
 
 void	Servers::setConf(std::pair<std::string, std::string> keyValue, ServerConf &currentServer){
-	if (keyValue.first == "listen"){
+	if (keyValue.first == "listen")
 		currentServer.setPort(keyValue.second);
-		std::cout << currentServer.getPort() << std::endl;
-	}
 	else if (keyValue.first == "server_name")
 		currentServer.setServerName(keyValue.second);
 	else if (keyValue.first == "root")

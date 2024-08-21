@@ -11,7 +11,17 @@ Location::Location(Location const &cpy){
 Location::~Location(){}
 
 Location    &Location::operator=(Location const &rhs){
-	(void) rhs;
+	this->_allowMethods = rhs._allowMethods;
+	this->_path = rhs._path;
+	this->_index = rhs._index;
+	this->_root = rhs._root;
+	this->_returnURL = rhs._returnURL;
+	this->_uploadStore = rhs._uploadStore;
+	this->_fastcgiPass = rhs._fastcgiPass;
+	this->_fastcgiIndex = rhs._fastcgiIndex;
+	this->_autoIndex = rhs._autoIndex;
+	this->_upload = rhs._upload;
+	
 	return (*this);
 }
 

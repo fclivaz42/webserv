@@ -9,7 +9,12 @@ ServerConf::ServerConf(ServerConf const &cpy){
 ServerConf::~ServerConf(){}
 
 ServerConf  &ServerConf::operator=(ServerConf const &rhs){
-    (void) rhs;
+    this->_serverName = rhs._serverName;
+    this->_port = rhs._port;
+    this->_root = rhs._root;
+    this->_index = rhs._index;
+    this->_errorPage = rhs._errorPage;
+    this->_location = rhs._location;
     return (*this);
 }
 
