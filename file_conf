@@ -1,26 +1,35 @@
 server {
+    server_name example.com
+    listen 80
+    root /var/www/example.com
+    index index.html
+    
+    location / {
+        methods GET POST
+        root /var/www/example.com/public
+        index index.html
+    }
 
-	listen: 4443
-	server_name: test
+    location /upload {
+        methods POST
+        root /var/www/example.com/uploads
+        accept_uploads yes
+    }
 
-	root ./test 
-	index index.html 
-
-	location / {
-		method GET
-		root ./test2/test3 
-	}
+    error_page 404 /404.html
 }
 
 server {
-	listen: 8000
-	server_name: default
+    server_name test.com
+    listen 8080
+    root /var/www/test.com
+    index index.html
+    
+    location / {
+        methods GET
+        root /var/www/test.com/public
+        index index.html
+    }
 
-	root ./test4
-	index index2.html
-
-	location / {
-		method DELETE
-		root ./test5
-	}
+    error_page 404 /404.html
 }

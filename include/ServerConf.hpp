@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <map>
 
+class Location;
+
 class ServerConf{
 	private:
 		std::string _serverName;
@@ -40,10 +42,11 @@ class ServerConf{
 		void	setPort(const std::string &port);
 		void	setRoot(const std::string &root);
 		void	setIndex(const std::string &index);
-		void	setLocation(const std::map<std::string, Location> &location);
+		void	setLocation(const std::string &path, Location &locations);
+		void	setErrorPage(const std::string &error);
 
 		/* MEMBERS FUNCTIONS */
-
+		void	print(void) const;
 };
 
 #endif

@@ -6,7 +6,7 @@
 #    By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/04/12 15:50:01 by fclivaz           #+#    #+#              #
-#    Updated: 2024/07/02 17:23:04 by fclivaz          ###   LAUSANNE.ch        #
+#    Updated: 2024/08/21 13:50:46 by malleman         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,12 +18,15 @@ SHELL	= /bin/bash
 
 CXX	= c++
 
-DEPS	=	${INCL}/-----.hpp\
-			${INCL}/-----.hpp\
+DEPS	=	${INCL}/Location.hpp\
+			${INCL}/ServerConf.hpp\
+			${INCL}/Servers.hpp\
 			${SRCS}
 
 SRCS	=	${SUBDIR}/webserv.cpp\
-			${SUBDIR}/-----.cpp
+			${SUBDIR}/Servers.cpp\
+			${SUBDIR}/ServerConf.cpp\
+			${SUBDIR}/Location.cpp\
 
 SUBDIR	= srcs
 
@@ -35,11 +38,11 @@ OBJDIR	= obj
 
 OBJTREE	= $(SRCTREE:srcs%=${OBJDIR}%)
 
-CXXFLAGS= -Wall -Werror -Wextra -O2 -std=c++98
+CXXFLAGS= -Wall -Werror -Wextra -O2 -std=c++98 -g3
 
 DBFLAGS	= DEBUG=1
 
-LFLAGS = -I${INCL}
+LFLAGS = -I${INCL} -g3
 
 LDFLAGS	= -g3 -fsanitize=address -I${INCL}
 

@@ -7,7 +7,10 @@
 #include <algorithm>
 #include <vector>
 #include "ServerConf.hpp"
+#include "Location.hpp"
 
+class ServerConf;
+class Location;
 
 class Servers{
 	private:
@@ -27,8 +30,12 @@ class Servers{
 		/* SETTERS */
 		
 		/* MEMBERS FUNCTIONS */
-		void	loadConfig(const std::ifstream confFile);
-		void	parseConf(void);
+		void									loadConfig(const std::string &confFile);
+		std::pair <std::string, std::string>	pairConf(std::string line);
+		void									setConf(std::pair<std::string, std::string> keyValue, ServerConf &current);
+		void									setConfLoc(std::pair<std::string, std::string> keyValue, Location &current);
+		void 									printConfigs(void) const;
+		
 };
 
 #endif
