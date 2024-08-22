@@ -4,7 +4,10 @@
 
 int main (int ac, char **av)
 {
-	SocketManager server;
+	std::vector<int> ports;
+	ports.push_back(8080);
+	ports.push_back(3000);
+	SocketManager server(ports);
 	
 	if (ac > 1)
 	{
@@ -12,15 +15,15 @@ int main (int ac, char **av)
 	}
 	else
 	{
-		server.setPort(8080);
 		server.setHost("0.0.0.0");
+		server.setPorts(ports);
 	}
 
 	if (!server.createSocket() || !server.bindSocket() || !server.startListening())
 	{
 		return (-1);
 	}
+	
 	server.start();
-
 	return (0);
 }

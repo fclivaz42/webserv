@@ -1,57 +1,69 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Server</title>
+    <title>test server</title>
 </head>
 <body>
-	<h1 style="font-family: 'Courier New', monospace;" >Testing some HTTP Requests</h1>
-	<h3 style="font-family: 'Courier New', monospace;">Like a queeeeeen</h3>
+	<h1 style="font-family: 'courier new', monospace;" >testing some http requests</h1>
+	<h3 style="font-family: 'courier new', monospace;">like a queeeeeen</h3>
+	<div>
+	    <h6>Port 8080</h6>
+	    <button style="font-family:'courier new', monospace;cursor:pointer;background-color: #cebfd4;padding:15px;margin: 0 10px;" onclick="sendGetRequest(8080)">send get request on port 8080</button>
+	    <button style="font-family:'courier new', monospace;cursor:pointer;background-color: #bfc5d4;padding:15px;margin: 0 10px;" onclick="sendPostRequest(8080)">send post request on port 8080</button>
+	    <button style="font-family:'courier new', monospace;cursor:pointer;background-color: #e1ccd7;padding:15px;margin: 0 10px;" onclick="sendDeleteRequest(8080)">send delete request on port 8080</button>
+	</div>
+	<div style="padding-top: 50px;">
+	    <h6>Port 3000</h6>
+	    <button style="font-family:'courier new', monospace;cursor:pointer;background-color: #cebfd4;padding:15px;margin: 0 10px;" onclick="sendGetRequest(3000)">send get request on port 3000</button>
+	    <button style="font-family:'courier new', monospace;cursor:pointer;background-color: #bfc5d4;padding:15px;margin: 0 10px;" onclick="sendPostRequest(3000)">send post request on port 3000</button>
+	    <button style="font-family:'courier new', monospace;cursor:pointer;background-color: #e1ccd7;padding:15px;margin: 0 10px;" onclick="sendDeleteRequest(3000)">send delete request on port 3000</button>
+	</div>
 
-    <button style="font-family:'Courier New', monospace;cursor:pointer;background-color: #cebfd4;padding:15px;margin: 0 10px;" onclick="sendGetRequest()">Send GET Request</button>
-    <button style="font-family:'Courier New', monospace;cursor:pointer;background-color: #bfc5d4;padding:15px;margin: 0 10px;" onclick="sendPostRequest()">Send POST Request</button>
-    <button style="font-family:'Courier New', monospace;cursor:pointer;background-color: #e1ccd7;padding:15px;margin: 0 10px;" onclick="sendDeleteRequest()">Send DELETE Request</button>
+    	<script>
+		function sendGetRequest(port) {
+		    fetch(`http://localhost:${port}`, {
+			method: 'GET',
+		    })
+		    .then(response => {
+			console.log(`Response status from port ${port}:`, response.status);
+			return response.text();
+		    })
+		    .then(data => {
+			console.log(`GET Response from port ${port}:`, data);
+		    })
+		    .catch(error => console.error('Error:', error));
+		}
 
-    <script>
-        function sendGetRequest() {
-            fetch('http://localhost:8080', {
-                method: 'GET',
-            })
-            .then(response => response.text())
-            .then(data => {
-                console.log('GET Response:', data);
-            })
-            .catch(error => console.error('Error:', error));
-        }
+		 function sendPostRequest(port) {
+		    fetch(`http://localhost:${port}`, {
+			method: 'POST',
+			headers: {
+			    'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: new URLSearchParams({
+			    'body': 'This is a POST request body',
+			}),
+		    })
+		    .then(response => response.text())
+		    .then(data => {
+			console.log(`POST response from port ${port}:`, data);
+		    })
+		    .catch(error => console.error('Error:', error));
+		}
 
-        function sendPostRequest() {
-            fetch('http://localhost:8080', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams({
-                    'body': 'This is a POST request body',
-                }),
-            })
-            .then(response => response.text())
-            .then(data => {
-                console.log('POST Response:', data);
-            })
-            .catch(error => console.error('Error:', error));
-        }
+		function sendDeleteRequest(port) {
+		    fetch(`http://localhost:${port}`, {
+			method: 'DELETE',
+		    })
+		    .then(response => response.text())
+		    .then(data => {
+			console.log(`DELETE response from port ${port}:`, data);
+		    })
+		    .catch(error => console.error('Error:', error));
+		}
+	</script>
 
-        function sendDeleteRequest() {
-            fetch('http://localhost:8080', {
-                method: 'DELETE',
-            })
-            .then(response => response.text())
-            .then(data => {
-                console.log('DELETE Response:', data);
-            })
-            .catch(error => console.error('Error:', error));
-        }
-    </script>
 </body>
 </html>

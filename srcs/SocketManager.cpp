@@ -20,18 +20,28 @@
 // set l'address family a AF_INET ce qui veut dire qu'on utilise le protocole IPv4
 // set le server sur INADDR_ANY pour binder le server a toutes les network interfaces available
 // htons(_port) convertis le numero de port de host byte a network byte order pour pouvoir lire sur tous les systemes
-SocketManager::SocketManager() : _serverFd(-1), _port(8080)
+SocketManager::SocketManager(const std::vector<int>& port) : _port(port)
 {
-	memset(&_serverAddress, 0, sizeof(_serverAddress));
-	_serverAddress.sin_family = AF_INET;
-	_serverAddress.sin_addr.s_addr = INADDR_ANY;
-	_serverAddress.sin_port = htons(_port);
+	_serverFd.resize(port.size(), -1);
+	_serverAddress.resize(port.size());
+	
+	for (size_t i = 0; i < _serverAddress.size(); i++)
+	{
+		memset(&_serverAddress[i], 0, sizeof(_serverAddress[i]));
+		_serverAddress[i].sin_family = AF_INET;
+		_serverAddress[i].sin_addr.s_addr = INADDR_ANY;
+		_serverAddress[i].sin_port = htons(_port[i]);
+	}
 }
 
 SocketManager::~SocketManager()
 {
-	if (_serverFd == -1)
-		close(_serverFd);
+	for (std::vector<int>::size_type i = 0; i < _serverFd.size(); i++)
+	{
+		int serverFd = _serverFd[i];
+		if (serverFd == -1)
+			close(serverFd);
+	}
 }
 
 
@@ -46,18 +56,24 @@ SocketManager::~SocketManager()
 //Utile quand on restart le server et que l'adresse est toujours en TIME_WAIT state.
 bool	SocketManager::createSocket()
 {
-	_serverFd = socket(AF_INET, SOCK_STREAM, 0);
-	if (_serverFd == -1)
+	_serverFd.clear();
+	for (std::vector<int>::size_type i = 0; i < _port.size(); i++)
 	{
-		std::cerr << RED << "ERROR: Unable to create socket" << RESET << std::endl;
-		return (false);
-	}
-	
-	int opt = 1;
-	if (setsockopt(_serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
-	{
-		std::cerr << RED << "ERROR: setsockopt failure" << RESET << std::endl;
-		return (false);
+		int port = _port[i];
+		int serverFd = socket(AF_INET, SOCK_STREAM, 0);
+		if (serverFd == -1)
+		{
+			std::cerr << RED << "ERROR: Unable to create socket" << RESET << std::endl;
+			return (false);
+		}
+		
+		int opt = 1;
+		if (setsockopt(serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
+		{
+			std::cerr << RED << "ERROR: setsockopt failure for port " << port << RESET << std::endl;
+			return (false);
+		}
+		_serverFd.push_back(serverFd);
 	}
 	return (true);
 }
@@ -68,14 +84,13 @@ bool	SocketManager::createSocket()
 //Je binde le socket a l'adresse du server avev bind()
 bool	SocketManager::bindSocket()
 {
-	_serverAddress.sin_family = AF_INET;
-	_serverAddress.sin_addr.s_addr = inet_addr(_host.c_str());
-	_serverAddress.sin_port = htons(_port);
-
-	if (bind(_serverFd, (struct sockaddr*)&_serverAddress, sizeof(_serverAddress)) == -1)
+	for (size_t i = 0; i < _serverFd.size(); i++)
 	{
-		std::cerr << RED << "ERROR: Binding failure" << RESET << std::endl;
-		return (false);
+		if (bind(_serverFd[i], (struct sockaddr*)&_serverAddress[i], sizeof(_serverAddress[i])) == -1)
+		{
+			std::cerr << RED << "ERROR: Binding failure" << RESET << std::endl;
+			return (false);
+		}
 	}
 	return (true);
 }
@@ -85,12 +100,15 @@ bool	SocketManager::bindSocket()
 //backlog corresponds au nombre max de connections en attentes qui peuvent etre queue dans ma socket
 bool	SocketManager::startListening(int backlog)
 {
-	if (listen(_serverFd, backlog) == -1)
+	for (size_t i = 0; i < _serverFd.size(); i++)
 	{
-		std::cerr << RED << "ERROR: Listening failure" << RESET << std::endl;
-		return (false);
+		if (listen(_serverFd[i], backlog) == -1)
+		{
+			std::cerr << RED << "ERROR: Listening failure" << RESET << std::endl;
+			return (false);
+		}
+		std::cout << GREEN << "Server listening on port " << _port[i] << RESET << std::endl;
 	}
-	std::cout << GREEN << "Server listening on port " << ntohs(_serverAddress.sin_port) << RESET << std::endl;
 	return (true);
 }
 
@@ -101,11 +119,11 @@ bool	SocketManager::startListening(int backlog)
 //clientLen stores la size de clientAddress
 //que je passe a accept() qui est le system call qui accept les connections entrantes d'un client
 //La fonction retourne le clientFd qui represents la new co et print l'ip address client
-int	SocketManager::acceptConnection()
+int	SocketManager::acceptConnection(int serverFd)
 {
 	struct sockaddr_in clientAddress;
 	socklen_t clientLen = sizeof(clientAddress);
-	int clientFd = accept(_serverFd, (struct sockaddr*)&clientAddress, &clientLen);
+	int clientFd = accept(serverFd, (struct sockaddr*)&clientAddress, &clientLen);
 
 	if (clientFd == -1)
 	{
@@ -154,49 +172,76 @@ std::string	SocketManager::readMessage(int clientFd)
 //Quand un client envoie de la data, le server lit la data, la process et s'occupe de la deconnexion
 int	SocketManager::start()
 {
-	std::vector<struct pollfd> fds;
+	fd_set	readFds;
+	int	maxFd = -1;
 
-	struct pollfd serverPollFd;
+	FD_ZERO(&readFds);
 
-	serverPollFd.fd = _serverFd;
-	serverPollFd.events = POLLIN;
-	serverPollFd.revents = 0;
-
-	fds.push_back(serverPollFd);
+	for (size_t i = 0; i < _serverFd.size(); i++)
+	{
+		FD_SET(_serverFd[i], &readFds);
+		if (_serverFd[i] > maxFd)
+		{
+			maxFd = _serverFd[i];
+		}
+	}
 
 	while (true)
 	{
-		int pollCount = poll(fds.data(), fds.size(), -1);
-		if (pollCount < 0)
+		fd_set	tmpFds = readFds;
+		int	activity = select(maxFd + 1, & tmpFds, NULL, NULL, NULL);
+		if (activity < 0)
 		{
-			std::cerr << RED << "ERROR: poll() failure" << RESET << std::endl;
+			std::cerr << RED << "ERROR: select() failure" << RESET << std::endl;
 			return (-1);
 		}
-		if (fds[0].revents & POLLIN)
+
+		for (size_t i = 0; i < _serverFd.size(); i++)
 		{
-			int clientFd = acceptConnection();
-			if (clientFd >= 0)
+			if (FD_ISSET(_serverFd[i], &tmpFds))
 			{
-				struct pollfd clientPollFd;
-
-				clientPollFd.fd = clientFd;
-				clientPollFd.events = POLLIN;
-				clientPollFd.revents = 0;
-
-				fds.push_back(clientPollFd);
+				int clientFd = acceptConnection(_serverFd[i]);
+				if (clientFd >= 0)
+				{
+					FD_SET(clientFd, &readFds);
+					if (clientFd > maxFd)
+						maxFd = clientFd;
+				}
 			}
 		}
-		std::vector<int> closedFds;
-		for (size_t i = 1; i < fds.size(); i++)
+
+		for (int fd = 0; fd <= maxFd; fd++)
 		{
-			if (fds[i].revents & POLLIN)
+			if (fd >= 0 && FD_ISSET(fd, &tmpFds) && !isServerFd(fd))
 			{
-				handleClient(fds[i].fd);
-				closedFds.push_back(fds[i].fd);
-				fds[i].fd = -1;
+				handleClient(fd);
+				if (clientDeco(fd))
+				{
+					FD_CLR(fd, &readFds);
+					close(fd);
+				}
 			}
 		}
 	}
+	return (0);
+}
+
+bool	SocketManager::isServerFd(int fd)
+{
+    return std::find(_serverFd.begin(), _serverFd.end(), fd) != _serverFd.end();
+}
+
+
+bool	SocketManager::clientDeco(int fd)
+{
+	char	buffer[1];
+	int	res = recv(fd, buffer, sizeof(buffer), MSG_PEEK | MSG_DONTWAIT);
+
+	if (res == 0)
+		return (true);
+	if (res == -1 && (errno == ECONNRESET || errno == EPIPE || errno == EBADF))
+		return (true);
+	return (false);
 }
 
 bool	SocketManager::isHttpRequest(const std::string& message)
@@ -223,50 +268,39 @@ void	SocketManager::handleClient(int clientFd)
 		std::string message = readMessage(clientFd);
 		if (message.empty())
 		{
+			std::cerr << RED << "Client disconnected or empty message" << RESET << "" << std::endl;
 			close(clientFd);
 			break ;
 		}
 
+		std::cout << GREEN << "Received request: " << message << RESET << std::endl;
+		std::string response;
 		if (isHttpRequest(message))
 		{
-			std::string response = HttpRequestHandler::handleRequest(message);
-
-			ssize_t bytesWritten = write(clientFd, response.c_str(), response.length());
-
-			if (bytesWritten == -1)
-			{
-				std::cerr << RED << "ERROR: Write() failure" << RESET << std::endl;
-				close(clientFd);
-				break ;
-			}
-			else if (bytesWritten != static_cast<ssize_t>(response.length())) 
-			{
-				std::cerr << RED << "ERROR: Failure to write all datas" << RESET << std::endl;
-				close(clientFd);
-				break ;
-			}
-			if (response.find("Connection: close") != std::string::npos)
-			{
-				keepAlive = false;
-			}
+			response = HttpRequestHandler::handleRequest(message);
 		}
 		else
 		{
-			std::string fileContent = readFile("index.html");
-			std::string response = "HTTP/1.1 200 OK\r\n Content-Type: text/htmlr\n\r\n" + fileContent;
-			ssize_t bytesWritten = write(clientFd, response.c_str(), response.length());
-			if (bytesWritten == -1)
-			{
-				std::cerr << RED << "ERROR: write() failure" << RESET << std::endl;
-				close(clientFd);
-				break ;
-			}
-			else if (bytesWritten != static_cast<ssize_t>(response.length())) 
-			{
-				std::cerr << RED << "ERROR: Failure to write all datas" << RESET << std::endl;
-				close(clientFd);
-				break ;
-			}
+			response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nInvalid request";
+		}
+		std::cout << "Sending response: " << response << std::endl;
+
+		ssize_t bytesWritten = write(clientFd, response.c_str(), response.length());
+
+		if (bytesWritten == -1)
+		{
+			std::cerr << RED << "ERROR: Write() failure" << RESET << std::endl;
+			close(clientFd);
+			break ;
+		}
+		else if (bytesWritten != static_cast<ssize_t>(response.length())) 
+		{
+			std::cerr << RED << "ERROR: Failure to write all datas" << RESET << std::endl;
+			close(clientFd);
+			break ;
+		}
+		if (response.find("Connection: close") != std::string::npos)
+		{
 			keepAlive = false;
 		}
 	}
@@ -289,15 +323,15 @@ std::string	SocketManager::readFile(const std::string& filePath)
 }
 
 //GETTERS
-int	SocketManager::getServerFd() const
+const std::vector<int>&	SocketManager::getServerFd() const
 {
 	return (_serverFd);
 }
 
 //SETTERS
-void	SocketManager::setPort(int port)
+void	SocketManager::setPorts(const std::vector<int>& ports)
 {
-	_port = port;
+	_port = ports;
 }
 
 void	SocketManager::setHost(const std::string& host)
