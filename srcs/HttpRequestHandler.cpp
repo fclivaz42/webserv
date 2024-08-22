@@ -25,16 +25,43 @@ std::string	trim(const std::string& str)
 	return (str.substr(start, end - start + 1));
 }
 
+//FONCTION THAT PROCESSES AN HTTP REQUEST AND GENERATES A RESPONSE
+//Je cree un input stream de la request avec ifstream
+//J'extraie la http method, le path de la request la http version et la request string
+//Je print la request recue
+//Je check le path
+//je handle si POST/GET/DELETE ou autre
+//Je checke quelle reuqte j'ai
+//Je checke que j'ai bien le bon path 
+//je lis le contenu de la request 
+//je renvoie le bon status code
 std::string	HttpRequestHandler::handleRequest(const std::string& request)
 {
 	std::istringstream	iss(request);
 	std::string method, path, version;
+	std::string headers;
+	bool keepAlive = false;
 	
 	iss >> method >> path >> version;
 
 	std::cout << RED << "Server received request: " << request << RESET << std::endl;
 	if (path.find("file://") == 0)
 		path.substr(7);
+
+	while (std::getline(iss, headers) && headers != "\r" && !headers.empty())
+	{
+		if (headers.find("Connection:") == 0)
+		{
+			std::string coType = headers.substr(headers.find(":") + 1);
+			coType = trim(coType);
+			if (coType == "keep-alive")
+			{
+				keepAlive = true;
+			}
+		}
+	}
+
+	std::string connectionHandler = keepAlive ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
 
 	if (method == "POST")
 	{
@@ -59,22 +86,22 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 			iss.read(&body[0], contentLength);
 			if (iss.gcount() < contentLength)
 			{
-				return ("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nIncomplete request body");
-			}
+				return ("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n" + connectionHandler + "\r\nIncomplete request body");
+			} 
 		}
-		return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nPOST request received with body");
+		return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n" + connectionHandler + "\r\nPOST request received with body");
 	}
 
 	if (method == "GET")
 	{
-		if (path == "/") path = "/pages/index.html";
+		if (path == "/") path = "/public/index.html";
 		std::string fileContent = SocketManager::readFile("." + path);
-		return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nGET request received");
+		return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n" + connectionHandler + "\r\nGET request received");
 	}
 	if (method == "DELETE")
 	{
 
-		return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nDELETE request received");
+		return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n" + connectionHandler + "\r\nDELETE request received");
 	}
-	return ("HTTP/1.1 405 Method not allowed\r\n\r\n");
+	return ("HTTP/1.1 405 Method not allowed\r\n\r\n" + connectionHandler + "\r\n");
 }

@@ -13,6 +13,13 @@
 #include "../include/SocketManager.hpp"
 #include "../include/HttpRequestHandler.hpp"
 
+//SETTING UP THE SOCKET MANAGER
+// Initialise le fd pour le server scoket a -1 pour indiquer que le socket n'a pas ete cree
+// Initialise un port par defaut a 8080
+// clear memoire pour serverAddress et set to les bytes a 0 pour eviter les garbage data
+// set l'address family a AF_INET ce qui veut dire qu'on utilise le protocole IPv4
+// set le server sur INADDR_ANY pour binder le server a toutes les network interfaces available
+// htons(_port) convertis le numero de port de host byte a network byte order pour pouvoir lire sur tous les systemes
 SocketManager::SocketManager() : _serverFd(-1), _port(8080)
 {
 	memset(&_serverAddress, 0, sizeof(_serverAddress));
@@ -29,6 +36,14 @@ SocketManager::~SocketManager()
 
 
 //METHODS
+//CREATE A SOCKET
+//Creer une socket avec la fonction socket()
+//AF_INET encore pour dire qu'on utiliose IPv4 protocol
+//SOCK_STREAM pour dire qu'on utilise un TCP stream 
+//Je ste les socket options avec setsockopt()
+//SOL_SOCKET == option que j'applique au niveau du socket
+//SO_REUSEADDR == autorise le server a reutilise l'addresse ip et le port si deja utilise.
+//Utile quand on restart le server et que l'adresse est toujours en TIME_WAIT state.
 bool	SocketManager::createSocket()
 {
 	_serverFd = socket(AF_INET, SOCK_STREAM, 0);
@@ -47,6 +62,10 @@ bool	SocketManager::createSocket()
 	return (true);
 }
 
+//BIND A SOCKET
+//j'assigne les bonnes infos contrairement au constructeur qui assignauit les valeurs par default
+//address info + ip address + port number
+//Je binde le socket a l'adresse du server avev bind()
 bool	SocketManager::bindSocket()
 {
 	_serverAddress.sin_family = AF_INET;
@@ -61,6 +80,9 @@ bool	SocketManager::bindSocket()
 	return (true);
 }
 
+//FUNCTION TO PUT THER SERVER SOCKET IN A LISTEN STATE
+//je commmence a ecouter des connections avec la fonction listen()
+//backlog corresponds au nombre max de connections en attentes qui peuvent etre queue dans ma socket
 bool	SocketManager::startListening(int backlog)
 {
 	if (listen(_serverFd, backlog) == -1)
@@ -72,6 +94,13 @@ bool	SocketManager::startListening(int backlog)
 	return (true);
 }
 
+//FUNCTION TO ACCEPT INCOMING CONNECTIONS FROM CLIENT TO SERVER
+//quand un client essaye de se connecter a un server, cette fonction gere la requete de connection
+//et etablie une nouvelle connexion.
+//sockaddr__in est une struct utilise pour storer les infos du client comme l'ip address et le num de port
+//clientLen stores la size de clientAddress
+//que je passe a accept() qui est le system call qui accept les connections entrantes d'un client
+//La fonction retourne le clientFd qui represents la new co et print l'ip address client
 int	SocketManager::acceptConnection()
 {
 	struct sockaddr_in clientAddress;
@@ -89,6 +118,13 @@ int	SocketManager::acceptConnection()
 	return (clientFd);
 }
 
+//FONCTION READ MESSAGE
+//Fonction responsable pour lire la data envoyee par le client via la socket connexion
+// Je set un buffer pour contenir les datas et une taille max pour definir le nombre de data lu en une fois
+// avec read() je lis le contenue de mon buffer
+// Je checke si read etait successful
+// si oui je convertis en string et je return.
+// Si le client s'est deco, je ne return rien
 std::string	SocketManager::readMessage(int clientFd)
 {
 	char		buffer[BUFFER_SIZE];
@@ -109,9 +145,13 @@ std::string	SocketManager::readMessage(int clientFd)
 		std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
 		return ("");
 	}
-	return (std::string(buffer));
 }
 
+//FUNCTION START MANAGES MULTIPLE CLIENT CONNECTIONS USING POLL()
+//Le server se tart or faisant une liste de fd qui seront gerers par poll()
+//La loop principale checks non stop si il y a une activite via les fds
+//Quand un nouveau client se connecte, il est ajoute a la liste the fd monitored
+//Quand un client envoie de la data, le server lit la data, la process et s'occupe de la deconnexion
 int	SocketManager::start()
 {
 	std::vector<struct pollfd> fds;
@@ -156,16 +196,6 @@ int	SocketManager::start()
 				fds[i].fd = -1;
 			}
 		}
-		for (std::vector<int>::iterator iter = closedFds.begin(); iter != closedFds.end(); iter++)
-		{
-			for (std::vector<struct pollfd>::iterator fdIter = fds.begin(); fdIter != fds.end(); fdIter++)
-			{
-				if (fdIter->fd == *iter)
-					fdIter = fds.erase(fdIter);
-				else
-					fdIter++;
-			}
-		}
 	}
 }
 
@@ -179,6 +209,12 @@ bool	SocketManager::isHttpRequest(const std::string& message)
 			message.find("OPTIONS ") == 0);
 }
 
+//FUNCTION TO PROCESS THE INCOMING DATA FROM THE CONNECTED CLIENT
+//S'occupe de requetes HTTP et gere les connexions persistantes basees sur les headers HTTPS
+//J'assigne un flag keepAlive pour savoir si je dois garder la connexion ouvertes ou non en cas de requetes multiples
+//Je boucle tant que la connection est en keep alive et je lis les datas du client
+//Je check si on m'a envoye une requete HTTP ou un message simple
+//Si j'ai bien une requete HTTP, j'envoie le bon status code
 void	SocketManager::handleClient(int clientFd)
 {
 	bool keepAlive = true;
@@ -209,7 +245,7 @@ void	SocketManager::handleClient(int clientFd)
 				close(clientFd);
 				break ;
 			}
-			if (message.find("Connection: close") != std::string::npos)
+			if (response.find("Connection: close") != std::string::npos)
 			{
 				keepAlive = false;
 			}
@@ -236,6 +272,10 @@ void	SocketManager::handleClient(int clientFd)
 	}
 }
 
+//FUNCTION DESIGNED TO READ CONTENTS OF A FILE
+//J'ouvre mon file avec ifstrem
+//je convertis en string Cstyle
+//Si ouverture du fichier okay je lis le content avec content()
 std::string	SocketManager::readFile(const std::string& filePath)
 {
 	std::ifstream file(filePath.c_str(), std::ios::in | std::ios::binary);
