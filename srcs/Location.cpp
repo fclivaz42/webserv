@@ -116,6 +116,21 @@ void	Location::setUpload(const std::string &upload){
 		this->_upload = false;
 }
 
+int     Location::checkAttribut(void) const{
+	std::vector<std::string>::const_iterator it;
+
+	if (_allowMethods.empty() || _root.empty())
+		return (1);
+	for (it = _allowMethods.begin(); it != _allowMethods.end(); ++it){
+		if (*it != "GET" && *it != "POST" && *it != "DELETE")
+			return (1);
+	}
+	if (_root[0] != '/')
+		return (1);
+
+	return (0);
+}
+
 /* Fonction permettant de print les attributs de la class Location. */
 void Location::print() const {
 		std::cout << "  Location: " << _path << std::endl;

@@ -35,6 +35,7 @@ class Servers{
 		void									setConf(std::pair<std::string, std::string> keyValue, ServerConf &current);
 		void									setConfLoc(std::pair<std::string, std::string> keyValue, Location &current);
 		void 									printConfigs(void) const;
+		int										checkValue(void);
 		
 };
 

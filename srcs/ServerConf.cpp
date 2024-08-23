@@ -45,6 +45,10 @@ void    ServerConf::setServerName(const std::string &serverName){
 }
 
 void    ServerConf::setPort(const std::string &port){
+    for (int i = 0; port[i]; i++){
+        if (!isdigit(port[i]))
+            return ;
+    }
     this->_port = port;
 }
 
@@ -62,6 +66,25 @@ void    ServerConf::setLocation(const std::string &path, Location &locations){
 
 void    ServerConf::setErrorPage(const std::string &error){
     this->_errorPage = error;
+}
+
+int     ServerConf::checkAttribut(void) const{
+    std::map<std::string, Location>::const_iterator it;
+
+    if (_serverName.empty() || _port.empty() || _root.empty() || _index.empty() || _errorPage.empty() || _location.empty())
+        return (1);
+    for (int i = 0; _port[i]; i++){
+        if (!isdigit(_port[i]))
+            return (1);
+    }
+    if (_root[0] != '/')
+        return (1);
+    for (it = _location.begin(); it != _location.end(); ++it){
+        if (it->second.checkAttribut() != 0)
+            return (1);
+    }
+    
+    return (0);
 }
 
 /* Fonction permettant de print les attributs de la class ServerConf. */

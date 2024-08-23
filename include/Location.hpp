@@ -56,6 +56,7 @@ class Location {
 		void						setUpload(const std::string &upload);
 		
 		/* MEMBER FUNCTIONS */
+		int     					checkAttribut(void) const;
 		void						print(void) const;
 
 };

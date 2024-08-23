@@ -1,7 +1,11 @@
 #include "Servers.hpp"
 
 Servers::Servers(const std::string &conf_file){
-		loadConfig(conf_file);
+	loadConfig(conf_file);
+	if (checkValue() != 0){
+		std::cerr << "Error: Value in config file is not available" << std::endl;
+		return ;
+	}
 }
 
 Servers::Servers(Servers const &cpy){
@@ -115,7 +119,7 @@ void	Servers::setConf(std::pair<std::string, std::string> keyValue, ServerConf &
 
 /* Fonction permettant de set les attributs de la class Location. */
 void	Servers::setConfLoc(std::pair<std::string, std::string> keyValue, Location &currentLocation){
-	if (keyValue.first == "method")
+	if (keyValue.first == "methods")
 		currentLocation.setAllowMethods(keyValue.second);
 	else if (keyValue.first == "root")
 		currentLocation.setRoot(keyValue.second);
@@ -127,6 +131,15 @@ void	Servers::setConfLoc(std::pair<std::string, std::string> keyValue, Location 
 		currentLocation.setUpload(keyValue.second);
 
 	return ;
+}
+
+int		Servers::checkValue(void){
+	std::vector<ServerConf>::const_iterator it;
+	for (it = _servConf.begin(); it != _servConf.end(); ++it){
+		if (it->checkAttribut() != 0)
+			return (1);
+	}
+	return (0);
 }
 
 /* Fonction permettant de print le contenu de l'attribut vector<ServerConf> de la class Server. */

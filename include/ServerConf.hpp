@@ -5,6 +5,7 @@
 #include "Location.hpp"
 #include <algorithm>
 #include <map>
+#include <cctype>
 
 class Location;
 
@@ -47,6 +48,7 @@ class ServerConf{
 
 		/* MEMBERS FUNCTIONS */
 		void	print(void) const;
+		int		checkAttribut(void) const;
 };
 
 #endif
