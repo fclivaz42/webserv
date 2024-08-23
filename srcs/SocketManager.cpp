@@ -211,6 +211,8 @@ int	SocketManager::start()
 			if (fds[i].revents & POLLIN)
 			{
 				handleClient(fds[i].fd);
+				fds.erase(fds.begin() + i);
+				i--;
 			}
 		}
 	}
