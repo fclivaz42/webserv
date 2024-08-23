@@ -44,7 +44,7 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 	
 	iss >> method >> path >> version;
 
-	std::cout << RED << "Server received request: " << request << RESET << std::endl;
+//	std::cout << RED << "Server received request: " << request << RESET << std::endl;
 	if (path.find("file://") == 0)
 		path.substr(7);
 

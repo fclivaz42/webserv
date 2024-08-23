@@ -191,29 +191,26 @@ int	SocketManager::start()
 			std::cerr << RED << "ERROR: poll() failure" << RESET << std::endl;
 			return (-1);
 		}
-		for (size_t i = 0; i < fds.size(); i++)
+		for (size_t i = 0; i < _serverFd.size(); i++)
 		{
-			if (std::find(_serverFd.begin(), _serverFd.end(), fds[i].fd) != _serverFd.end())
+			if (fds[i].revents & POLLIN)
 			{
-				if (fds[0].revents & POLLIN)
+				int clientFd = acceptConnection(_serverFd[i]);
+				if (clientFd >= 0)
 				{
-					int clientFd = acceptConnection(fds[i].fd);
-					if (clientFd >= 0)
-					{
-						struct pollfd clientPollFd;
-						clientPollFd.fd = clientFd;
-						clientPollFd.events = POLLIN;
-						clientPollFd.revents = 0;
-						fds.push_back(clientPollFd);
-					}
+					struct pollfd clientPollFd;
+					clientPollFd.fd = clientFd;
+					clientPollFd.events = POLLIN;
+					clientPollFd.revents = 0;
+					fds.push_back(clientPollFd);
 				}
 			}
-			else if (fds[i].revents & POLLIN)
+		}
+		for (size_t i = _serverFd.size(); i < fds.size(); i++)
+		{
+			if (fds[i].revents & POLLIN)
 			{
 				handleClient(fds[i].fd);
-				close(fds[i].fd);
-				fds.erase(fds.begin() + i);
-				i--;
 			}
 		}
 	}
@@ -279,7 +276,8 @@ void	SocketManager::handleClient(int clientFd)
 	}
 }
 
-//FUNCTION DESIGNED TO READ CONTENTS OF A FILE
+//FUNCTION DESIGNED TO READ COED
+//ENTS OF A FILE
 //J'ouvre mon file avec ifstrem
 //je convertis en string Cstyle
 //Si ouverture du fichier okay je lis le content avec content()
