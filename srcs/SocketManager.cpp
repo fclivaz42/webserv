@@ -172,86 +172,59 @@ std::string	SocketManager::readMessage(int clientFd)
 //Quand un client envoie de la data, le server lit la data, la process et s'occupe de la deconnexion
 int	SocketManager::start()
 {
-	fd_set	readFds;
-	int	maxFd = -1;
-
-	FD_ZERO(&readFds);
+	std::vector<struct pollfd> fds;
 
 	for (size_t i = 0; i < _serverFd.size(); i++)
 	{
-		FD_SET(_serverFd[i], &readFds);
-		if (_serverFd[i] > maxFd)
-		{
-			maxFd = _serverFd[i];
-		}
+		struct pollfd serverPollFd;
+		serverPollFd.fd = _serverFd[i];
+		serverPollFd.events = POLLIN;
+		serverPollFd.revents = 0;
+		fds.push_back(serverPollFd);
 	}
 
 	while (true)
 	{
-		fd_set	tmpFds = readFds;
-		int	activity = select(maxFd + 1, & tmpFds, NULL, NULL, NULL);
-		if (activity < 0)
+		int pollCount = poll(fds.data(), fds.size(), -1);
+		if (pollCount < 0)
 		{
-			std::cerr << RED << "ERROR: select() failure" << RESET << std::endl;
+			std::cerr << RED << "ERROR: poll() failure" << RESET << std::endl;
 			return (-1);
 		}
-
-		for (size_t i = 0; i < _serverFd.size(); i++)
+		for (size_t i = 0; i < fds.size(); i++)
 		{
-			if (FD_ISSET(_serverFd[i], &tmpFds))
+			if (std::find(_serverFd.begin(), _serverFd.end(), fds[i].fd) != _serverFd.end())
 			{
-				int clientFd = acceptConnection(_serverFd[i]);
-				if (clientFd >= 0)
+				if (fds[0].revents & POLLIN)
 				{
-					FD_SET(clientFd, &readFds);
-					if (clientFd > maxFd)
-						maxFd = clientFd;
+					int clientFd = acceptConnection(fds[i].fd);
+					if (clientFd >= 0)
+					{
+						struct pollfd clientPollFd;
+						clientPollFd.fd = clientFd;
+						clientPollFd.events = POLLIN;
+						clientPollFd.revents = 0;
+						fds.push_back(clientPollFd);
+					}
 				}
 			}
-		}
-
-		for (int fd = 0; fd <= maxFd; fd++)
-		{
-			if (fd >= 0 && FD_ISSET(fd, &tmpFds) && !isServerFd(fd))
+			else if (fds[i].revents & POLLIN)
 			{
-				handleClient(fd);
-				if (clientDeco(fd))
-				{
-					FD_CLR(fd, &readFds);
-					close(fd);
-				}
+				handleClient(fds[i].fd);
+				close(fds[i].fd);
+				fds.erase(fds.begin() + i);
+				i--;
 			}
 		}
 	}
 	return (0);
 }
 
-bool	SocketManager::isServerFd(int fd)
-{
-    return std::find(_serverFd.begin(), _serverFd.end(), fd) != _serverFd.end();
-}
-
-
-bool	SocketManager::clientDeco(int fd)
-{
-	char	buffer[1];
-	int	res = recv(fd, buffer, sizeof(buffer), MSG_PEEK | MSG_DONTWAIT);
-
-	if (res == 0)
-		return (true);
-	if (res == -1 && (errno == ECONNRESET || errno == EPIPE || errno == EBADF))
-		return (true);
-	return (false);
-}
-
 bool	SocketManager::isHttpRequest(const std::string& message)
 {
 	return (message.find("GET ") == 0 ||
 			message.find("POST ") == 0 ||
-			message.find("DELETE ") == 0 ||
-			message.find("PUT ") == 0 ||
-			message.find("HEAD ") == 0 ||
-			message.find("OPTIONS ") == 0);
+			message.find("DELETE ") == 0);
 }
 
 //FUNCTION TO PROCESS THE INCOMING DATA FROM THE CONNECTED CLIENT
