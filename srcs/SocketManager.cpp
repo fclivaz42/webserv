@@ -258,7 +258,7 @@ void	SocketManager::handleClient(int clientFd)
 		std::cout << "Sending response: " << response << std::endl;
 
 		ssize_t bytesWritten = write(clientFd, response.c_str(), response.length());
-
+		close(clientFd);	
 		if (bytesWritten == -1)
 		{
 			std::cerr << RED << "ERROR: Write() failure" << RESET << std::endl;

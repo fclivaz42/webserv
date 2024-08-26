@@ -94,9 +94,11 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 
 	if (method == "GET")
 	{
+		std::cout << "path: " << path << std::endl;
 		if (path == "/") path = "/public/index.html";
 		std::string fileContent = SocketManager::readFile("." + path);
-		return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n" + connectionHandler + "\r\nGET request received");
+		std::cout << "file content: " << fileContent << std::endl;
+		return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n" + fileContent);
 	}
 	if (method == "DELETE")
 	{
