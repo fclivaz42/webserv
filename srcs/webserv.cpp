@@ -30,9 +30,8 @@ int main (int ac, char **av)
 	
 	server.start();
 	return (0);
-#include "Location.hpp"
-#include "ServerConf.hpp"
-#include "Servers.hpp"
+}
+
 /*
 int main (int argc, char *argv[]) {
 

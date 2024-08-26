@@ -30,7 +30,6 @@ DEPS	=	${INCL}/webserv.hpp\
 SRCS	=	${SUBDIR}/webserv.cpp\
 			${SUBDIR}/SocketManager.cpp\
 			${SUBDIR}/HttpRequestHandler.cpp\
-			${SUBDIR}/main.cpp\
 			${SUBDIR}/Servers.cpp\
 			${SUBDIR}/ServerConf.cpp\
 			${SUBDIR}/Location.cpp\
