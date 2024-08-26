@@ -8,27 +8,27 @@
 
 int main (int ac, char **av)
 {
-	std::vector<int> ports;
-	ports.push_back(8080);
-	ports.push_back(3000);
-	SocketManager server(ports);
+	if (ac > 1){
+		Servers	serv(av[1]);
+		ServerConf servOne = serv.getServConf(1);
+		SocketManager socket(servOne.getPort());
 	
-	if (ac > 1)
-	{
-		std::string configFile = av[1];
-	}
-	else
-	{
-		server.setHost("0.0.0.0");
-		server.setPorts(ports);
-	}
+	
+	
+	
+		serv.printConfigs();
 
-	if (!server.createSocket() || !server.bindSocket() || !server.startListening())
-	{
-		return (-1);
-	}
+		socket.setHost(servOne.getIpAddr());
 	
-	server.start();
+	
+		if (!socket.createSocket() || !socket.bindSocket() || !socket.startListening())
+		{
+			return (-1);
+		}
+	
+		socket.start();
+		return (0);
+	}
 	return (0);
 }
 

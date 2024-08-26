@@ -26,7 +26,7 @@ class Servers{
 		/* SURCHARGED OPERATORS */
 		Servers &operator=(Servers const &rhs);
 		/* GETTERS */
-		std::vector<ServerConf> getServConf(void) const;
+		ServerConf getServConf(int lequel) const;
 		/* SETTERS */
 		
 		/* MEMBERS FUNCTIONS */

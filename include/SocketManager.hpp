@@ -55,16 +55,16 @@ class SocketManager
 		bool			createSocket();
 		bool			bindSocket();
 		bool			startListening(int backlog = 10);
-		int			acceptConnection(int serverFd);
+		int				acceptConnection(int serverFd);
 		std::string		readMessage(int clientFd);
-		int			start();
+		int				start();
 		bool			isServerFd(int fd);
 		bool			clientDeco(int fd);
 		static std::string	readFile(const std::string& filePath);
 		//GETTERS
 		const std::vector<int>&	getServerFd() const;
 		//SETTERS
-		void			setPorts(const std::vector<int>& ports);
+		void			setPorts(std::vector <int>& port);
 		void			setHost(const std::string& host);
 };
 

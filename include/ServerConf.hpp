@@ -11,12 +11,12 @@ class Location;
 
 class ServerConf{
 	private:
-		std::string _serverName;
-		std::string	_port;
-		std::string _root;
-		std::string _index;
-		std::string _errorPage;
-		std::string	_ipAddr;
+		std::string 					_serverName;
+		std::vector<int>				_port;
+		std::string 					_root;
+		std::string 					_index;
+		std::string 					_errorPage;
+		std::string						_ipAddr;
 		std::map<std::string, Location> _location;
 
 	public:
@@ -33,11 +33,11 @@ class ServerConf{
 		ServerConf	&operator=(ServerConf const &rhs);
 
 		/* GETTERS */
-		std::string getServerName(void) const;
-		std::string	getPort(void) const;
-		std::string getRoot(void) const;
-		std::string	getIndex(void) const;
-		std::string	getIpAddr(void)	const;
+		std::string 					getServerName(void) const;
+		std::vector<int>				getPort(void) const;
+		std::string 					getRoot(void) const;
+		std::string						getIndex(void) const;
+		std::string						getIpAddr(void)	const;
 		std::map<std::string, Location>	getLocation(void) const;
 
 		/* SETTERS */

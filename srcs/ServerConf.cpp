@@ -23,7 +23,7 @@ std::string ServerConf::getServerName(void) const{
     return (this->_serverName);
 }
 
-std::string ServerConf::getPort(void) const{
+std::vector<int>         ServerConf::getPort(void) const{
     return (this->_port);
 }
 
@@ -49,11 +49,14 @@ void    ServerConf::setServerName(const std::string &serverName){
 }
 
 void    ServerConf::setPort(const std::string &port){
-    for (int i = 0; port[i]; i++){
+    /*for (int i = 0; port[i]; i++){
         if (!isdigit(port[i]))
             return ;
     }
-    this->_port = port;
+    */
+   
+    const char *tmp = port.c_str();
+    _port.push_back(atoi(tmp));
 }
 
 void    ServerConf::setRoot(const std::string &root){
@@ -77,10 +80,10 @@ int     ServerConf::checkAttribut(void) const{
 
     if (_serverName.empty() || _port.empty() || _root.empty() || _index.empty() || _errorPage.empty() || _location.empty())
         return (1);
-    for (int i = 0; _port[i]; i++){
+    /*for (int i = 0; _port[i]; i++){
         if (!isdigit(_port[i]))
             return (1);
-    }
+    }*/
     if (_root[0] != '/')
         return (1);
     for (it = _location.begin(); it != _location.end(); ++it){
@@ -94,12 +97,15 @@ int     ServerConf::checkAttribut(void) const{
 /* Fonction permettant de print les attributs de la class ServerConf. */
 void    ServerConf::print(void) const {
         std::cout << "  Server: " << this->_serverName << std::endl;
-        std::cout << "  Port: " << this->_port << std::endl;
+        std::vector<int>::const_iterator it = _port.begin();
+        for (; it != _port.end(); ++it){
+           std::cout << "  Port: " << *it << std::endl;
+        }
         std::cout << "  Root: " << this->_root << std::endl;
         std::cout << "  Index: " << this->_index << std::endl;
         std::cout << "  Error Page: " << this->_errorPage << std::endl;
-        std::map<std::string, Location>::const_iterator it = _location.begin();
-        for (; it != _location.end(); ++it) {
-            it->second.print();
+        std::map<std::string, Location>::const_iterator it2 = _location.begin();
+        for (; it2 != _location.end(); ++it2) {
+            it2->second.print();
         }
 }

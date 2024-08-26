@@ -19,9 +19,21 @@ Servers &Servers::operator=(Servers const &rhs){
 	return (*this);
 }
 
-std::vector<ServerConf>	Servers::getServConf(void) const{
-	return (this->_servConf);
-
+ServerConf	Servers::getServConf(int lequel) const{
+	std::vector<ServerConf>::const_iterator it;
+	int i = 1;
+	if (lequel <= 0){
+		std::cerr << "Error: Invalid config number." << std::endl;
+	}
+	for (it = _servConf.begin(); it != _servConf.end(); it++){
+		if (i == lequel)
+			return (*it);
+		else i++;
+	}
+	if (i > lequel){
+		std::cerr << "Error: No config number found." << std::endl;
+	}
+	return (*it);
 }
 
 /* Fonction qui va ouvrir le fichier de config et le parser afin de stocker les elements dans les bons attributs.
@@ -80,7 +92,7 @@ void    Servers::loadConfig(std::string const &conf_file){
 			else
 				setConfLoc(keyValue, currentLocation);
 		}
-	}
+	} 
 	confFile.close();
 
 	return ;
