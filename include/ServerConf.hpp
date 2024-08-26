@@ -16,6 +16,7 @@ class ServerConf{
 		std::string _root;
 		std::string _index;
 		std::string _errorPage;
+		std::string	_ipAddr;
 		std::map<std::string, Location> _location;
 
 	public:
@@ -36,6 +37,7 @@ class ServerConf{
 		std::string	getPort(void) const;
 		std::string getRoot(void) const;
 		std::string	getIndex(void) const;
+		std::string	getIpAddr(void)	const;
 		std::map<std::string, Location>	getLocation(void) const;
 
 		/* SETTERS */

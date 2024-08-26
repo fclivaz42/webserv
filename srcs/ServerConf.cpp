@@ -1,6 +1,6 @@
 #include "ServerConf.hpp"
 
-ServerConf::ServerConf(){}
+ServerConf::ServerConf() : _ipAddr("127.0.0.1"){}
 
 ServerConf::ServerConf(ServerConf const &cpy){
     *this = cpy;
@@ -37,6 +37,10 @@ std::string ServerConf::getIndex(void) const{
 
 std::map<std::string, Location> ServerConf::getLocation(void) const{
     return (this->_location);
+}
+
+std::string ServerConf::getIpAddr(void)	const{
+    return (this->_ipAddr);
 }
 
                 /* SETTERS */
