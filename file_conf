@@ -1,0 +1,35 @@
+server {
+    server_name example.com
+    listen 80
+    root /var/www/example.com
+    index index.html
+    
+    location / {
+        methods GET POST
+        root /var/www/example.com/public
+        index index.html
+    }
+
+    location /upload {
+        methods POST
+        root /var/www/example.com/uploads
+        accept_uploads yes
+    }
+
+    error_page 404 /404.html
+}
+
+server {
+    server_name test.com
+    listen 8080
+    root /var/www/test.com
+    index index.html
+    
+    location / {
+        methods GET
+        root /var/www/test.com/public
+        index index.html
+    }
+
+    error_page 404 /404.html
+}
