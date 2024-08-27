@@ -6,7 +6,7 @@
 //   By: lmedrano <your@email.com>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/15 14:08:14 by lmedrano          #+#    #+#             //
-//   Updated: 2024/08/15 14:20:51 by lmedrano         ###   ########.fr       //
+//   Updated: 2024/08/27 16:25:55 by lmedrano         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
@@ -90,8 +90,10 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 
 	if (method == "GET")
 	{
-		std::cout << "path: " << path << std::endl;
-		if (path == "/") path = "/public/index.html";
+		if (path == "/")
+			path = "/public/index.html";
+		else
+			path = "/public" + path;
 		std::string fileContent = SocketManager::readFile("." + path);
 		std::string contentType = getMimeType(path);
 		return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n" + connectionHandler + "\r\n" + fileContent);
