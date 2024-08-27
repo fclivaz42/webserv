@@ -10,28 +10,29 @@
 	<h1>One, two, testing</h1>
 	<h3>Like a queeeeeen</h3>
 	<div class="requests">
-	    <button class="request_button" onclick="sendGetRequest(8080)">send get request on port 8080</button>
-	    <button class="request_button" onclick="sendPostRequest(8080)">send post request on port 8080</button>
-	    <button class="request_button" onclick="sendDeleteRequest(8080)">send delete request on port 8080</button>
+	    <button class="request_button" onclick="sendGetRequest()">send get request</button>
+	    <button class="request_button" onclick="sendPostRequest()">send post request</button>
+	    <button class="request_button" onclick="sendDeleteRequest()">send delete request</button>
 	</div>
 
     	<script>
-		function sendGetRequest(port) {
-		    fetch(`http://localhost:${port}`, {
+		const currentPort = window.location.port || 80;
+		function sendGetRequest() {
+		    fetch(`http://localhost:${currentPort}`, {
 			method: 'GET',
 		    })
 		    .then(response => {
-			console.log(`Response status from port ${port}:`, response.status);
+			console.log(`Response status from port ${currentPort}:`, response.status);
 			return response.text();
 		    })
 		    .then(data => {
-			console.log(`GET Response from port ${port}:`, data);
+			console.log(`GET Response from port ${currentPort}:`, data);
 		    })
 		    .catch(error => console.error('Error:', error));
 		}
 
-		 function sendPostRequest(port) {
-		    fetch(`http://localhost:${port}`, {
+		 function sendPostRequest() {
+		    fetch(`http://localhost:${currentPort}`, {
 			method: 'POST',
 			headers: {
 			    'Content-Type': 'application/x-www-form-urlencoded',
@@ -42,18 +43,18 @@
 		    })
 		    .then(response => response.text())
 		    .then(data => {
-			console.log(`POST response from port ${port}:`, data);
+			console.log(`POST response from port ${currentPort}:`, data);
 		    })
 		    .catch(error => console.error('Error:', error));
 		}
 
-		function sendDeleteRequest(port) {
-		    fetch(`http://localhost:${port}`, {
+		function sendDeleteRequest() {
+		    fetch(`http://localhost:${currentPort}`, {
 			method: 'DELETE',
 		    })
 		    .then(response => response.text())
 		    .then(data => {
-			console.log(`DELETE response from port ${port}:`, data);
+			console.log(`DELETE response from port ${currentPort}:`, data);
 		    })
 		    .catch(error => console.error('Error:', error));
 		}

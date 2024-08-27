@@ -75,7 +75,6 @@ bool	SocketManager::createSocket()
 		}
 		_serverFd.push_back(serverFd);
 	}
-	std::cout << GREEN << "creating socket successful" << RESET << std::endl;
 	return (true);
 }
 
@@ -109,6 +108,7 @@ bool	SocketManager::startListening(int backlog)
 			return (false);
 		}
 		std::cout << GREEN << "Server listening on port " << _port[i] << RESET << std::endl;
+		std::cout << std::endl;
 	}
 	return (true);
 }
@@ -133,6 +133,7 @@ int	SocketManager::acceptConnection(int serverFd)
 	else
 	{
 		std::cerr << GREEN << "New connection from " << inet_ntoa(clientAddress.sin_addr) << RESET << std::endl;
+		std::cout << std::endl;
 	}
 	return (clientFd);
 }
@@ -246,7 +247,7 @@ void	SocketManager::handleClient(int clientFd)
 			break ;
 		}
 
-		std::cout << GREEN << "Received request: " << message << RESET << std::endl;
+		//std::cout << GREEN << "Received request: " << message << RESET << std::endl;
 		std::string response;
 		if (isHttpRequest(message))
 		{

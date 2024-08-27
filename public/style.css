@@ -51,7 +51,7 @@ div.requests:hover
 	background-color: transparent;
 	border: 1px solid black;
 	outline: 1px solid black;
-	padding: 15px;
+	padding: 20px 50px;
 	margin: 0 20px;
 	transition: background-color 0.2s ease;
 }

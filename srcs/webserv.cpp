@@ -16,7 +16,7 @@ int main (int ac, char **av)
 	
 	
 	
-		serv.printConfigs();
+	//	serv.printConfigs();
 
 		socket.setHost(servOne.getIpAddr());
 	
