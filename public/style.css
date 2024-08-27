@@ -1,0 +1,65 @@
+/* style.css */
+
+html,
+body {
+    border: none;
+    margin: 0 auto;
+    padding: 0;
+    text-align: left;
+    max-width: 100%;
+    margin: 0;
+    margin-top: 50px;
+}
+
+h1 
+{
+	font-family: 'courier new', monospace;
+	margin: 10px;
+	text-align: center;
+	text-transform: uppercase;
+}
+
+h3 
+{
+	font-family: 'courier new', monospace;
+	margin: 10px;
+	text-align: center;
+}
+
+div.requests
+{
+	padding: 100px;
+	margin: 50px;
+	background-color: transparent;
+	border: 2px solid black;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+	box-shadow: 6px 6px black;
+}
+
+div.requests:hover
+{
+	transition: all 0.2s ease;
+}
+
+.request_button
+{
+	font-family: 'courier new', monospace;
+	cursor: pointer;
+	background-color: transparent;
+	border: 1px solid black;
+	outline: 1px solid black;
+	padding: 15px;
+	margin: 0 20px;
+	transition: background-color 0.2s ease;
+}
+
+.request_button:hover
+{
+	background-color: #eae9e9;
+	box-shadow: 0 0 8px rgba(0,0,0,0.3);
+	outline: 1.5px solid black;
+	transition: background-color 0.2s ease;
+}

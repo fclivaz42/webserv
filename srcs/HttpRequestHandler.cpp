@@ -25,6 +25,30 @@ std::string	trim(const std::string& str)
 	return (str.substr(start, end - start + 1));
 }
 
+bool		hasExtension(const std::string& path, const std::string& extension)
+{
+	std::string::size_type pos = path.rfind(extension);
+	return ((pos != std::string::npos) && (pos == path.length() - extension.length()));
+}
+
+std::string	getMimeType(const std::string& path)
+{
+	if (hasExtension(path, ".css"))
+		return ("text/css");
+	if (hasExtension(path, ".html"))
+		return ("text/html");
+	if (hasExtension(path, ".js"))
+		return ("application/javascript");
+	if (hasExtension(path, ".png"))
+		return ("image/png");
+	if (hasExtension(path, ".jpg") || hasExtension(path, ".jpeg"))
+		return ("image/jpeg");
+	if (hasExtension(path, ".gif"))
+		return ("image/gif");
+	return ("application/octet-stream");
+}
+
+
 //FONCTION THAT PROCESSES AN HTTP REQUEST AND GENERATES A RESPONSE
 //Je cree un input stream de la request avec ifstream
 //J'extraie la http method, le path de la request la http version et la request string
@@ -44,10 +68,6 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 	
 	iss >> method >> path >> version;
 
-//	std::cout << RED << "Server received request: " << request << RESET << std::endl;
-	if (path.find("file://") == 0)
-		path.substr(7);
-
 	while (std::getline(iss, headers) && headers != "\r" && !headers.empty())
 	{
 		if (headers.find("Connection:") == 0)
@@ -65,30 +85,6 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 
 	if (method == "POST")
 	{
-		std::string 	headers;
-		std::string 	body;
-		bool		contentLengthFound = false;
-		int		contentLength = 0;
-
-		while (std::getline(iss, headers) && headers != "\r" && !headers.empty())
-		{
-			if (headers.find("Content-Length:") == 0)
-			{
-				contentLengthFound = true;
-				std::string contentLengthStr = headers.substr(headers.find(":") + 1);
-				contentLengthStr = trim(contentLengthStr);
-				contentLength = std::atoi(contentLengthStr.c_str());
-			}
-		}
-		if (contentLengthFound)
-		{
-			body.resize(contentLength);
-			iss.read(&body[0], contentLength);
-			if (iss.gcount() < contentLength)
-			{
-				return ("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n" + connectionHandler + "\r\nIncomplete request body");
-			} 
-		}
 		return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n" + connectionHandler + "\r\nPOST request received with body");
 	}
 
@@ -97,8 +93,8 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 		std::cout << "path: " << path << std::endl;
 		if (path == "/") path = "/public/index.html";
 		std::string fileContent = SocketManager::readFile("." + path);
-		std::cout << "file content: " << fileContent << std::endl;
-		return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n" + fileContent);
+		std::string contentType = getMimeType(path);
+		return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n" + connectionHandler + "\r\n" + fileContent);
 	}
 	if (method == "DELETE")
 	{

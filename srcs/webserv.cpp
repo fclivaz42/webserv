@@ -29,6 +29,10 @@ int main (int ac, char **av)
 		socket.start();
 		return (0);
 	}
+	else if (ac == 1)
+	{
+		std::cout << RED << "Server should start with default values" << RESET << std::endl;
+	}
 	return (0);
 }
 

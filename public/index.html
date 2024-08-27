@@ -3,22 +3,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>test server</title>
+    <title>Hey Sexy...</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-	<h1 style="font-family: 'courier new', monospace;" >testing some http requests</h1>
-	<h3 style="font-family: 'courier new', monospace;">like a queeeeeen</h3>
-	<div>
-	    <h6>Port 8080</h6>
-	    <button style="font-family:'courier new', monospace;cursor:pointer;background-color: #cebfd4;padding:15px;margin: 0 10px;" onclick="sendGetRequest(8080)">send get request on port 8080</button>
-	    <button style="font-family:'courier new', monospace;cursor:pointer;background-color: #bfc5d4;padding:15px;margin: 0 10px;" onclick="sendPostRequest(8080)">send post request on port 8080</button>
-	    <button style="font-family:'courier new', monospace;cursor:pointer;background-color: #e1ccd7;padding:15px;margin: 0 10px;" onclick="sendDeleteRequest(8080)">send delete request on port 8080</button>
-	</div>
-	<div style="padding-top: 50px;">
-	    <h6>Port 3000</h6>
-	    <button style="font-family:'courier new', monospace;cursor:pointer;background-color: #cebfd4;padding:15px;margin: 0 10px;" onclick="sendGetRequest(3000)">send get request on port 3000</button>
-	    <button style="font-family:'courier new', monospace;cursor:pointer;background-color: #bfc5d4;padding:15px;margin: 0 10px;" onclick="sendPostRequest(3000)">send post request on port 3000</button>
-	    <button style="font-family:'courier new', monospace;cursor:pointer;background-color: #e1ccd7;padding:15px;margin: 0 10px;" onclick="sendDeleteRequest(3000)">send delete request on port 3000</button>
+	<h1>One, two, testing</h1>
+	<h3>Like a queeeeeen</h3>
+	<div class="requests">
+	    <button class="request_button" onclick="sendGetRequest(8080)">send get request on port 8080</button>
+	    <button class="request_button" onclick="sendPostRequest(8080)">send post request on port 8080</button>
+	    <button class="request_button" onclick="sendDeleteRequest(8080)">send delete request on port 8080</button>
 	</div>
 
     	<script>

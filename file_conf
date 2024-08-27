@@ -1,6 +1,6 @@
 server {
     server_name example.com
-    listen 80
+    listen 8080
     listen 3000
     root /var/www/example.com
     index index.html

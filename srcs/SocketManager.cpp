@@ -29,7 +29,7 @@ SocketManager::SocketManager(const std::vector<int>& port) : _port(port)
 	{
 		memset(&_serverAddress[i], 0, sizeof(_serverAddress[i]));
 		_serverAddress[i].sin_family = AF_INET;
-		_serverAddress[i].sin_addr.s_addr = INADDR_ANY;
+		_serverAddress[i].sin_addr.s_addr = htonl(INADDR_ANY);
 		_serverAddress[i].sin_port = htons(_port[i]);
 	}
 }
@@ -75,6 +75,7 @@ bool	SocketManager::createSocket()
 		}
 		_serverFd.push_back(serverFd);
 	}
+	std::cout << GREEN << "creating socket successful" << RESET << std::endl;
 	return (true);
 }
 
@@ -304,7 +305,7 @@ const std::vector<int>&	SocketManager::getServerFd() const
 //SETTERS
 void	SocketManager::setPorts(std::vector<int> &port)
 {
-	_port = port;;
+	_port = port;
 }
 
 void	SocketManager::setHost(const std::string& host)
