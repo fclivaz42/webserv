@@ -1,17 +1,16 @@
 // ************************************************************************** //
 //                                                                            //
 //                                                        :::      ::::::::   //
-//   SocketManager.hpp                                  :+:      :+:    :+:   //
+/*   SocketManager.hpp                                  :+:      :+:    :+:   */
 //                                                    +:+ +:+         +:+     //
 //   By: lmedrano <your@email.com>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/15 11:07:53 by lmedrano          #+#    #+#             //
-//   Updated: 2024/08/15 14:40:55 by lmedrano         ###   ########.fr       //
+/*   Updated: 2024/08/29 20:58:36 by fclivaz          ###   LAUSANNE.ch       */
 //                                                                            //
 // ************************************************************************** //
 
 #ifndef SOCKETMANAGER_HPP
-
 # define SOCKETMANAGER_HPP
 
 #include <iostream>
@@ -28,15 +27,7 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
-
-
-#define RESET "\x1b[0m"
-#define GREEN "\x1b[32m"
-#define ORANGE "\x1b[38;5;208m"
-#define RED "\x1b[31m"
-#define PURPLE "\x1b[35m"
-
-#define BUFFER_SIZE 1024
+#include "webserv.hpp"
 
 class SocketManager
 {

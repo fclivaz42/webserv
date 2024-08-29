@@ -1,8 +1,7 @@
-#ifndef SERVER_CONF_HPP
-# define SERVER_CONF_HPP
+#ifndef SERVERCONF_HPP
+# define SERVERCONF_HPP
 
 #include "Servers.hpp"
-#include "Location.hpp"
 #include <algorithm>
 #include <map>
 #include <cctype>

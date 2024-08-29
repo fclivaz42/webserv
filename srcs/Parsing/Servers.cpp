@@ -1,4 +1,6 @@
-#include "Servers.hpp"
+#include "Parsing/Servers.hpp"
+#include "Parsing/ServerConf.hpp"
+#include "Parsing/Location.hpp"
 
 Servers::Servers(const std::string &conf_file){
 	loadConfig(conf_file);

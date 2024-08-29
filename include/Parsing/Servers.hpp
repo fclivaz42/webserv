@@ -6,8 +6,6 @@
 #include <fstream>
 #include <algorithm>
 #include <vector>
-#include "ServerConf.hpp"
-#include "Location.hpp"
 
 class ServerConf;
 class Location;

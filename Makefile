@@ -5,9 +5,8 @@
 #                                                     +:+ +:+         +:+      #
 #    By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/04/12 15:50:01 by fclivaz           #+#    #+#              #
-#    Updated: 2024/08/21 13:50:46 by malleman         ###   ########.fr        #
-#    Updated: 2024/08/15 14:41:34 by lmedrano         ###   ########.fr        #
+#    Created: 2024/08/27 18:28:30 by fclivaz           #+#    #+#              #
+#    Updated: 2024/08/29 20:43:34 by fclivaz          ###   LAUSANNE.ch        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,19 +19,19 @@ SHELL	= /bin/bash
 CXX	= c++
 
 DEPS	=	${INCL}/webserv.hpp\
-			${INCL}/SocketManager.hpp\
-			${INCL}/HttpRequestHandler.hpp\
-			${INCL}/Location.hpp\
-			${INCL}/ServerConf.hpp\
-			${INCL}/Servers.hpp\
+			${INCL}/Sockets/SocketManager.hpp\
+			${INCL}/Sockets/HttpRequestHandler.hpp\
+			${INCL}/Parsing/Location.hpp\
+			${INCL}/Parsing/ServerConf.hpp\
+			${INCL}/Parsing/Servers.hpp\
 			${SRCS}
 
 SRCS	=	${SUBDIR}/webserv.cpp\
-			${SUBDIR}/SocketManager.cpp\
-			${SUBDIR}/HttpRequestHandler.cpp\
-			${SUBDIR}/Servers.cpp\
-			${SUBDIR}/ServerConf.cpp\
-			${SUBDIR}/Location.cpp\
+			${SUBDIR}/Sockets/SocketManager.cpp\
+			${SUBDIR}/Sockets/HttpRequestHandler.cpp\
+			${SUBDIR}/Parsing/Servers.cpp\
+			${SUBDIR}/Parsing/ServerConf.cpp\
+			${SUBDIR}/Parsing/Location.cpp
 
 SUBDIR	= srcs
 

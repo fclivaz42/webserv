@@ -1,17 +1,17 @@
 // ************************************************************************** //
 //                                                                            //
 //                                                        :::      ::::::::   //
-//   HttpRequestHandler.cpp                             :+:      :+:    :+:   //
+/*   HttpRequestHandler.cpp                             :+:      :+:    :+:   */
 //                                                    +:+ +:+         +:+     //
 //   By: lmedrano <your@email.com>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/15 14:08:14 by lmedrano          #+#    #+#             //
-//   Updated: 2024/08/27 16:25:55 by lmedrano         ###   ########.fr       //
+/*   Updated: 2024/08/29 21:00:10 by fclivaz          ###   LAUSANNE.ch       */
 //                                                                            //
 // ************************************************************************** //
 
-#include "../include/HttpRequestHandler.hpp"
-#include "../include/SocketManager.hpp"
+#include "Sockets/HttpRequestHandler.hpp"
+#include "Sockets/SocketManager.hpp"
 
 std::string	trim(const std::string& str)
 {

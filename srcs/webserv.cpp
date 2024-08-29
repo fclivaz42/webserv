@@ -1,10 +1,8 @@
 // On ne fait pas de Header pour le moment :)
 
-#include "Location.hpp"
-#include "ServerConf.hpp"
-#include "Servers.hpp"
-
-#include "../include/SocketManager.hpp"
+#include "Parsing/Servers.hpp"
+#include "Parsing/ServerConf.hpp"
+#include "Sockets/SocketManager.hpp"
 
 int main (int ac, char **av)
 {

@@ -1,4 +1,5 @@
-#include "ServerConf.hpp"
+#include "Parsing/ServerConf.hpp"
+#include "Parsing/Location.hpp"
 
 ServerConf::ServerConf() : _ipAddr("127.0.0.1"){}
 

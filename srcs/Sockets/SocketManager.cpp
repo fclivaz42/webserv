@@ -1,17 +1,17 @@
 // ************************************************************************** //
 //                                                                            //
 //                                                        :::      ::::::::   //
-//   SocketManager.cpp                                  :+:      :+:    :+:   //
+/*   SocketManager.cpp                                  :+:      :+:    :+:   */
 //                                                    +:+ +:+         +:+     //
 //   By: lmedrano <your@email.com>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/15 11:15:07 by lmedrano          #+#    #+#             //
-//   Updated: 2024/08/15 14:37:37 by lmedrano         ###   ########.fr       //
+/*   Updated: 2024/08/29 21:00:22 by fclivaz          ###   LAUSANNE.ch       */
 //                                                                            //
 // ************************************************************************** //
 
-#include "../include/SocketManager.hpp"
-#include "../include/HttpRequestHandler.hpp"
+#include "Sockets/SocketManager.hpp"
+#include "Sockets/HttpRequestHandler.hpp"
 
 //SETTING UP THE SOCKET MANAGER
 // Initialise le fd pour le server scoket a -1 pour indiquer que le socket n'a pas ete cree

@@ -1,8 +1,9 @@
 #ifndef LOCATION_HPP
 # define LOCATION_HPP
 
-#include "ServerConf.hpp"
-#include "sstream"
+#include <sstream>
+#include <vector>
+#include <iostream>
 
 class Location {
 	private:
