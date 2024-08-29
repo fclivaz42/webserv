@@ -1,0 +1,160 @@
+/* style.css */
+
+html,
+body {
+    border: none;
+    margin: 0 auto;
+    padding: 0;
+    text-align: left;
+    max-width: 100%;
+    margin: 0;
+}
+
+h1 
+{
+	font-family: 'courier new', monospace;
+	margin: 10px;
+	text-align: center;
+	text-transform: uppercase;
+}
+
+h3 
+{
+	font-family: 'courier new', monospace;
+	margin: 10px;
+	text-align: center;
+}
+
+p
+{
+	font-family: 'courier new', monospace;
+	margin: 10px;
+	text-align: center;
+}
+
+a 
+{
+	text-decoration: none;
+	color: black;
+}
+
+nav
+{
+	padding: 50px;
+	margin-bottom: 50px;
+	background-color: #eae9e9;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-bottom: 2px solid black;
+	box-shadow: 0 0 8px rgba(0,0,0,0.2);
+}
+
+nav a
+{
+	padding: 10px 25px !important;
+}
+
+.black
+{
+	background-color: black !important;
+	color: white;
+}
+
+.black:hover
+{
+	background-color: transparent !important;
+	color: black !important;
+}
+
+.requests
+{
+	padding: 100px;
+	margin: 50px;
+	background-color: transparent;
+	border: 2px solid black;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+	box-shadow: 6px 6px black;
+}
+
+.requests:hover
+{
+	transition: all 0.2s ease;
+}
+
+.request_button
+{
+	font-family: 'courier new', monospace;
+	cursor: pointer;
+	background-color: transparent;
+	border: 1px solid black;
+	outline: 1px solid black;
+	padding: 20px 50px;
+	margin: 0 20px;
+	transition: background-color 0.2s ease;
+}
+
+.request_button:hover
+{
+	background-color: #eae9e9;
+	box-shadow: 0 0 8px rgba(0,0,0,0.3);
+	outline: 1.5px solid black;
+	transition: background-color 0.2s ease;
+}
+
+form
+{
+	margin: 50px;
+	font-family: 'courier new', monospace;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content:center;
+	
+}
+
+form label
+{
+	padding: 15px 0;
+	font-family: 'courier new', monospace !important;
+}
+
+form input
+{
+	padding: 30px 0;
+	font-family: 'courier new', monospace !important;
+}
+
+.contact-form input, .contact-form button, .contact-form textarea
+{
+	width: 50%;
+}
+
+.contact-form textarea
+{
+	width: 51%;
+}
+
+.contact-form input 
+{
+	padding: 10px !important;
+}
+
+.contact-form .request_button
+{
+	margin-top: 50px;
+}
+
+.error-flex
+{
+	display: flex;
+	flex-direction: column;
+}
+
+.error-img
+{
+	margin-bottom: 50px;
+}

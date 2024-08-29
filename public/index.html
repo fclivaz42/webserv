@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hey Sexy...</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+	<nav>
+		<a class="request_button" href="/formulaire.html">Get in Touch !</a>
+		<a class="black request_button" href="/index.html">Welcome Page</a>
+		<a class="request_button" href="/upload.html">Upload a picture</a>
+	</nav>
+	<h1>One, two, testing</h1>
+	<h3>Like a queeeeeen</h3>
+	<div class="requests">
+	    <button class="request_button" onclick="sendGetRequest()">send get request</button>
+	    <button class="request_button" onclick="sendPostRequest()">send post request</button>
+	    <button class="request_button" onclick="sendDeleteRequest()">send delete request</button>
+	</div>
+
+    	<script>
+		const currentPort = window.location.port || 80;
+		function sendGetRequest() {
+		    fetch(`http://localhost:${currentPort}`, {
+			method: 'GET',
+		    })
+		    .then(response => {
+			console.log(`Response status from port ${currentPort}:`, response.status);
+			return response.text();
+		    })
+		    .then(data => {
+			console.log(`GET Response from port ${currentPort}:`, data);
+		    })
+		    .catch(error => console.error('Error:', error));
+		}
+
+		 function sendPostRequest() {
+		    fetch(`http://localhost:${currentPort}`, {
+			method: 'POST',
+			headers: {
+			    'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: new URLSearchParams({
+			    'body': 'This is a POST request body',
+			}),
+		    })
+		    .then(response => response.text())
+		    .then(data => {
+			console.log(`POST response from port ${currentPort}:`, data);
+		    })
+		    .catch(error => console.error('Error:', error));
+		}
+
+		function sendDeleteRequest() {
+		    fetch(`http://localhost:${currentPort}`, {
+			method: 'DELETE',
+		    })
+		    .then(response => response.text())
+		    .then(data => {
+			console.log(`DELETE response from port ${currentPort}:`, data);
+		    })
+		    .catch(error => console.error('Error:', error));
+		}
+	</script>
+
+</body>
+</html>

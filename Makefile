@@ -5,8 +5,8 @@
 #                                                     +:+ +:+         +:+      #
 #    By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/04/12 15:50:01 by fclivaz           #+#    #+#              #
-#    Updated: 2024/07/02 17:23:04 by fclivaz          ###   LAUSANNE.ch        #
+#    Created: 2024/08/27 18:28:30 by fclivaz           #+#    #+#              #
+#    Updated: 2024/08/29 20:43:34 by fclivaz          ###   LAUSANNE.ch        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,12 +18,20 @@ SHELL	= /bin/bash
 
 CXX	= c++
 
-DEPS	=	${INCL}/-----.hpp\
-			${INCL}/-----.hpp\
+DEPS	=	${INCL}/webserv.hpp\
+			${INCL}/Sockets/SocketManager.hpp\
+			${INCL}/Sockets/HttpRequestHandler.hpp\
+			${INCL}/Parsing/Location.hpp\
+			${INCL}/Parsing/ServerConf.hpp\
+			${INCL}/Parsing/Servers.hpp\
 			${SRCS}
 
 SRCS	=	${SUBDIR}/webserv.cpp\
-			${SUBDIR}/-----.cpp
+			${SUBDIR}/Sockets/SocketManager.cpp\
+			${SUBDIR}/Sockets/HttpRequestHandler.cpp\
+			${SUBDIR}/Parsing/Servers.cpp\
+			${SUBDIR}/Parsing/ServerConf.cpp\
+			${SUBDIR}/Parsing/Location.cpp
 
 SUBDIR	= srcs
 
@@ -35,11 +43,11 @@ OBJDIR	= obj
 
 OBJTREE	= $(SRCTREE:srcs%=${OBJDIR}%)
 
-CXXFLAGS= -Wall -Werror -Wextra -O2 -std=c++98
+CXXFLAGS= -Wall -Werror -Wextra -O2 -std=c++98 -g3
 
 DBFLAGS	= DEBUG=1
 
-LFLAGS = -I${INCL}
+LFLAGS = -I${INCL} -g3
 
 LDFLAGS	= -g3 -fsanitize=address -I${INCL}
 
