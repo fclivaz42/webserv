@@ -55,6 +55,39 @@ std::string	processPostRequest(std::string body, std::string connectionHandler)
 	std::string username = formData["name"];
 	std::string email = formData["email"];
 	std::string message = formData["message"];
-	std::string response = "POST request received with data:\nUsername: " + username + "\nEmail: " + email + "\nMessage: " + message;
-	return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n" + connectionHandler + "\r\n" + response + "\r\n");
+
+	std::string htmlRes = 
+	"<!doctype html>"
+	"<html lang=\"en\">"
+	"<head>"
+	"<meta charset=\"utf-8\">"
+	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+	"<title>Contact Form</title>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"/>"
+	"</head>"
+	"<body>"
+	"<nav>"
+	"<a class=\"request_button\" href=\"/formulaire.html\">Get in Touch !</a>"
+	"<a class=\"black request_button\" href=\"/index.html\">Welcome Page</a>"
+	"<a class=\"request_button\" href=\"/upload.html\">Upload a picture</a>"
+	"</nav>"
+	"<h1>Form successfully submitted!</h1>"
+	"<p>Thank you for your submission" + username + ".</p>"
+	"<p>Your email is: " + email + "</p>"
+	"<p>Your message is: " + message + "</p>"
+	"</br>"
+	"</br>"
+	"</br>"
+    	"<p><a class=\"request_button\" href=\"/index.html\">Return to Home</a></p>"
+	"<p></p>"
+	"</body>"
+	"</html>";
+
+	std::string response = 
+	"HTTP/1.1 200 OK\r\n"
+	"Content-Type: text/html\r\n" +
+	connectionHandler + "\r\n" +
+	htmlRes + "\r\n";
+
+	return (response);
 }
