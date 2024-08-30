@@ -6,7 +6,7 @@
 #    By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/27 18:28:30 by fclivaz           #+#    #+#              #
-#    Updated: 2024/08/29 20:43:34 by fclivaz          ###   LAUSANNE.ch        #
+#    Updated: 2024/08/30 15:19:36 by lmedrano         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,6 +24,9 @@ DEPS	=	${INCL}/webserv.hpp\
 			${INCL}/Parsing/Location.hpp\
 			${INCL}/Parsing/ServerConf.hpp\
 			${INCL}/Parsing/Servers.hpp\
+			${INCL}/Requests/Get.hpp\
+			${INCL}/Requests/Post.hpp\
+			${INCL}/Requests/Delete.hpp\
 			${SRCS}
 
 SRCS	=	${SUBDIR}/webserv.cpp\
@@ -31,7 +34,11 @@ SRCS	=	${SUBDIR}/webserv.cpp\
 			${SUBDIR}/Sockets/HttpRequestHandler.cpp\
 			${SUBDIR}/Parsing/Servers.cpp\
 			${SUBDIR}/Parsing/ServerConf.cpp\
-			${SUBDIR}/Parsing/Location.cpp
+			${SUBDIR}/Parsing/Location.cpp\
+			${SUBDIR}/Requests/Get.cpp\
+			${SUBDIR}/Requests/Post.cpp\
+			${SUBDIR}/Requests/Delete.cpp\
+
 
 SUBDIR	= srcs
 

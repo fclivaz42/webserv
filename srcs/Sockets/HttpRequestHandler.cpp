@@ -1,17 +1,18 @@
 // ************************************************************************** //
 //                                                                            //
 //                                                        :::      ::::::::   //
-/*   HttpRequestHandler.cpp                             :+:      :+:    :+:   */
+//   HttpRequestHandler.cpp                             :+:      :+:    :+:   //
 //                                                    +:+ +:+         +:+     //
 //   By: lmedrano <your@email.com>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/15 14:08:14 by lmedrano          #+#    #+#             //
-/*   Updated: 2024/08/29 21:00:10 by fclivaz          ###   LAUSANNE.ch       */
+//   Updated: 2024/08/30 15:17:10 by lmedrano         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
 #include "Sockets/HttpRequestHandler.hpp"
-#include "Sockets/SocketManager.hpp"
+#include "Requests/Get.hpp"
+#include "Requests/Post.hpp"
 
 std::string	trim(const std::string& str)
 {
@@ -24,30 +25,6 @@ std::string	trim(const std::string& str)
 	size_t end = str.find_last_not_of(" \t");
 	return (str.substr(start, end - start + 1));
 }
-
-bool		hasExtension(const std::string& path, const std::string& extension)
-{
-	std::string::size_type pos = path.rfind(extension);
-	return ((pos != std::string::npos) && (pos == path.length() - extension.length()));
-}
-
-std::string	getMimeType(const std::string& path)
-{
-	if (hasExtension(path, ".css"))
-		return ("text/css");
-	if (hasExtension(path, ".html"))
-		return ("text/html");
-	if (hasExtension(path, ".js"))
-		return ("application/javascript");
-	if (hasExtension(path, ".png"))
-		return ("image/png");
-	if (hasExtension(path, ".jpg") || hasExtension(path, ".jpeg"))
-		return ("image/jpeg");
-	if (hasExtension(path, ".gif"))
-		return ("image/gif");
-	return ("application/octet-stream");
-}
-
 
 //FONCTION THAT PROCESSES AN HTTP REQUEST AND GENERATES A RESPONSE
 //Je cree un input stream de la request avec ifstream
@@ -62,9 +39,10 @@ std::string	getMimeType(const std::string& path)
 std::string	HttpRequestHandler::handleRequest(const std::string& request)
 {
 	std::istringstream	iss(request);
-	std::string method, path, version;
+	std::string method, path, version, body;
 	std::string headers;
 	bool keepAlive = false;
+	size_t contentLength = 0;
 	
 	iss >> method >> path >> version;
 
@@ -79,25 +57,25 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 				keepAlive = true;
 			}
 		}
+		else if (headers.find("Content-Length:") == 0)
+		{
+			std::string cl = headers.substr(headers.find(":") + 1);
+			cl = trim(cl);
+			contentLength = static_cast<size_t>(atoi(cl.c_str()));
+		}
 	}
 
 	std::string connectionHandler = keepAlive ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
 
-	if (method == "POST")
-	{
-		return ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n" + connectionHandler + "\r\nPOST request received with body");
-	}
-
 	if (method == "GET")
 	{
-		if (path == "/")
-			path = "/public/index.html";
-		else
-			path = "/public" + path;
-		std::string fileContent = SocketManager::readFile("." + path);
-		std::string contentType = getMimeType(path);
-		return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n" + connectionHandler + "\r\n" + fileContent);
+		return (processGetRequest(path, connectionHandler));
 	}
+	if (method == "POST" && contentLength > 0)
+	{
+		return (processPostRequest(body, iss, contentLength, connectionHandler));
+	}
+
 	if (method == "DELETE")
 	{
 
