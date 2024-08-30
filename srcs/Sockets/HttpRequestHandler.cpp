@@ -6,7 +6,7 @@
 //   By: lmedrano <your@email.com>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/15 14:08:14 by lmedrano          #+#    #+#             //
-//   Updated: 2024/08/30 15:17:10 by lmedrano         ###   ########.fr       //
+//   Updated: 2024/08/30 16:20:15 by lmedrano         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
@@ -44,7 +44,9 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 	bool keepAlive = false;
 	size_t contentLength = 0;
 	
-	iss >> method >> path >> version;
+	std::getline(iss, headers);
+	std::istringstream requestLine(headers);
+	requestLine >> method >> path >> version;
 
 	while (std::getline(iss, headers) && headers != "\r" && !headers.empty())
 	{
@@ -65,17 +67,26 @@ std::string	HttpRequestHandler::handleRequest(const std::string& request)
 		}
 	}
 
+	if (iss.peek() == '\r')
+	{
+		iss.ignore();
+		if (iss.peek() == '\n')
+			iss.ignore();
+	}
+
 	std::string connectionHandler = keepAlive ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
 
 	if (method == "GET")
 	{
-		return (processGetRequest(path, connectionHandler));
+		return (processGetRequest(path, keepAlive ? "Connection: keep-alive\r\n" : "Connection: close\r\n"));
 	}
 	if (method == "POST" && contentLength > 0)
 	{
-		return (processPostRequest(body, iss, contentLength, connectionHandler));
-	}
+		body.resize(contentLength);
+		iss.read(&body[0], contentLength);
 
+		return (processPostRequest(body, keepAlive ? "Connection: keep-alive\r\n" : "Connection: close\r\n"));
+	}
 	if (method == "DELETE")
 	{
 
