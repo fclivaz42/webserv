@@ -72,7 +72,7 @@ std::string	processPostRequest(std::string body, std::string connectionHandler)
 	"<a class=\"request_button\" href=\"/upload.html\">Upload a picture</a>"
 	"</nav>"
 	"<h1>Form successfully submitted!</h1>"
-	"<p>Thank you for your submission" + username + ".</p>"
+	"<p>Thank you for your submission " + username + ".</p>"
 	"<p>Your email is: " + email + "</p>"
 	"<p>Your message is: " + message + "</p>"
 	"</br>"
