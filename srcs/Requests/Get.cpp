@@ -35,11 +35,24 @@ std::string	getMimeType(const std::string& path)
 	return ("application/octet-stream");
 }
 
+std::string updatePath(const std::string &path)
+{
+	//TODO do something to manage favicon ?
+	if (path == "/favicon.ico")
+		return (path);
+	if (path.find("public") == std::string::npos)
+		return ("/public" + path);
+	return (path);
+}
+
 std::string	processGetRequest(std::string path, std::string connectionHandler)
 {
+	std::cout << ORANGE << path << RESET << std::endl;
+	path = updatePath(path);
 	std::cout << path << std::endl;
-	path = "/public" + path;
 	std::string fileContent = SocketManager::readFile("." + path);
+	std::cout << PURPLE << "fileContent is: " << fileContent << RESET << std::endl; 
 	std::string contentType = getMimeType(path);
+	std::cout << PURPLE << "contentType is: " << contentType << RESET << std::endl; 
 	return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n" + connectionHandler + "\r\n" + fileContent);
 }
