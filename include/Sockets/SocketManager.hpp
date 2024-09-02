@@ -6,7 +6,7 @@
 //   By: lmedrano <your@email.com>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/15 11:07:53 by lmedrano          #+#    #+#             //
-/*   Updated: 2024/08/29 20:58:36 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/09/02 23:13:50 by fclivaz          ###   LAUSANNE.ch       */
 //                                                                            //
 // ************************************************************************** //
 
@@ -32,14 +32,14 @@
 class SocketManager
 {
 	private:
-		std::vector<int>		_serverFd;
+		std::vector<int>				_serverFd;
 		std::vector<struct sockaddr_in>	_serverAddress;
-		std::vector<int>		_port;
-		std::string			_host;
+		std::vector<unsigned short>		_port;
+		std::string						_host;
 		
 		void			handleClient(int clientFd);
 	public:
-		SocketManager(const std::vector<int>& port);
+		SocketManager(const std::vector<unsigned short>& port);
 		~SocketManager();
 
 		//METHODS
@@ -56,7 +56,7 @@ class SocketManager
 		//GETTERS
 		const std::vector<int>&	getServerFd() const;
 		//SETTERS
-		void			setPorts(std::vector <int>& port);
+		void			setPorts(std::vector<unsigned short>& port);
 		void			setHost(const std::string& host);
 };
 

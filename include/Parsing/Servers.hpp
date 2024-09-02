@@ -16,6 +16,7 @@ class Servers{
 
 	public: 
 		/* CONSTRUCTORS */
+		Servers();
 		Servers(const std::string &confFile);
 		/* COPY CONSTRUCTOR */
 		Servers(Servers const &cpy);
@@ -34,6 +35,7 @@ class Servers{
 		void									setConfLoc(std::pair<std::string, std::string> keyValue, Location &current);
 		void 									printConfigs(void) const;
 		int										checkValue(void);
+		bool									isConfigured(void) const;
 		
 };
 

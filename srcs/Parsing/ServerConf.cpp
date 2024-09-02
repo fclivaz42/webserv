@@ -1,7 +1,65 @@
 #include "Parsing/ServerConf.hpp"
 #include "Parsing/Location.hpp"
+#include "webserv.hpp"
 
-ServerConf::ServerConf() : _ipAddr("127.0.0.1"){}
+ServerConf::ServerConf() : _ipAddr("127.0.0.1") {}
+
+ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1")
+{
+	std::stringstream	configStream(configString);
+	const std::string	whitespaces(" \t\f\v\n\r");
+	std::string			line;
+	long				bigPortCheck;
+	short				port;
+	char				*ptr;
+
+	while(std::getline(configStream, line))
+	{
+		line.erase(0, line.find_first_not_of(whitespaces));
+		line.erase(line.find_last_not_of(whitespaces) + 1);
+		if (!line.find("server_name")) {
+			line.erase(0, line.find_first_not_of("server_name"));
+			line.erase(0, line.find_first_not_of(whitespaces));
+			line.erase(line.find_last_not_of(whitespaces) + 1);
+			this->_serverName = line;
+			std::cout << this->_serverName << std::endl;
+		}
+		else if (!line.find("root")) {
+			line.erase(0, line.find_first_not_of("root"));
+			line.erase(0, line.find_first_not_of(whitespaces));
+			line.erase(line.find_last_not_of(whitespaces) + 1);
+			this->_root = line;
+			std::cout << this->_root << std::endl;
+		}
+		else if (!line.find("index")) {
+			line.erase(0, line.find_first_not_of("index"));
+			line.erase(0, line.find_first_not_of(whitespaces));
+			line.erase(line.find_last_not_of(whitespaces) + 1);
+			this->_index = line;
+			std::cout << this->_index << std::endl;
+		}
+		else if (!line.find("error_page")) {
+			line.erase(0, line.find_first_not_of("error_page"));
+			line.erase(0, line.find_first_not_of(whitespaces));
+			line.erase(line.find_last_not_of(whitespaces) + 1);
+			this->_errorPage = line;
+			std::cout << this->_errorPage << std::endl;
+		}
+		else if (!line.find("listen")) {
+			line.erase(0, line.find_first_not_of("listen"));
+			line.erase(0, line.find_first_not_of(whitespaces));
+			line.erase(line.find_last_not_of(whitespaces) + 1);
+			bigPortCheck = strtol(line.c_str(), &ptr, 10);
+			port = strtol(line.c_str(), &ptr, 10);
+			if (ptr[0] != 0 || port != bigPortCheck || port == 0)
+				std::cerr << "Error: " << RED << "Invalid port.\n" << RESET;
+			this->_port.push_back(port);
+		}
+		else if (!line.find("location ")) {
+			// HOLY FUCK TODO
+		}
+	}
+}
 
 ServerConf::ServerConf(ServerConf const &cpy){
     *this = cpy;
@@ -24,7 +82,7 @@ std::string ServerConf::getServerName(void) const{
     return (this->_serverName);
 }
 
-std::vector<int>         ServerConf::getPort(void) const{
+std::vector<unsigned short>         ServerConf::getPort(void) const{
     return (this->_port);
 }
 
@@ -98,7 +156,7 @@ int     ServerConf::checkAttribut(void) const{
 /* Fonction permettant de print les attributs de la class ServerConf. */
 void    ServerConf::print(void) const {
         std::cout << "  Server: " << this->_serverName << std::endl;
-        std::vector<int>::const_iterator it = _port.begin();
+        std::vector<unsigned short>::const_iterator it = _port.begin();
         for (; it != _port.end(); ++it){
            std::cout << "  Port: " << *it << std::endl;
         }

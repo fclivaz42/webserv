@@ -11,7 +11,7 @@ class Location;
 class ServerConf{
 	private:
 		std::string 					_serverName;
-		std::vector<int>				_port;
+		std::vector<unsigned short>		_port;
 		std::string 					_root;
 		std::string 					_index;
 		std::string 					_errorPage;
@@ -21,6 +21,7 @@ class ServerConf{
 	public:
 		/* CONSTRUCTORS */
 		ServerConf();
+		ServerConf(const std::string& configString);
 
 		/* COPY CONSTRUCTORS */
 		ServerConf(ServerConf const &cpy);
@@ -33,7 +34,7 @@ class ServerConf{
 
 		/* GETTERS */
 		std::string 					getServerName(void) const;
-		std::vector<int>				getPort(void) const;
+		std::vector<unsigned short>		getPort(void) const;
 		std::string 					getRoot(void) const;
 		std::string						getIndex(void) const;
 		std::string						getIpAddr(void)	const;

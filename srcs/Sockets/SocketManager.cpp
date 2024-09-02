@@ -6,7 +6,7 @@
 //   By: lmedrano <your@email.com>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/15 11:15:07 by lmedrano          #+#    #+#             //
-/*   Updated: 2024/08/29 21:00:22 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/09/02 23:12:51 by fclivaz          ###   LAUSANNE.ch       */
 //                                                                            //
 // ************************************************************************** //
 
@@ -20,7 +20,7 @@
 // set l'address family a AF_INET ce qui veut dire qu'on utilise le protocole IPv4
 // set le server sur INADDR_ANY pour binder le server a toutes les network interfaces available
 // htons(_port) convertis le numero de port de host byte a network byte order pour pouvoir lire sur tous les systemes
-SocketManager::SocketManager(const std::vector<int>& port) : _port(port)
+SocketManager::SocketManager(const std::vector<unsigned short>& port) : _port(port)
 {
 	_serverFd.resize(port.size(), -1);
 	_serverAddress.resize(port.size());
@@ -304,7 +304,7 @@ const std::vector<int>&	SocketManager::getServerFd() const
 }
 
 //SETTERS
-void	SocketManager::setPorts(std::vector<int> &port)
+void	SocketManager::setPorts(std::vector<unsigned short> &port)
 {
 	_port = port;
 }
