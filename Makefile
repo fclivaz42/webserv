@@ -6,7 +6,7 @@
 #    By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/08/27 18:28:30 by fclivaz           #+#    #+#              #
-#    Updated: 2024/08/30 15:19:36 by lmedrano         ###   ########.fr        #
+#    Updated: 2024/09/03 15:26:40 by lmedrano         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,6 +27,7 @@ DEPS	=	${INCL}/webserv.hpp\
 			${INCL}/Requests/Get.hpp\
 			${INCL}/Requests/Post.hpp\
 			${INCL}/Requests/Delete.hpp\
+			${INCL}/Requests/HttpRequest.hpp\
 			${SRCS}
 
 SRCS	=	${SUBDIR}/webserv.cpp\
@@ -38,6 +39,7 @@ SRCS	=	${SUBDIR}/webserv.cpp\
 			${SUBDIR}/Requests/Get.cpp\
 			${SUBDIR}/Requests/Post.cpp\
 			${SUBDIR}/Requests/Delete.cpp\
+			${SUBDIR}/Requests/HttpRequest.cpp\
 
 
 SUBDIR	= srcs

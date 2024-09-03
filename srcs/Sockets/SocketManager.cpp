@@ -1,17 +1,17 @@
 // ************************************************************************** //
 //                                                                            //
 //                                                        :::      ::::::::   //
-/*   SocketManager.cpp                                  :+:      :+:    :+:   */
+//   SocketManager.cpp                                  :+:      :+:    :+:   //
 //                                                    +:+ +:+         +:+     //
 //   By: lmedrano <your@email.com>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/15 11:15:07 by lmedrano          #+#    #+#             //
-/*   Updated: 2024/08/29 21:00:22 by fclivaz          ###   LAUSANNE.ch       */
+//   Updated: 2024/09/03 15:29:33 by lmedrano         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
 #include "Sockets/SocketManager.hpp"
-#include "Sockets/HttpRequestHandler.hpp"
+#include "Requests/HttpRequest.hpp"
 
 //SETTING UP THE SOCKET MANAGER
 // Initialise le fd pour le server scoket a -1 pour indiquer que le socket n'a pas ete cree
@@ -247,36 +247,7 @@ void	SocketManager::handleClient(int clientFd)
 			break ;
 		}
 
-		//std::cout << GREEN << "Received request: " << message << RESET << std::endl;
-		std::string response;
-		if (isHttpRequest(message))
-		{
-			response = HttpRequestHandler::handleRequest(message);
-		}
-		else
-		{
-			response = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\n\r\nInvalid request";
-		}
-		std::cout << "Sending response: " << response << std::endl;
-
-		ssize_t bytesWritten = write(clientFd, response.c_str(), response.length());
-		close(clientFd);	
-		if (bytesWritten == -1)
-		{
-			std::cerr << RED << "ERROR: Write() failure" << RESET << std::endl;
-			close(clientFd);
-			break ;
-		}
-		else if (bytesWritten != static_cast<ssize_t>(response.length())) 
-		{
-			std::cerr << RED << "ERROR: Failure to write all datas" << RESET << std::endl;
-			close(clientFd);
-			break ;
-		}
-		if (response.find("Connection: close") != std::string::npos)
-		{
-			keepAlive = false;
-		}
+		HttpRequest request = HttpRequest(message);
 	}
 }
 
