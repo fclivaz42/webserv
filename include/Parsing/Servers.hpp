@@ -31,8 +31,12 @@ class Servers{
 		/* MEMBERS FUNCTIONS */
 		void	loadConfig(const std::string &confFile);
 		void 	printConfigs(void) const;
-		int		checkValue(void);
 		bool	isConfigured(void) const;
+		/* EXCEPTIONS */
+		class InvalidServersException : public std::exception{
+        public:
+            virtual char const	*what(void) const throw();
+		};
 		
 };
 

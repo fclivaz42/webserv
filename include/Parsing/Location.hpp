@@ -12,7 +12,6 @@ class Location {
 		std::string					_index;
 		std::string					_root;
 		std::string					_returnURL;
-		std::string					_uploadStore;
 		std::string					_fastcgiPass;
 		std::string					_fastcgiIndex;
 		bool						_autoIndex;
@@ -46,8 +45,15 @@ class Location {
 		bool						getUpload(void) const;
 
 		/* MEMBER FUNCTIONS */
-		int     					checkAttribut(void) const;
+		void     					checkAttribut(void) const;
 		void						print(void) const;
+
+		/* EXCEPTIONS */
+		class InvalidLocationException : public std::exception{
+        public:
+            virtual char const	*what(void) const throw();
+		};
+	
 
 };
 

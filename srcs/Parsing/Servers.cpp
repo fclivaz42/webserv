@@ -48,13 +48,12 @@ Servers::Servers(const std::string &conf_file)
 			std::cerr << "Error: " << RED << "Invalid config line \"" << ORANGE << line << RED << "\"\n" << RESET;
 			confFile.close();
 			this->_servConf.clear();
-			return ;
+			throw InvalidServersException();
 		}
 	}
 	confFile.close();
 	if (this->_servConf.empty())
-		std::cerr << "Error: " << RED << "invalid configuration format." << RESET << std::endl;
-	return ;
+		throw InvalidServersException();
 }
 
 Servers::Servers(Servers const &cpy){
@@ -85,15 +84,6 @@ ServerConf	Servers::getServConf(int lequel) const{
 	return (*it);
 }
 
-int		Servers::checkValue(void){
-	std::vector<ServerConf>::const_iterator it;
-	for (it = _servConf.begin(); it != _servConf.end(); ++it){
-		if (it->checkAttribut() != 0)
-			return (1);
-	}
-	return (0);
-}
-
 /* Fonction permettant de print le contenu de l'attribut vector<ServerConf> de la class Server. */
 void	Servers::printConfigs() const {
     std::vector<ServerConf>::const_iterator it = _servConf.begin();
@@ -104,4 +94,8 @@ void	Servers::printConfigs() const {
 
 bool	Servers::isConfigured() const {
 	return !this->_servConf.empty();
+}
+
+char const	*Servers::InvalidServersException::what(void) const throw(){
+    return ("Invalid <Servers> configurtation format");
 }

@@ -22,34 +22,26 @@ int main (int ac, char **av)
 		std::cerr << "Error: " << RED << "Incorrect extension.\n" << RESET;
 		return 2;
 	}
-	serv = Servers(av[1]);
-	if (!serv.isConfigured())
-		return 3;
-	SocketManager socket(serv.getServConf(1).getPort());
+	try {
+		serv = Servers(av[1]);
+		if (!serv.isConfigured())
+			return 3;
+	
+		SocketManager socket(serv.getServConf(1).getPort());
 
-	serv.printConfigs();
+		serv.printConfigs();
 
-	socket.setHost(serv.getServConf(1).getIpAddr());
+		socket.setHost(serv.getServConf(1).getIpAddr());
 
 
-	if (!socket.createSocket() || !socket.bindSocket() || !socket.startListening())
-		return (-1);
+		if (!socket.createSocket() || !socket.bindSocket() || !socket.startListening())
+			return (-1);
 
-	socket.start();
+		socket.start();
+	}
+	catch (std::exception &e){
+		std::cout << e.what() << std::endl;
+	}
 	return (0);
 }
 
-/*
-int main (int argc, char *argv[]) {
-
-	if (argc != 2){
-		std::cout << "Error: Invalid argument" << std::endl;
-		return (0);
-	}
-	Servers	serv(argv[1]);
-	
-	serv.printConfigs();
-
-	return 0;
-}
-*/
