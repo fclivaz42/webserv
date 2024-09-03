@@ -29,13 +29,10 @@ class Servers{
 		/* SETTERS */
 		
 		/* MEMBERS FUNCTIONS */
-		void									loadConfig(const std::string &confFile);
-		std::pair <std::string, std::string>	pairConf(std::string line);
-		void									setConf(std::pair<std::string, std::string> keyValue, ServerConf &current);
-		void									setConfLoc(std::pair<std::string, std::string> keyValue, Location &current);
-		void 									printConfigs(void) const;
-		int										checkValue(void);
-		bool									isConfigured(void) const;
+		void	loadConfig(const std::string &confFile);
+		void 	printConfigs(void) const;
+		int		checkValue(void);
+		bool	isConfigured(void) const;
 		
 };
 

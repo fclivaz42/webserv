@@ -40,14 +40,6 @@ class ServerConf{
 		std::string						getIpAddr(void)	const;
 		std::map<std::string, Location>	getLocation(void) const;
 
-		/* SETTERS */
-		void	setServerName(const std::string &serverName);
-		void	setPort(const std::string &port);
-		void	setRoot(const std::string &root);
-		void	setIndex(const std::string &index);
-		void	setLocation(const std::string &path, Location &locations);
-		void	setErrorPage(const std::string &error);
-
 		/* MEMBERS FUNCTIONS */
 		void	print(void) const;
 		int		checkAttribut(void) const;

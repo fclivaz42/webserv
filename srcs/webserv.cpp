@@ -27,7 +27,7 @@ int main (int ac, char **av)
 		return 3;
 	SocketManager socket(serv.getServConf(1).getPort());
 
-//	serv.printConfigs();
+	serv.printConfigs();
 
 	socket.setHost(serv.getServConf(1).getIpAddr());
 

@@ -22,7 +22,6 @@ Servers::Servers() {}
 Servers::Servers(const std::string &conf_file)
 {
 	std::ifstream		confFile;
-	const std::string	whitespaces(" \t\f\v\n\r");
 	std::string 		line, configString;
 	ServerConf			currentServer;
 	Location			currentLocation;
@@ -33,8 +32,8 @@ Servers::Servers(const std::string &conf_file)
 		return ;
 	}
 	while (std::getline(confFile, line)){
-		line.erase(0, line.find_first_not_of(whitespaces));
-		line.erase(line.find_last_not_of(whitespaces) + 1);
+		line.erase(0, line.find_first_not_of(WHITESPACES));
+		line.erase(line.find_last_not_of(WHITESPACES) + 1);
 		if (line.empty() || line[0] == '#')
 			continue;
 		else if (line.find("server {") != std::string::npos) {
@@ -84,53 +83,6 @@ ServerConf	Servers::getServConf(int lequel) const{
 		std::cerr << "Error: No config number found." << std::endl;
 	}
 	return (*it);
-}
-
-/* Fonction qui permet de faire les paires pour attribue les valeurs aux attributs des class.
-	1. Creation d'une variable pos a laquelle on va donner la position de l'espace qui est le separateur.
-	2. Creation de la valeur "key" qui comprendra le mot cle qui est le premier mot.
-	3. Creation de la valeur "value" qui comprendra la valeur qui est le second mot.
-	4. Retour des pairs. 
-*/
-std::pair<std::string, std::string>	Servers::pairConf(std::string line){
-	std::size_t	pos = line.find(' ');
-	std::string	key = line.substr(0, pos);
-	std::string	value = line.substr(pos);
-	value.erase(0, value.find_first_not_of(' '));
-
-	return (std::pair<std::string, std::string>(key, value));
-}
-
-/* Fonction permettant de set les attributs de la class ServerConf. */
-void	Servers::setConf(std::pair<std::string, std::string> keyValue, ServerConf &currentServer){
-	if (keyValue.first == "listen")
-		currentServer.setPort(keyValue.second);
-	else if (keyValue.first == "server_name")
-		currentServer.setServerName(keyValue.second);
-	else if (keyValue.first == "root")
-		currentServer.setRoot(keyValue.second);
-	else if (keyValue.first == "index")
-		currentServer.setIndex(keyValue.second);
-	else if (keyValue.first == "error_page")
-		currentServer.setErrorPage(keyValue.second);
-
-	return ;
-}
-
-/* Fonction permettant de set les attributs de la class Location. */
-void	Servers::setConfLoc(std::pair<std::string, std::string> keyValue, Location &currentLocation){
-	if (keyValue.first == "methods")
-		currentLocation.setAllowMethods(keyValue.second);
-	else if (keyValue.first == "root")
-		currentLocation.setRoot(keyValue.second);
-	else if (keyValue.first == "return")
-		currentLocation.setReturnURL(keyValue.second);
-	else if (keyValue.first == "index")
-		currentLocation.setIndex(keyValue.second);
-	else if (keyValue.first == "accept_uploads")
-		currentLocation.setUpload(keyValue.second);
-
-	return ;
 }
 
 int		Servers::checkValue(void){

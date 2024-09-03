@@ -1,8 +1,57 @@
 #include "Parsing/Location.hpp"
+#include "webserv.hpp"
 
 Location::Location(){}
 
-Location::Location(const std::string &path) : _path(path){}
+Location::Location(const std::string &path, const std::string& locationString) : _path(path)
+{
+	std::stringstream	locationStream(locationString);
+	std::string			line;
+	size_t				pos = 0;
+
+	while(std::getline(locationStream, line))
+	{
+		line.erase(0, line.find_first_not_of(WHITESPACES));
+		line.erase(line.find_last_not_of(WHITESPACES) + 1);
+		if (!line.find("root")) {
+			line.erase(0, line.find_first_not_of("root"));
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			this->_root = line;
+		}
+		else if (!line.find("index")) {
+			line.erase(0, line.find_first_not_of("index"));
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			this->_index = line;
+		}
+		else if (!line.find("accept_uploads")) {
+			line.erase(0, line.find_first_not_of("accept_uploads"));
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			if (line.compare("1") || line.compare("yes") || line.compare("true"))
+				this->_upload = true;
+			else if (line.compare("0") || line.compare("no") || line.compare("false"))
+				this->_upload = false;
+			else {
+				// TODO: Throw either a warning or an error and exit.
+			}
+		}
+		else if (!line.find("methods")) {
+			line.erase(0, line.find_first_not_of("methods"));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			while (pos != std::string::npos)
+			{
+				line.erase(0, line.find_first_not_of(WHITESPACES));
+				this->_allowMethods.push_back(line.substr(0, line.find_first_of(WHITESPACES)));
+				pos = line.find_first_of(WHITESPACES);
+				if (pos == std::string::npos)
+					break ;
+				line = line.substr(pos);
+			}
+		}
+	}
+}
 
 Location::Location(Location const &cpy){
 	*this = cpy;
@@ -10,18 +59,20 @@ Location::Location(Location const &cpy){
 
 Location::~Location(){}
 
-Location    &Location::operator=(Location const &rhs){
-	this->_allowMethods = rhs._allowMethods;
-	this->_path = rhs._path;
-	this->_index = rhs._index;
-	this->_root = rhs._root;
-	this->_returnURL = rhs._returnURL;
-	this->_uploadStore = rhs._uploadStore;
-	this->_fastcgiPass = rhs._fastcgiPass;
-	this->_fastcgiIndex = rhs._fastcgiIndex;
-	this->_autoIndex = rhs._autoIndex;
-	this->_upload = rhs._upload;
-
+Location    &Location::operator=(Location const &rhs)
+{
+	if (this != &rhs) {
+		this->_allowMethods = rhs._allowMethods;
+		this->_path = rhs._path;
+		this->_index = rhs._index;
+		this->_root = rhs._root;
+		this->_returnURL = rhs._returnURL;
+		this->_uploadStore = rhs._uploadStore;
+		this->_fastcgiPass = rhs._fastcgiPass;
+		this->_fastcgiIndex = rhs._fastcgiIndex;
+		this->_autoIndex = rhs._autoIndex;
+		this->_upload = rhs._upload;
+	}
 	return (*this);
 }
 
@@ -64,56 +115,6 @@ bool	Location::getAutoIndex(void) const{
 
 bool	Location::getUpload(void) const{
 	return (this->_upload);
-}
-
-				/* SETTERS */
-void	Location::setAllowMethods(const std::string &methods){
-	std::string	method;
-	std::istringstream	iss(methods);
-
-	this->_allowMethods.clear();
-	while (iss >> method){
-		_allowMethods.push_back(method);
-	}
-}
-
-void	Location::setPath(const std::string &path){
-	this->_path = path;
-}
-
-void	Location::setIndex(const std::string &index){
-	this->_index = index;
-}
-
-void	Location::setRoot(const std::string &root){
-	this->_root = root;
-}
-
-void	Location::setReturnURL(const std::string &url){
-	this->_returnURL = url;
-}
-
-void	Location::setUploadStore(const std::string &store){
-	this->_uploadStore = store;
-}
-
-void	Location::setFastcgiPass(const std::string &pass){
-	this->_fastcgiPass = pass;
-}
-
-void	Location::setFastcgiIndex(const std::string &index){
-	this->_fastcgiIndex = index;
-}
-
-void	Location::setAutoIndex(bool index){
-	this->_autoIndex = index;
-}
-
-void	Location::setUpload(const std::string &upload){
-	if (upload == "yes")
-		this->_upload = true;
-	else
-		this->_upload = false;
 }
 
 int     Location::checkAttribut(void) const{

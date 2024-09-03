@@ -7,48 +7,43 @@ ServerConf::ServerConf() : _ipAddr("127.0.0.1") {}
 ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1")
 {
 	std::stringstream	configStream(configString);
-	const std::string	whitespaces(" \t\f\v\n\r");
-	std::string			line;
+	std::string			line, locationString, locationPath;
 	long				bigPortCheck;
 	short				port;
 	char				*ptr;
 
 	while(std::getline(configStream, line))
 	{
-		line.erase(0, line.find_first_not_of(whitespaces));
-		line.erase(line.find_last_not_of(whitespaces) + 1);
+		line.erase(0, line.find_first_not_of(WHITESPACES));
+		line.erase(line.find_last_not_of(WHITESPACES) + 1);
 		if (!line.find("server_name")) {
 			line.erase(0, line.find_first_not_of("server_name"));
-			line.erase(0, line.find_first_not_of(whitespaces));
-			line.erase(line.find_last_not_of(whitespaces) + 1);
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
 			this->_serverName = line;
-			std::cout << this->_serverName << std::endl;
 		}
 		else if (!line.find("root")) {
 			line.erase(0, line.find_first_not_of("root"));
-			line.erase(0, line.find_first_not_of(whitespaces));
-			line.erase(line.find_last_not_of(whitespaces) + 1);
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
 			this->_root = line;
-			std::cout << this->_root << std::endl;
 		}
 		else if (!line.find("index")) {
 			line.erase(0, line.find_first_not_of("index"));
-			line.erase(0, line.find_first_not_of(whitespaces));
-			line.erase(line.find_last_not_of(whitespaces) + 1);
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
 			this->_index = line;
-			std::cout << this->_index << std::endl;
 		}
 		else if (!line.find("error_page")) {
 			line.erase(0, line.find_first_not_of("error_page"));
-			line.erase(0, line.find_first_not_of(whitespaces));
-			line.erase(line.find_last_not_of(whitespaces) + 1);
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
 			this->_errorPage = line;
-			std::cout << this->_errorPage << std::endl;
 		}
 		else if (!line.find("listen")) {
 			line.erase(0, line.find_first_not_of("listen"));
-			line.erase(0, line.find_first_not_of(whitespaces));
-			line.erase(line.find_last_not_of(whitespaces) + 1);
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
 			bigPortCheck = strtol(line.c_str(), &ptr, 10);
 			port = strtol(line.c_str(), &ptr, 10);
 			if (ptr[0] != 0 || port != bigPortCheck || port == 0)
@@ -56,7 +51,18 @@ ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1")
 			this->_port.push_back(port);
 		}
 		else if (!line.find("location ")) {
-			// HOLY FUCK TODO
+			line.erase(0, line.find_first_not_of("location"));
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			locationPath = line.substr(0, line.find_first_of(WHITESPACES));
+			while (line.find('}') == std::string::npos) {
+				std::getline(configStream, line);
+				locationString += line + '\n';
+			}
+			this->_location[locationPath] = Location(locationPath, locationString.substr(0, locationString.find_last_of('}')));
+			locationString.clear();
+		}
+		else {
+			// TODO: Throw either a warning or an error and exit.
 		}
 	}
 }
@@ -100,38 +106,6 @@ std::map<std::string, Location> ServerConf::getLocation(void) const{
 
 std::string ServerConf::getIpAddr(void)	const{
     return (this->_ipAddr);
-}
-
-                /* SETTERS */
-void    ServerConf::setServerName(const std::string &serverName){
-    this->_serverName = serverName;
-}
-
-void    ServerConf::setPort(const std::string &port){
-    /*for (int i = 0; port[i]; i++){
-        if (!isdigit(port[i]))
-            return ;
-    }
-    */
-   
-    const char *tmp = port.c_str();
-    _port.push_back(atoi(tmp));
-}
-
-void    ServerConf::setRoot(const std::string &root){
-    this->_root = root;
-}
-
-void    ServerConf::setIndex(const std::string &index){
-    this->_index = index;
-}
-
-void    ServerConf::setLocation(const std::string &path, Location &locations){
-    this->_location[path] = locations;
-}
-
-void    ServerConf::setErrorPage(const std::string &error){
-    this->_errorPage = error;
 }
 
 int     ServerConf::checkAttribut(void) const{
