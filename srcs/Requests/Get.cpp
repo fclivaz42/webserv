@@ -40,8 +40,12 @@ std::string updatePath(const std::string &path)
 	//TODO do something to manage favicon ?
 	if (path == "/favicon.ico")
 		return (path);
-	if (path.find("public") == std::string::npos)
+	else if (path == "/")
+		return ("/public/index.html");
+	else if (path.find("public") == std::string::npos)
 		return ("/public" + path);
+	else
+		return ("404 not found");
 	return (path);
 }
 
