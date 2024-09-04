@@ -6,7 +6,7 @@
 //   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/30 14:39:31 by lmedrano          #+#    #+#             //
-//   Updated: 2024/08/30 15:47:56 by lmedrano         ###   ########.fr       //
+//   Updated: 2024/09/04 11:19:07 by lmedrano         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
@@ -35,10 +35,10 @@ std::string urlDecode(const std::string& str) {
 }
 
 
-std::string	processPostRequest(std::string body, std::string connectionHandler)
+std::string	processPostRequest(const HttpRequest& request)
 {
 	std::map<std::string, std::string> formData;
-	std::istringstream bodyStream(body);
+	std::istringstream bodyStream(request.getBody());
 	std::string keyValue;
 
 	while (std::getline(bodyStream, keyValue, '&'))
@@ -52,9 +52,10 @@ std::string	processPostRequest(std::string body, std::string connectionHandler)
 		}
 	}
 
-	std::string username = formData["name"];
-	std::string email = formData["email"];
-	std::string message = formData["message"];
+	std::string	username = formData["name"];
+	std::string	email = formData["email"];
+	std::string	message = formData["message"];
+	std::string	alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
 
 	std::string htmlRes = 
 	"<!doctype html>"
@@ -86,7 +87,7 @@ std::string	processPostRequest(std::string body, std::string connectionHandler)
 	std::string response = 
 	"HTTP/1.1 200 OK\r\n"
 	"Content-Type: text/html\r\n" +
-	connectionHandler + "\r\n" +
+	alive + "\r\n" +
 	htmlRes + "\r\n";
 
 	return (response);

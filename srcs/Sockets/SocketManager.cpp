@@ -6,12 +6,15 @@
 //   By: lmedrano <your@email.com>                  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/15 11:15:07 by lmedrano          #+#    #+#             //
-//   Updated: 2024/09/03 15:29:33 by lmedrano         ###   ########.fr       //
+//   Updated: 2024/09/04 11:35:41 by lmedrano         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
 #include "Sockets/SocketManager.hpp"
 #include "Requests/HttpRequest.hpp"
+#include "Requests/Get.hpp"
+#include "Requests/Post.hpp"
+#include "Requests/Delete.hpp"
 
 //SETTING UP THE SOCKET MANAGER
 // Initialise le fd pour le server scoket a -1 pour indiquer que le socket n'a pas ete cree
@@ -221,38 +224,60 @@ int	SocketManager::start()
 	return (0);
 }
 
-bool	SocketManager::isHttpRequest(const std::string& message)
-{
-	return (message.find("GET ") == 0 ||
-			message.find("POST ") == 0 ||
-			message.find("DELETE ") == 0);
-}
-
-//FUNCTION TO PROCESS THE INCOMING DATA FROM THE CONNECTED CLIENT
-//S'occupe de requetes HTTP et gere les connexions persistantes basees sur les headers HTTPS
-//J'assigne un flag keepAlive pour savoir si je dois garder la connexion ouvertes ou non en cas de requetes multiples
-//Je boucle tant que la connection est en keep alive et je lis les datas du client
-//Je check si on m'a envoye une requete HTTP ou un message simple
-//Si j'ai bien une requete HTTP, j'envoie le bon status code
+//FUNCTION TO STORE REQUEST FROM CLIENT INTO HTTPREQUEST CLASS
 void	SocketManager::handleClient(int clientFd)
 {
-	bool keepAlive = true;
-	while (keepAlive)
+	std::string message = readMessage(clientFd);
+	std::string response;
+	if (message.empty())
 	{
-		std::string message = readMessage(clientFd);
-		if (message.empty())
+		std::cerr << RED << "Client disconnected or empty message" << RESET << "" << std::endl;
+		close(clientFd);
+	}
+	try
+	{
+		HttpRequest request = HttpRequest(message);
+		try
 		{
-			std::cerr << RED << "Client disconnected or empty message" << RESET << "" << std::endl;
-			close(clientFd);
-			break ;
+			if (request.getMethod() == "GET")
+				response = processGetRequest(request);
+			else if (request.getMethod() == "POST")
+				response = processPostRequest(request);
+			else if (request.getMethod() == "DELETE")
+				response = processDeleteRequest(request);
+			else
+				throw std::runtime_error("405 Method Not Allowed");
+		}
+		catch (const std::exception& error)
+		{
+			std::cerr << RED << "Method processing failed: " << error.what() << RESET << std::endl;
+			response = "HTTP/1.1 405 Method Not Allowed\r\n\r\n" + std::string(error.what());
+			//TODO send response error back to client
 		}
 
-		HttpRequest request = HttpRequest(message);
+
+	}
+	catch (const std::exception& error)
+	{
+		std::cerr << "Request parsing failed " << error.what() << std::endl;
+		response = "HTTP/1.1 400 Bad Request\r\n\r\n" + std::string(error.what());
+		//TODO send response error back to client
+	}
+	ssize_t bytesWritten = write(clientFd, response.c_str(), response.length());
+	close(clientFd);
+	if (bytesWritten == -1)
+	{
+		std::cerr << RED << "ERROR: Write() failure" << RESET << std::endl;
+		close(clientFd);
+	}
+	else if (bytesWritten != static_cast<ssize_t>(response.length())) 
+	{
+		std::cerr << RED << "ERROR: Failure to write all datas" << RESET << std::endl;
+		close(clientFd);
 	}
 }
 
-//FUNCTION DESIGNED TO READ COED
-//ENTS OF A FILE
+//FUNCTION DESIGNED TO READ CONTENTS OF A FILE
 //J'ouvre mon file avec ifstrem
 //je convertis en string Cstyle
 //Si ouverture du fichier okay je lis le content avec content()

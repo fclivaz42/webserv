@@ -20,7 +20,6 @@ CXX	= c++
 
 DEPS	=	${INCL}/webserv.hpp\
 			${INCL}/Sockets/SocketManager.hpp\
-			${INCL}/Sockets/HttpRequestHandler.hpp\
 			${INCL}/Parsing/Location.hpp\
 			${INCL}/Parsing/ServerConf.hpp\
 			${INCL}/Parsing/Servers.hpp\
@@ -32,7 +31,6 @@ DEPS	=	${INCL}/webserv.hpp\
 
 SRCS	=	${SUBDIR}/webserv.cpp\
 			${SUBDIR}/Sockets/SocketManager.cpp\
-			${SUBDIR}/Sockets/HttpRequestHandler.cpp\
 			${SUBDIR}/Parsing/Servers.cpp\
 			${SUBDIR}/Parsing/ServerConf.cpp\
 			${SUBDIR}/Parsing/Location.cpp\

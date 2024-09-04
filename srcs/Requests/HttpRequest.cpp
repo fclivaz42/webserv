@@ -6,7 +6,7 @@
 //   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/09/03 14:35:14 by lmedrano          #+#    #+#             //
-//   Updated: 2024/09/03 15:18:42 by lmedrano         ###   ########.fr       //
+//   Updated: 2024/09/04 11:31:23 by lmedrano         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
@@ -82,9 +82,28 @@ void	HttpRequest::parseRequest(const std::string& request)
 	std::istringstream	iss(request);
 	std::string		line;
 	
-	std::getline(iss, line);
+	std::cout << request<< std::endl;
+	if (!std::getline(iss, line) || line.empty())
+	{
+		std::cerr << RED << "ERROR: Empty request" << RESET << std::endl;
+		return ;
+	}
 	std::istringstream requestLine(line);
 	requestLine >> method >> path >> version;
+
+	std::cout << "method: " << "" << method << "" << std:: endl;
+	std::cout << "path: " << path << std:: endl;
+	std::cout << "version: " << version << std:: endl;
+	//TODO throw real error response
+	if (method != "GET" && method != "POST" && method != "DELETE")
+		throw std::runtime_error("ERROR: Request not allowed");
+
+	//TODO search url in location path
+	if (path.empty() || path[0] != '/')
+		throw std::runtime_error("ERROR: Invalid path");
+
+	if (version != "HTTP/1.1" && version != "HTTP/1.0")
+		throw std::runtime_error("ERROR: Unsupported HTTP version");
 
 	while (std::getline(iss, line) && line != "\r" && !line.empty())
 	{
@@ -95,14 +114,13 @@ void	HttpRequest::parseRequest(const std::string& request)
 			std::string value = trim(line.substr(pos + 1));
 			headers[key] = value;
 		}
+		else
+			throw std::runtime_error("ERROR: Invalid headers");
 	}
 
-	if (iss.peek() == '\r')
-	{
-		iss.ignore();
-		if (iss.peek() == '\n')
-			iss.ignore();
-	}
+
+	if (version == "HTTP/1.1" && headers.find("Host") == headers.end())
+		throw std::runtime_error("ERROR: Missing host");
 
 	if (headers.find("Content-Length") != headers.end())
 	{
@@ -112,4 +130,23 @@ void	HttpRequest::parseRequest(const std::string& request)
 		body.resize(contentLength);
 		iss.read(&body[0], contentLength);
 	}
+}
+
+bool	HttpRequest::isKeepAlive() const
+{
+	std::map<std::string, std::string>::const_iterator iter = headers.find("Connection");
+
+	if (iter != headers.end())
+	{
+		std::string alive  = iter->second;
+		std::transform(alive.begin(), alive.end(), alive.begin(), ::tolower);
+		if (alive == "keep-alive")
+			return (true);
+		if (alive == "close")
+			return (false);
+	}
+	if (version == "HTTP/1.1")
+		return (true);
+	return (false);
+
 }

@@ -6,7 +6,7 @@
 //   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/30 15:11:49 by lmedrano          #+#    #+#             //
-//   Updated: 2024/08/30 15:16:17 by lmedrano         ###   ########.fr       //
+//   Updated: 2024/09/04 10:48:03 by lmedrano         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
@@ -15,9 +15,11 @@
 
 #include <string>
 #include "Sockets/SocketManager.hpp"
+#include "Requests/HttpRequest.hpp"
 
-std::string	processGetRequest(std::string path, std::string connectionHandler);
+std::string	processGetRequest(const HttpRequest& request);
 std::string	getMimeType(const std::string& path);
 bool		hasExtension(const std::string& path, const std::string& extension);
+std::string	updatePath(const std::string &path);
 
 #endif
