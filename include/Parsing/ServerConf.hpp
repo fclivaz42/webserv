@@ -39,6 +39,7 @@ class ServerConf{
 		std::string 					getRoot(void) const;
 		std::string						getIndex(void) const;
 		std::string						getMaxBodySize(void) const;
+		std::string						getErrorPage(void) const;
 		std::string						getIpAddr(void)	const;
 		std::map<std::string, Location>	getLocation(void) const;
 

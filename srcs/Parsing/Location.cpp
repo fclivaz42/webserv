@@ -1,6 +1,7 @@
 #include "Parsing/Location.hpp"
 #include "webserv.hpp"
 
+/* ------------------- CONSTRUCTOR ----------------------*/
 Location::Location() : _autoIndex(false), _upload(false){}
 
 Location::Location(const std::string &path, const std::string& locationString) : _path(path), _autoIndex(false), _upload(false){
@@ -75,16 +76,23 @@ Location::Location(const std::string &path, const std::string& locationString) :
 			line.erase(line.find_last_not_of(WHITESPACES) + 1);
 			this->_fastcgiIndex = line;
 		}
+		else if (line.empty())
+			continue ;
+		else 
+			throw InvalidLocationException();
 	}
 	checkAttribut();
 }
 
+/* ------------------- COPY CONSTRUCTOR ----------------------*/
 Location::Location(Location const &cpy){
 	*this = cpy;
 }
 
+/* ------------------- DESTRUCTOR ----------------------*/
 Location::~Location(){}
 
+/* ------------------- SURCHARGED OPERATOR ----------------------*/
 Location    &Location::operator=(Location const &rhs)
 {
 	if (this != &rhs) {
@@ -101,7 +109,7 @@ Location    &Location::operator=(Location const &rhs)
 	return (*this);
 }
 
-				/* GETTERS */
+/* ------------------- GETTERS ----------------------*/
 std::vector<std::string>    Location::getAllowMethods(void) const{
 	return (this->_allowMethods);
 }
@@ -138,6 +146,7 @@ bool	Location::getUpload(void) const{
 	return (this->_upload);
 }
 
+/* ------------------- MEMBERS FUNCTIONS ----------------------*/
 void     Location::checkAttribut(void) const{
 	std::vector<std::string>::const_iterator it;
 
@@ -160,7 +169,6 @@ void     Location::checkAttribut(void) const{
 	return ;
 }
 
-/* Fonction permettant de print les attributs de la class Location. */
 void Location::print() const {
 		std::cout << "  Location: " << _path << std::endl;
 		std::vector<std::string>::const_iterator it;
@@ -176,6 +184,7 @@ void Location::print() const {
 		std::cout << "    Auto Index: " << (_autoIndex ? "Yes" : "No") << std::endl;
 }
 
+/* ------------------- EXCEPTION ----------------------*/
 char const	*Location::InvalidLocationException::what(void) const throw(){
     return ("Invalid <Location> configuration format");
 }

@@ -51,7 +51,7 @@ class Location {
 		/* EXCEPTIONS */
 		class InvalidLocationException : public std::exception{
         public:
-            virtual char const	*what(void) const throw();
+            virtual char const		*what(void) const throw();
 		};
 	
 

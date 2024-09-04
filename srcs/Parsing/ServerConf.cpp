@@ -2,12 +2,14 @@
 #include "Parsing/Location.hpp"
 #include "webserv.hpp"
 
+/* ------------------- CONSTRUCTORS ----------------------*/
+
 ServerConf::ServerConf() : _ipAddr("127.0.0.1") {}
 
 ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1"){
 	std::stringstream	configStream(configString);
 	std::string			line, locationString, locationPath;
-	long				bigPortCheck;
+	//long				bigPortCheck;
 	short				port;
 	char				*ptr;
 
@@ -43,12 +45,7 @@ ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1"){
 			line.erase(0, line.find_first_not_of("listen"));
 			line.erase(0, line.find_first_not_of(WHITESPACES));
 			line.erase(line.find_last_not_of(WHITESPACES) + 1);
-			bigPortCheck = strtol(line.c_str(), &ptr, 10);
 			port = strtol(line.c_str(), &ptr, 10);
-			if (ptr[0] != 0 || port != bigPortCheck || port == 0){
-				std::cerr << "Error: " << RED << "Invalid port.\n" << RESET;
-				throw InvalidServerConfException();
-			}
 			this->_port.push_back(port);
 		}
 		else if (!line.find("max_body_size")){
@@ -68,19 +65,23 @@ ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1"){
 			this->_location[locationPath] = Location(locationPath, locationString.substr(0, locationString.find_last_of('}')));
 			locationString.clear();
 		}
-		//else {
-			//throw InvalidServerConfException();
-		//}
+		else if (line.empty())
+			continue ;
+		else
+			throw InvalidServerConfException();
 	}
 	checkAttribut();
 }
 
+/* ------------------- COPY CONSTRUCTOR ----------------------*/
 ServerConf::ServerConf(ServerConf const &cpy){
     *this = cpy;
 }
 
+/* ------------------- DESTRUCTOR ----------------------*/
 ServerConf::~ServerConf(){}
 
+/* ------------------- SURCHARGED OPERATOR ----------------------*/
 ServerConf  &ServerConf::operator=(ServerConf const &rhs){
     this->_serverName = rhs._serverName;
     this->_port = rhs._port;
@@ -88,16 +89,17 @@ ServerConf  &ServerConf::operator=(ServerConf const &rhs){
     this->_index = rhs._index;
 	this->_maxBodySize = rhs._maxBodySize;
     this->_errorPage = rhs._errorPage;
+	this->_ipAddr = rhs._ipAddr;
     this->_location = rhs._location;
     return (*this);
 }
 
-                /* GETTERS */
+/* ------------------- GETTERS ----------------------*/
 std::string ServerConf::getServerName(void) const{
     return (this->_serverName);
 }
 
-std::vector<unsigned short>         ServerConf::getPort(void) const{
+std::vector<unsigned short> ServerConf::getPort(void) const{
     return (this->_port);
 }
 
@@ -113,6 +115,9 @@ std::string ServerConf::getMaxBodySize(void) const{
 	return (this->_maxBodySize);
 }
 
+std::string	ServerConf::getErrorPage(void) const{
+	return (this->_errorPage);
+}
 std::map<std::string, Location> ServerConf::getLocation(void) const{
     return (this->_location);
 }
@@ -121,14 +126,21 @@ std::string ServerConf::getIpAddr(void)	const{
     return (this->_ipAddr);
 }
 
+/* ------------------- MEMBERS FUNCTIONS ----------------------*/
 void     ServerConf::checkAttribut(void) const{
-    std::map<std::string, Location>::const_iterator it;
+    std::vector<unsigned short>::const_iterator it;
 
     if (_serverName.empty() || _port.empty() || _errorPage.empty() || _maxBodySize.empty() || _location.empty()){
 		std::cerr << "Error: " << RED << "Missing args in server configuration. " << RED << "\n" << RESET;
         throw InvalidServerConfException();
-	} 
-    else if (_root[0] != '/'){
+	}
+	for (it = _port.begin(); it != _port.end(); it++){
+		if (*it < 1 || *it > 65534){
+			std::cerr << "Error: " << RED << "Port number is out of range." << RED << std::endl << RESET;
+			throw InvalidServerConfException();
+		}
+	}
+    if (_root[0] != '/'){
 		std::cerr << "Error: " << RED << "Invalid root path. " << RED << "\n" << RESET;
         throw InvalidServerConfException();
 	}
@@ -139,7 +151,6 @@ void     ServerConf::checkAttribut(void) const{
     return ;
 }
 
-/* Fonction permettant de print les attributs de la class ServerConf. */
 void    ServerConf::print(void) const {
         std::cout << "  Server: " << this->_serverName << std::endl;
         std::vector<unsigned short>::const_iterator it = _port.begin();
@@ -157,6 +168,7 @@ void    ServerConf::print(void) const {
         }
 }
 
+/* ------------------- EXCEPTIONS ----------------------*/
 char const	*ServerConf::InvalidServerConfException::what(void) const throw(){
     return ("Invalid <ServerConf> configurtation format");
 }
