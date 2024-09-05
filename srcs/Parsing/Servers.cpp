@@ -1,6 +1,5 @@
 #include "Parsing/Servers.hpp"
 #include "Parsing/ServerConf.hpp"
-#include "Parsing/Location.hpp"
 #include "webserv.hpp"
 
 /* ------------------- CONSTRUCTORS ----------------------*/
@@ -9,13 +8,11 @@ Servers::Servers() {}
 Servers::Servers(const std::string &conf_file){
 	std::ifstream		confFile;
 	std::string 		line, configString;
-	ServerConf			currentServer;
-	Location			currentLocation;
 
 	confFile.open(conf_file.c_str(), std::ios::in);
 	if (!confFile.is_open()) {
-		std::cerr << "Error: " << RED << "could not open file \"" << ORANGE << conf_file << RED << "\"" << RESET << std::endl;
-		return ;
+		std::cerr << RED << "Error: " << RESET << "could not open file \"" << ORANGE << conf_file << RESET << "\"\n";
+		throw AlreadyPrintedException();
 	}
 	while (std::getline(confFile, line)){
 		line.erase(0, line.find_first_not_of(WHITESPACES));
@@ -23,18 +20,20 @@ Servers::Servers(const std::string &conf_file){
 		if (line.empty() || line[0] == '#')
 			continue;
 		else if (line.find("server {") != std::string::npos) {
-			while (line.find("}")) {
+			while (line.find("}") || confFile.peek() != EOF) {
 				std::getline(confFile, line);
 				configString += line + '\n';
+			if (confFile.peek() == EOF && line[0] != '}')
+				throw UnexpectedEOFException();
 			}
 			this->_servConf.push_back(ServerConf(configString.substr(0, configString.find_last_of('}'))));
 			configString.clear();
 		}
 		else {
-			std::cerr << "Error: " << RED << "Invalid config line \"" << ORANGE << line << RED << "\"\n" << RESET;
+			std::cerr << RED << "Error: " << RESET << "Invalid config line \"" << ORANGE << line << RESET << "\"\n";
 			confFile.close();
 			this->_servConf.clear();
-			throw InvalidServersException();
+			throw AlreadyPrintedException();
 		}
 	}
 	confFile.close();
@@ -84,9 +83,4 @@ void	Servers::printConfigs() const {
 
 bool	Servers::isConfigured() const {
 	return !this->_servConf.empty();
-}
-
-/* ------------------- EXCEPTION ----------------------*/
-char const	*Servers::InvalidServersException::what(void) const throw(){
-    return ("Invalid <Servers> configurtation format");
 }

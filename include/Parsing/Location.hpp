@@ -53,6 +53,12 @@ class Location {
         public:
             virtual char const		*what(void) const throw();
 		};
+		class UnexpectedEOFException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Unexpected End Of File.\n";
+				}
+		};
 	
 
 };

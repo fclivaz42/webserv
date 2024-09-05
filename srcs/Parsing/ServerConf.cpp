@@ -9,12 +9,13 @@ ServerConf::ServerConf() : _ipAddr("127.0.0.1") {}
 ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1"){
 	std::stringstream	configStream(configString);
 	std::string			line, locationString, locationPath;
-	//long				bigPortCheck;
+	long				bigPortCheck;
 	short				port;
 	char				*ptr;
 
-	while(std::getline(configStream, line))
+	while(!configStream.eof())
 	{
+		std::getline(configStream, line);
 		line.erase(0, line.find_first_not_of(WHITESPACES));
 		line.erase(line.find_last_not_of(WHITESPACES) + 1);
 		if (!line.find("server_name")) {
@@ -46,6 +47,9 @@ ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1"){
 			line.erase(0, line.find_first_not_of(WHITESPACES));
 			line.erase(line.find_last_not_of(WHITESPACES) + 1);
 			port = strtol(line.c_str(), &ptr, 10);
+			bigPortCheck = strtol(line.c_str(), &ptr, 10);
+			if (ptr[0] != 0 || port != bigPortCheck || port == 0)
+				throw InvalidPortException();
 			this->_port.push_back(port);
 		}
 		else if (!line.find("max_body_size")){
@@ -58,15 +62,21 @@ ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1"){
 			line.erase(0, line.find_first_not_of("location"));
 			line.erase(0, line.find_first_not_of(WHITESPACES));
 			locationPath = line.substr(0, line.find_first_of(WHITESPACES));
-			while (line.find('}') == std::string::npos) {
+			while (line.find('}') == std::string::npos || configStream.peek() != EOF) {
 				std::getline(configStream, line);
 				locationString += line + '\n';
+			if (configStream.peek() == EOF && line[0] != '}')
+				throw UnexpectedEOFException();
 			}
+			if (configStream.peek() == EOF)
+				throw UnexpectedEOFException();
 			this->_location[locationPath] = Location(locationPath, locationString.substr(0, locationString.find_last_of('}')));
 			locationString.clear();
 		}
 		else if (line.empty())
 			continue ;
+		else if (configStream.peek() == EOF)
+			throw UnexpectedEOFException();
 		else
 			throw InvalidServerConfException();
 	}
@@ -127,27 +137,15 @@ std::string ServerConf::getIpAddr(void)	const{
 }
 
 /* ------------------- MEMBERS FUNCTIONS ----------------------*/
-void     ServerConf::checkAttribut(void) const{
+void     ServerConf::checkAttribut(void) const {
     std::vector<unsigned short>::const_iterator it;
 
-    if (_serverName.empty() || _port.empty() || _errorPage.empty() || _maxBodySize.empty() || _location.empty()){
-		std::cerr << "Error: " << RED << "Missing args in server configuration. " << RED << "\n" << RESET;
-        throw InvalidServerConfException();
-	}
-	for (it = _port.begin(); it != _port.end(); it++){
-		if (*it < 1 || *it > 65534){
-			std::cerr << "Error: " << RED << "Port number is out of range." << RED << std::endl << RESET;
-			throw InvalidServerConfException();
-		}
-	}
-    if (_root[0] != '/'){
-		std::cerr << "Error: " << RED << "Invalid root path. " << RED << "\n" << RESET;
-        throw InvalidServerConfException();
-	}
-	else if (_errorPage.size() < 15 || _errorPage.substr(0, 8) != "/errors/" || _errorPage.substr(11, 5) != ".html"){
-		std::cerr << "Error: " << RED << "Invalid error page path. " << RED << std::endl << RESET;
-		throw InvalidServerConfException();
-	}
+	if (_serverName.empty() || _port.empty() || _errorPage.empty() || _maxBodySize.empty() || _location.empty())
+		throw MissingArgsException();
+	if (_root[0] != '/')
+		throw InvalidRootPathException();
+	if (_errorPage.size() < 15 || _errorPage.substr(0, 8) != "/errors/" || _errorPage.substr(11, 5) != ".html")
+		throw InvalidErrorPageException();
     return ;
 }
 
@@ -166,9 +164,4 @@ void    ServerConf::print(void) const {
         for (; it2 != _location.end(); ++it2) {
             it2->second.print();
         }
-}
-
-/* ------------------- EXCEPTIONS ----------------------*/
-char const	*ServerConf::InvalidServerConfException::what(void) const throw(){
-    return ("Invalid <ServerConf> configurtation format");
 }

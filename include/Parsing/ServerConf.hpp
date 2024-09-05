@@ -49,8 +49,40 @@ class ServerConf{
 
 		/* EXCEPTIONS */
 		class InvalidServerConfException : public std::exception{
-        public:
-            virtual char const			*what(void) const throw();
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Invalid server configurtation format.\n";
+				}
+		};
+		class InvalidPortException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Invalid port.\n";
+				}
+		};
+		class MissingArgsException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Missing args in server configuration.\n";
+				}
+		};
+		class InvalidRootPathException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Invalid Root Path.\n";
+				}
+		};
+		class InvalidErrorPageException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Invalid error page path.\n";
+				}
+		};
+		class UnexpectedEOFException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Unexpected End Of File.\n";
+				}
 		};
 };
 

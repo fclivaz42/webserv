@@ -38,10 +38,23 @@ class Servers{
 
 		/* EXCEPTIONS */
 		class InvalidServersException : public std::exception{
-        public:
-            virtual char const	*what(void) const throw();
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Invalid Server configurtation format.\n";
+				}
 		};
-		
+		class AlreadyPrintedException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "";
+				}
+		};
+		class UnexpectedEOFException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Unexpected End Of File.\n";
+				}
+		};
 };
 
 #endif

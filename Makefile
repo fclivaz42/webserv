@@ -1,14 +1,4 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/08/27 18:28:30 by fclivaz           #+#    #+#              #
-#    Updated: 2024/09/02 20:02:43 by fclivaz          ###   LAUSANNE.ch        #
-#                                                                              #
-# **************************************************************************** #
+# Pas de header pour eviter les conflicts :)
 
 export MAKEFLAGS += --silent
 
@@ -20,18 +10,25 @@ CXX	= c++
 
 DEPS	=	${INCL}/webserv.hpp\
 			${INCL}/Sockets/SocketManager.hpp\
-			${INCL}/Sockets/HttpRequestHandler.hpp\
 			${INCL}/Parsing/Location.hpp\
 			${INCL}/Parsing/ServerConf.hpp\
 			${INCL}/Parsing/Servers.hpp\
+			${INCL}/Requests/Get.hpp\
+			${INCL}/Requests/Post.hpp\
+			${INCL}/Requests/Delete.hpp\
+			${INCL}/Requests/HttpRequest.hpp\
 			${SRCS}
 
 SRCS	=	${SUBDIR}/webserv.cpp\
 			${SUBDIR}/Sockets/SocketManager.cpp\
-			${SUBDIR}/Sockets/HttpRequestHandler.cpp\
 			${SUBDIR}/Parsing/Servers.cpp\
 			${SUBDIR}/Parsing/ServerConf.cpp\
-			${SUBDIR}/Parsing/Location.cpp
+			${SUBDIR}/Parsing/Location.cpp\
+			${SUBDIR}/Requests/Get.cpp\
+			${SUBDIR}/Requests/Post.cpp\
+			${SUBDIR}/Requests/Delete.cpp\
+			${SUBDIR}/Requests/HttpRequest.cpp\
+
 
 SUBDIR	= srcs
 
@@ -152,6 +149,10 @@ test: debug
 	-./webserv configs/broken.conf
 	@printf "Testing ${CYEL}another broken config...${RSET}\n"
 	-./webserv configs/broken2.conf
+	@printf "Testing ${CYEL}YET another broken config...${RSET}\n"
+	-./webserv configs/broken3.conf
+	@printf "Testing ${CYEL}the last broken config...${RSET}\n"
+	-./webserv configs/broken4.conf
 	@printf "Testing ${CYEL}an incomplete config...${RSET}\n"
 	-./webserv configs/incomplete.conf
 	@printf "Testing a working config...${RSET}\n"

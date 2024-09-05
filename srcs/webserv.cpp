@@ -11,7 +11,7 @@ int main (int ac, char **av)
 
 	
 	if (ac > 2) {
-		std::cerr << "Error: " << RED << "Too many arguments.\n" << RESET;
+		std::cerr << RED << "Error: " << RESET << "Too many arguments.\n";
 		return (1);
 	}
 	else if (ac < 2) {
@@ -22,7 +22,7 @@ int main (int ac, char **av)
 		config_file = av[1];
 	npos = config_file.find_last_of('.');
 	if (npos == std::string::npos || config_file.substr(npos + 1) != "conf") {
-		std::cerr << "Error: " << RED << "Incorrect extension.\n" << RESET;
+		std::cerr << RED << "Error: " << RESET << "Incorrect extension.\n";
 		return (2);
 	}
 	try {
@@ -35,8 +35,10 @@ int main (int ac, char **av)
 			return (-1);
 		socket.start();
 	}
-	catch (std::exception &e){
-		std::cout << e.what() << std::endl;
+	catch (const Servers::AlreadyPrintedException &e) {
+	}
+	catch (const std::exception &e){
+		std::cerr << RED << "Error: " << RESET << e.what();
 	}
 	return (0);
 }

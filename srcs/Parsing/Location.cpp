@@ -78,6 +78,8 @@ Location::Location(const std::string &path, const std::string& locationString) :
 		}
 		else if (line.empty())
 			continue ;
+		else if (locationStream.peek() == EOF)
+			throw UnexpectedEOFException();
 		else 
 			throw InvalidLocationException();
 	}
