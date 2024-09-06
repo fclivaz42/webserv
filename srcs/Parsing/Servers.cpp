@@ -21,10 +21,9 @@ Servers::Servers(const std::string &conf_file){
 			continue;
 		else if (line.find("server {") != std::string::npos) {
 			while (line.find("}") || confFile.peek() != EOF) {
-				std::getline(confFile, line);
+				if (std::getline(confFile, line).eof())
+					throw UnexpectedEOFException();
 				configString += line + '\n';
-			if (confFile.peek() == EOF && line[0] != '}')
-				throw UnexpectedEOFException();
 			}
 			this->_servConf.push_back(ServerConf(configString.substr(0, configString.find_last_of('}'))));
 			configString.clear();

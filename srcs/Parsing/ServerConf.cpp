@@ -62,14 +62,11 @@ ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1"){
 			line.erase(0, line.find_first_not_of("location"));
 			line.erase(0, line.find_first_not_of(WHITESPACES));
 			locationPath = line.substr(0, line.find_first_of(WHITESPACES));
-			while (line.find('}') == std::string::npos || configStream.peek() != EOF) {
-				std::getline(configStream, line);
+			while (line.find('}') == std::string::npos) {
+				if (std::getline(configStream, line).eof())
+					throw UnexpectedEOFException();
 				locationString += line + '\n';
-			if (configStream.peek() == EOF && line[0] != '}')
-				throw UnexpectedEOFException();
 			}
-			if (configStream.peek() == EOF)
-				throw UnexpectedEOFException();
 			this->_location[locationPath] = Location(locationPath, locationString.substr(0, locationString.find_last_of('}')));
 			locationString.clear();
 		}

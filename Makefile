@@ -46,7 +46,7 @@ DBFLAGS	= DEBUG=1
 
 LFLAGS = -I${INCL} -g3
 
-LDFLAGS	= -g3 -fsanitize=address -I${INCL}
+LDFLAGS	= -g3 -I${INCL}
 
 INCL	= include
 
@@ -155,7 +155,7 @@ test: debug
 	-./webserv configs/broken4.conf
 	@printf "Testing ${CYEL}an incomplete config...${RSET}\n"
 	-./webserv configs/incomplete.conf
-	@printf "Testing a working config...${RSET}\n"
+	@printf "Testing a ${CGRN}working config...${RSET}\n"
 	-./webserv configs/file.conf
 
 .PHONY: all fclean clean re

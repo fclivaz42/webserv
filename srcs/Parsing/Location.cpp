@@ -152,22 +152,16 @@ bool	Location::getUpload(void) const{
 void     Location::checkAttribut(void) const{
 	std::vector<std::string>::const_iterator it;
 
-	if (this->_root.empty() && (this->_fastcgiPass.empty() || this->_fastcgiIndex.empty())){
-		std::cerr << "Error: " << RED << "Missing args in location configuration." << RED << "\n" << RESET;
-		throw InvalidLocationException();
-	}
+	if (this->_root.empty() && (this->_fastcgiPass.empty() || this->_fastcgiIndex.empty()))
+		throw MissingArgsException();
 	if (!_allowMethods.empty()){
 		for (it = _allowMethods.begin(); it != _allowMethods.end(); ++it){
-			if (*it != "GET" && *it != "POST" && *it != "DELETE"){
-				std::cerr << "Error: " << RED << "Invalid methods. " << RED << "\n" << RESET;
-				throw InvalidLocationException();
-			}
+			if (*it != "GET" && *it != "POST" && *it != "DELETE")
+				throw InvalidMethodsException();
 		}
 	}
-	if (!_root.empty() && _root[0] != '/'){
-		std::cerr << "Error: " << RED << "Invalid location root. " << RED << "\n" << RESET;
-		throw InvalidLocationException();
-	}
+	if (!_root.empty() && _root[0] != '/')
+		throw InvalidRootException();
 	return ;
 }
 
@@ -184,9 +178,4 @@ void Location::print() const {
 		std::cout << "    FastCgiIndex: " << _fastcgiIndex << std::endl;
 		std::cout << "    Accept Uploads: " << (_upload ? "Yes" : "No") << std::endl;
 		std::cout << "    Auto Index: " << (_autoIndex ? "Yes" : "No") << std::endl;
-}
-
-/* ------------------- EXCEPTION ----------------------*/
-char const	*Location::InvalidLocationException::what(void) const throw(){
-    return ("Invalid <Location> configuration format");
 }
