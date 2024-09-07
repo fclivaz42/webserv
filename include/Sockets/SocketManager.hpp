@@ -28,6 +28,7 @@
 #include <fstream>
 #include <string>
 #include "webserv.hpp"
+#include "Parsing/ServerConf.hpp"
 
 class SocketManager
 {
@@ -37,9 +38,9 @@ class SocketManager
 		std::vector<int>		_port;
 		std::string			_host;
 		
-		void			handleClient(int clientFd);
+		void			handleClient(int clientFd, const ServerConf& serverConf);
 	public:
-		SocketManager(const std::vector<int>& port);
+		SocketManager(const ServerConf& serverConf);
 		~SocketManager();
 
 		//METHODS
@@ -49,7 +50,7 @@ class SocketManager
 		bool			startListening(int backlog = 10);
 		int				acceptConnection(int serverFd);
 		std::string		readMessage(int clientFd);
-		int				start();
+		int				start(const ServerConf& serverConf);
 		bool			isServerFd(int fd);
 		bool			clientDeco(int fd);
 		static std::string	readFile(const std::string& filePath);

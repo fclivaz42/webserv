@@ -9,7 +9,7 @@ int main (int ac, char **av)
 	if (ac > 1){
 		Servers	serv(av[1]);
 		ServerConf servOne = serv.getServConf(1);
-		SocketManager socket(servOne.getPort());
+		SocketManager socket(servOne);
 	
 	
 	
@@ -24,7 +24,7 @@ int main (int ac, char **av)
 			return (-1);
 		}
 	
-		socket.start();
+		socket.start(servOne);
 		return (0);
 	}
 	else if (ac == 1)

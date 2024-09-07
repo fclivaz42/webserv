@@ -2,18 +2,18 @@ server {
     server_name example.com
     listen 8080
     listen 3000
-    root /var/www/example.com
+    root /public
     index index.html
     
     location / {
         methods GET POST
-        root /var/www/example.com/public
+        root /public
         index index.html
     }
 
     location /upload {
         methods POST
-        root /var/www/example.com/uploads
+        root /public/uploads
         accept_uploads yes
     }
 
@@ -28,7 +28,7 @@ server {
     
     location / {
         methods GET
-        root /var/www/test.com/public
+        root /public
         index index.html
     }
 

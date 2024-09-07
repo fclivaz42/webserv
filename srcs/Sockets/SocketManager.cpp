@@ -15,6 +15,7 @@
 #include "Requests/Get.hpp"
 #include "Requests/Post.hpp"
 #include "Requests/Delete.hpp"
+#include "Parsing/ServerConf.hpp"
 
 //SETTING UP THE SOCKET MANAGER
 // Initialise le fd pour le server scoket a -1 pour indiquer que le socket n'a pas ete cree
@@ -23,10 +24,10 @@
 // set l'address family a AF_INET ce qui veut dire qu'on utilise le protocole IPv4
 // set le server sur INADDR_ANY pour binder le server a toutes les network interfaces available
 // htons(_port) convertis le numero de port de host byte a network byte order pour pouvoir lire sur tous les systemes
-SocketManager::SocketManager(const std::vector<int>& port) : _port(port)
+SocketManager::SocketManager(const ServerConf& serverConf) : _port(serverConf.getPort())
 {
-	_serverFd.resize(port.size(), -1);
-	_serverAddress.resize(port.size());
+	_serverFd.resize(serverConf.getPort().size(), -1);
+	_serverAddress.resize(serverConf.getPort().size());
 	
 	for (size_t i = 0; i < _serverAddress.size(); i++)
 	{
@@ -175,7 +176,7 @@ std::string	SocketManager::readMessage(int clientFd)
 //La loop principale checks non stop si il y a une activite via les fds
 //Quand un nouveau client se connecte, il est ajoute a la liste the fd monitored
 //Quand un client envoie de la data, le server lit la data, la process et s'occupe de la deconnexion
-int	SocketManager::start()
+int	SocketManager::start(const ServerConf& serverConf)
 {
 	std::vector<struct pollfd> fds;
 
@@ -215,7 +216,7 @@ int	SocketManager::start()
 		{
 			if (fds[i].revents & POLLIN)
 			{
-				handleClient(fds[i].fd);
+				handleClient(fds[i].fd, serverConf);
 				fds.erase(fds.begin() + i);
 				i--;
 			}
@@ -225,7 +226,7 @@ int	SocketManager::start()
 }
 
 //FUNCTION TO STORE REQUEST FROM CLIENT INTO HTTPREQUEST CLASS
-void	SocketManager::handleClient(int clientFd)
+void	SocketManager::handleClient(int clientFd, const ServerConf& serverConf)
 {
 	std::string message = readMessage(clientFd);
 	std::string response;
@@ -240,7 +241,7 @@ void	SocketManager::handleClient(int clientFd)
 		try
 		{
 			if (request.getMethod() == "GET")
-				response = processGetRequest(request);
+				response = processGetRequest(request, serverConf);
 			else if (request.getMethod() == "POST")
 				response = processPostRequest(request);
 			else if (request.getMethod() == "DELETE")
