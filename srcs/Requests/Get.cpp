@@ -52,7 +52,6 @@ bool		fileExists(std::string localPath)
 {
 	std::ifstream file(localPath.c_str());
 
-	file.open(localPath.c_str());
 	return (file.good());
 }
 
@@ -152,12 +151,13 @@ std::string	processGetRequest(const HttpRequest& request, const ServerConf& serv
 		localPath = createLocalPathFromRoot(path);
 		std::cout << PURPLE << localPath << RESET << std::endl;
 	}
-	//if (!fileExists(path))
+	//TODO When I uncomment these, it fucks up everything hehe
+	//if (!fileExists(localPath))
 	//{
-	//	std::cerr << RED << "ERROR: File not found: " << path << RESET << std::endl;
+	//	std::cerr << RED << "ERROR: File not found: " << localPath << RESET << std::endl;
 	//	return ("HTTP/1.1 ERROR 404 Page not found\r\nConnection: close\r\n\r\n");
 	//}
-	//if (!hasAccess(path))
+	//if (!hasAccess(localPath))
 	//{
 	//	std::cerr << RED << "ERROR: Access denied to file: " << localPath << RESET << std::endl;
 	//	return ("HTTP/1.1 ERROR 403 Forbidden\r\nConnection: close\r\n\r\n");
