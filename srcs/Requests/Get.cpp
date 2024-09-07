@@ -6,12 +6,13 @@
 //   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/08/30 14:33:20 by lmedrano          #+#    #+#             //
-//   Updated: 2024/09/04 11:31:53 by lmedrano         ###   ########.fr       //
+//   Updated: 2024/09/07 18:52:15 by lmedrano         ###   ########.fr       //
 //                                                                            //
 // ************************************************************************** //
 
 #include "Requests/Get.hpp"
 #include "Requests/HttpRequest.hpp"
+#include "Requests/HttpResponse.hpp"
 #include "Parsing/Location.hpp"
 
 bool		hasExtension(const std::string& path, const std::string& extension)
@@ -127,6 +128,7 @@ bool 		isLocationPath(const std::string& path, const ServerConf& serverConf)
 
 std::string	processGetRequest(const HttpRequest& request, const ServerConf& serverConf)
 {
+	HttpResponse	ret(serverConf);
 	if (request.getBody().size() > MAX_BODY_SIZE)
 		return ("HTTP/1.1 ERROR 413 Payload Too Large\r\nConnection: close\r\n\r\n");
 	//TODO send http error response instead
@@ -155,12 +157,12 @@ std::string	processGetRequest(const HttpRequest& request, const ServerConf& serv
 	//if (!fileExists(localPath))
 	//{
 	//	std::cerr << RED << "ERROR: File not found: " << localPath << RESET << std::endl;
-	//	return ("HTTP/1.1 ERROR 404 Page not found\r\nConnection: close\r\n\r\n");
+	//	return (ret.generateResponse("404", ""));
 	//}
 	//if (!hasAccess(localPath))
 	//{
 	//	std::cerr << RED << "ERROR: Access denied to file: " << localPath << RESET << std::endl;
-	//	return ("HTTP/1.1 ERROR 403 Forbidden\r\nConnection: close\r\n\r\n");
+	//	return (ret.generateResponse("403", ""));
 	//}
 
 	std::string fileContent = SocketManager::readFile("." + localPath);
@@ -171,5 +173,6 @@ std::string	processGetRequest(const HttpRequest& request, const ServerConf& serv
 
 	std::string alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
 
+	//return (ret.generateResponse("200", localPath));
 	return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + fileContent);
 }
