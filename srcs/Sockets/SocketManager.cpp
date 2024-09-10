@@ -301,7 +301,7 @@ const std::vector<int>&	SocketManager::getServerFd() const
 }
 
 //SETTERS
-void	SocketManager::setPorts(std::vector<int> &port)
+void	SocketManager::setPorts(std::vector<unsigned short> &port)
 {
 	_port = port;
 }

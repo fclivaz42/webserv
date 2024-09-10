@@ -146,6 +146,26 @@ re:
 		@${MAKE} fclean r
 		@${MAKE} all r
 
+test: debug
+	@printf "Testing ${CYEL}a non-existent file...${RSET}\n"
+	-./webserv configs/doesntexist.conf
+	@printf "Testing ${CYEL}a non-existent file with an invalid extension...${RSET}\n"
+	-./webserv configs/doesntexist.conffff
+	@printf "Testing ${CYEL}a jpg...${RSET}\n"
+	-./webserv public/uploads/400.jpg
+	@printf "Testing ${CYEL}an empty file...${RSET}\n"
+	-./webserv configs/empty.conf
+	@printf "Testing ${CYEL}an file with only a whitespace...${RSET}\n"
+	-./webserv configs/whitespace.conf
+	@printf "Testing ${CYEL}a broken config...${RSET}\n"
+	-./webserv configs/broken.conf
+	@printf "Testing ${CYEL}another broken config...${RSET}\n"
+	-./webserv configs/broken2.conf
+	@printf "Testing ${CYEL}an incomplete config...${RSET}\n"
+	-./webserv configs/incomplete.conf
+	@printf "Testing a working config...${RSET}\n"
+	-./webserv configs/file.conf
+
 .PHONY: all fclean clean re
 
 $(eval r:;@:)

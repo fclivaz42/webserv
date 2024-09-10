@@ -6,7 +6,7 @@
 /*   By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/27 18:02:21 by fclivaz           #+#    #+#             */
-/*   Updated: 2024/08/27 18:03:26 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/09/03 05:05:35 by fclivaz          ###   LAUSANNE.ch       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@
 #define ORANGE "\x1b[38;5;208m"
 #define RED "\x1b[31m"
 #define PURPLE "\x1b[35m"
-
+#define WHITESPACES " \t\f\v\n\r"
 // Buffer size
 
 #define BUFFER_SIZE 1024

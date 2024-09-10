@@ -1,31 +1,115 @@
 #include "Parsing/Location.hpp"
+#include "webserv.hpp"
 
-Location::Location(){}
+/* ------------------- CONSTRUCTOR ----------------------*/
+Location::Location() : _autoIndex(false), _upload(false){}
 
-Location::Location(const std::string &path) : _path(path){}
+Location::Location(const std::string &path, const std::string& locationString) : _path(path), _autoIndex(false), _upload(false){
 
+	std::stringstream	locationStream(locationString);
+	std::string			line;
+	size_t				pos = 0;
+
+	while(std::getline(locationStream, line))
+	{
+		line.erase(0, line.find_first_not_of(WHITESPACES));
+		line.erase(line.find_last_not_of(WHITESPACES) + 1);
+		if (!line.find("root")) {
+			line.erase(0, line.find_first_not_of("root"));
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			this->_root = line;
+		}
+		else if (!line.find("index")) {
+			line.erase(0, line.find_first_not_of("index"));
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			this->_index = line;
+		}
+		else if (!line.find("accept_uploads")) {
+			line.erase(0, line.find_first_not_of("accept_uploads"));
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			if (line.compare("1") || line.compare("yes") || line.compare("true"))
+				this->_upload = true;
+			else if (line.compare("0") || line.compare("no") || line.compare("false"))
+				this->_upload = false;
+			else {
+				std::cerr << "Error: " << RED << " Invalid accept_upload config." << std::endl << RESET;
+				throw InvalidLocationException();
+			}
+		}
+		else if (!line.find("auto_index")) {
+			line.erase(0, line.find_first_not_of("auto_index"));
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			if (line.compare("1") || line.compare("yes") || line.compare("true"))
+				this->_upload = true;
+			else if (line.compare("0") || line.compare("no") || line.compare("false"))
+				this->_upload = false;
+			else {
+				std::cerr << "Error: " << RED << " Invalid auto_index config." << std::endl << RESET;
+			}
+		}
+		else if (!line.find("methods")) {
+			line.erase(0, line.find_first_not_of("methods"));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			while (pos != std::string::npos)
+			{
+				line.erase(0, line.find_first_not_of(WHITESPACES));
+				this->_allowMethods.push_back(line.substr(0, line.find_first_of(WHITESPACES)));
+				pos = line.find_first_of(WHITESPACES);
+				if (pos == std::string::npos)
+					break ;
+				line = line.substr(pos);
+			}
+		}
+		else if (!line.find("fastcgiPass")){
+			line.erase(0, line.find_first_not_of("fastcgiPass"));
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			this->_fastcgiPass = line;
+		}
+		else if (!line.find("fastcgiIndex")){
+			line.erase(0, line.find_first_not_of("fastcgiIndex"));
+			line.erase(0, line.find_first_not_of(WHITESPACES));
+			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			this->_fastcgiIndex = line;
+		}
+		else if (line.empty())
+			continue ;
+		else 
+			throw InvalidLocationException();
+	}
+	checkAttribut();
+}
+
+/* ------------------- COPY CONSTRUCTOR ----------------------*/
 Location::Location(Location const &cpy){
 	*this = cpy;
 }
 
+/* ------------------- DESTRUCTOR ----------------------*/
 Location::~Location(){}
 
-Location    &Location::operator=(Location const &rhs){
-	this->_allowMethods = rhs._allowMethods;
-	this->_path = rhs._path;
-	this->_index = rhs._index;
-	this->_root = rhs._root;
-	this->_returnURL = rhs._returnURL;
-	this->_uploadStore = rhs._uploadStore;
-	this->_fastcgiPass = rhs._fastcgiPass;
-	this->_fastcgiIndex = rhs._fastcgiIndex;
-	this->_autoIndex = rhs._autoIndex;
-	this->_upload = rhs._upload;
-
+/* ------------------- SURCHARGED OPERATOR ----------------------*/
+Location    &Location::operator=(Location const &rhs)
+{
+	if (this != &rhs) {
+		this->_allowMethods = rhs._allowMethods;
+		this->_path = rhs._path;
+		this->_index = rhs._index;
+		this->_root = rhs._root;
+		this->_returnURL = rhs._returnURL;
+		this->_fastcgiPass = rhs._fastcgiPass;
+		this->_fastcgiIndex = rhs._fastcgiIndex;
+		this->_autoIndex = rhs._autoIndex;
+		this->_upload = rhs._upload;
+	}
 	return (*this);
 }
 
-				/* GETTERS */
+/* ------------------- GETTERS ----------------------*/
 std::vector<std::string>    Location::getAllowMethods(void) const{
 	return (this->_allowMethods);
 }
@@ -46,10 +130,6 @@ std::string	Location::getReturnURL(void) const{
 	return (this->_returnURL);
 }
 
-std::string	Location::getUploadStore(void) const{
-	return (this->_uploadStore);
-}
-
 std::string	Location::getFastcgiPass(void) const{
 	return (this->_fastcgiPass);
 }
@@ -66,72 +146,29 @@ bool	Location::getUpload(void) const{
 	return (this->_upload);
 }
 
-				/* SETTERS */
-void	Location::setAllowMethods(const std::string &methods){
-	std::string	method;
-	std::istringstream	iss(methods);
-
-	this->_allowMethods.clear();
-	while (iss >> method){
-		_allowMethods.push_back(method);
-	}
-}
-
-void	Location::setPath(const std::string &path){
-	this->_path = path;
-}
-
-void	Location::setIndex(const std::string &index){
-	this->_index = index;
-}
-
-void	Location::setRoot(const std::string &root){
-	this->_root = root;
-}
-
-void	Location::setReturnURL(const std::string &url){
-	this->_returnURL = url;
-}
-
-void	Location::setUploadStore(const std::string &store){
-	this->_uploadStore = store;
-}
-
-void	Location::setFastcgiPass(const std::string &pass){
-	this->_fastcgiPass = pass;
-}
-
-void	Location::setFastcgiIndex(const std::string &index){
-	this->_fastcgiIndex = index;
-}
-
-void	Location::setAutoIndex(bool index){
-	this->_autoIndex = index;
-}
-
-void	Location::setUpload(const std::string &upload){
-	if (upload == "yes")
-		this->_upload = true;
-	else
-		this->_upload = false;
-}
-
-int     Location::checkAttribut(void) const{
+/* ------------------- MEMBERS FUNCTIONS ----------------------*/
+void     Location::checkAttribut(void) const{
 	std::vector<std::string>::const_iterator it;
 
-	if (_allowMethods.empty() || _root.empty())
-		return (1);
-	for (it = _allowMethods.begin(); it != _allowMethods.end(); ++it){
-		if (*it != "GET" && *it != "POST" && *it != "DELETE")
-			return (1);
+	if (this->_root.empty() && (this->_fastcgiPass.empty() || this->_fastcgiIndex.empty())){
+		std::cerr << "Error: " << RED << "Missing args in location configuration." << RED << "\n" << RESET;
+		throw InvalidLocationException();
 	}
-	if (_root[0] != '/')
-		return (1);
-
-	return (0);
+	if (!_allowMethods.empty()){
+		for (it = _allowMethods.begin(); it != _allowMethods.end(); ++it){
+			if (*it != "GET" && *it != "POST" && *it != "DELETE"){
+				std::cerr << "Error: " << RED << "Invalid methods. " << RED << "\n" << RESET;
+				throw InvalidLocationException();
+			}
+		}
+	}
+	if (!_root.empty() && _root[0] != '/'){
+		std::cerr << "Error: " << RED << "Invalid location root. " << RED << "\n" << RESET;
+		throw InvalidLocationException();
+	}
+	return ;
 }
 
-/* Fonction permettant de print les attributs de la class Location. */
 void Location::print() const {
 		std::cout << "  Location: " << _path << std::endl;
 		std::vector<std::string>::const_iterator it;
@@ -140,5 +177,14 @@ void Location::print() const {
 		}
 		std::cout << "    Root: " << _root << std::endl;
 		std::cout << "    Index: " << _index << std::endl;
+		std::cout << "    Return URL: " << _returnURL << std::endl;
+		std::cout << "    FastCgiPass: " << _fastcgiPass << std::endl;
+		std::cout << "    FastCgiIndex: " << _fastcgiIndex << std::endl;
 		std::cout << "    Accept Uploads: " << (_upload ? "Yes" : "No") << std::endl;
+		std::cout << "    Auto Index: " << (_autoIndex ? "Yes" : "No") << std::endl;
+}
+
+/* ------------------- EXCEPTION ----------------------*/
+char const	*Location::InvalidLocationException::what(void) const throw(){
+    return ("Invalid <Location> configuration format");
 }

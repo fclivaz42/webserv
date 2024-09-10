@@ -16,24 +16,31 @@ class Servers{
 
 	public: 
 		/* CONSTRUCTORS */
+		Servers();
 		Servers(const std::string &confFile);
+
 		/* COPY CONSTRUCTOR */
 		Servers(Servers const &cpy);
+
 		/* DESTRUCTOR */
 		~Servers();
+
 		/* SURCHARGED OPERATORS */
 		Servers &operator=(Servers const &rhs);
+
 		/* GETTERS */
-		ServerConf getServConf(int lequel) const;
-		/* SETTERS */
+		ServerConf 				getServConf(int lequel) const;
 		
 		/* MEMBERS FUNCTIONS */
-		void									loadConfig(const std::string &confFile);
-		std::pair <std::string, std::string>	pairConf(std::string line);
-		void									setConf(std::pair<std::string, std::string> keyValue, ServerConf &current);
-		void									setConfLoc(std::pair<std::string, std::string> keyValue, Location &current);
-		void 									printConfigs(void) const;
-		int										checkValue(void);
+		void					loadConfig(const std::string &confFile);
+		void 					printConfigs(void) const;
+		bool					isConfigured(void) const;
+
+		/* EXCEPTIONS */
+		class InvalidServersException : public std::exception{
+        public:
+            virtual char const	*what(void) const throw();
+		};
 		
 };
 
