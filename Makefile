@@ -155,7 +155,7 @@ test: debug
 	-./webserv configs/broken4.conf
 	@printf "Testing ${CYEL}an incomplete config...${RSET}\n"
 	-./webserv configs/incomplete.conf
-	@printf "Testing a ${CGRN}working config...${RSET}\n"
+	@printf "Testing ${CGRN}a working config...${RSET}\n"
 	-./webserv configs/file.conf
 
 .PHONY: all fclean clean re

@@ -45,8 +45,6 @@ Location::Location(const std::string &path, const std::string& locationString) :
 			line.erase(line.find_last_not_of(WHITESPACES) + 1);
 			if (line.compare("1") || line.compare("yes") || line.compare("true"))
 				this->_upload = true;
-			else if (line.compare("0") || line.compare("no") || line.compare("false"))
-				this->_upload = false;
 			else {
 				std::cerr << "Error: " << RED << " Invalid auto_index config." << std::endl << RESET;
 			}
@@ -78,8 +76,6 @@ Location::Location(const std::string &path, const std::string& locationString) :
 		}
 		else if (line.empty())
 			continue ;
-		else if (locationStream.peek() == EOF)
-			throw UnexpectedEOFException();
 		else 
 			throw InvalidLocationException();
 	}

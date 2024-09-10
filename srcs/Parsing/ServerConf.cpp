@@ -62,7 +62,7 @@ ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1"){
 			line.erase(0, line.find_first_not_of("location"));
 			line.erase(0, line.find_first_not_of(WHITESPACES));
 			locationPath = line.substr(0, line.find_first_of(WHITESPACES));
-			while (line.find('}') == std::string::npos) {
+			while (!(line.find('}') == 4 && configStream.peek() != EOF)) {
 				if (std::getline(configStream, line).eof())
 					throw UnexpectedEOFException();
 				locationString += line + '\n';
@@ -72,8 +72,6 @@ ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1"){
 		}
 		else if (line.empty())
 			continue ;
-		else if (configStream.peek() == EOF)
-			throw UnexpectedEOFException();
 		else
 			throw InvalidServerConfException();
 	}

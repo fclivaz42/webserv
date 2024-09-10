@@ -20,9 +20,9 @@ Servers::Servers(const std::string &conf_file){
 		if (line.empty() || line[0] == '#')
 			continue;
 		else if (line.find("server {") != std::string::npos) {
-			while (line.find("}") || confFile.peek() != EOF) {
+			while (!(line.find('}') == 0 && confFile.peek() != EOF)) {
 				if (std::getline(confFile, line).eof())
-					throw UnexpectedEOFException();
+					break ;
 				configString += line + '\n';
 			}
 			this->_servConf.push_back(ServerConf(configString.substr(0, configString.find_last_of('}'))));
