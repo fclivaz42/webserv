@@ -51,10 +51,34 @@ class Location {
 		/* EXCEPTIONS */
 		class InvalidLocationException : public std::exception{
         public:
-            virtual char const		*what(void) const throw();
+            virtual char const		*what(void) const throw() {
+				return ("Invalid <Location> configuration format.\n");
+			}
 		};
-	
-
+		class UnexpectedEOFException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Unexpected End Of File.\n";
+				}
+		};
+		class MissingArgsException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Missing args in location configuration.\n";
+				}
+		};
+		class InvalidMethodsException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Invalid methods.\n";
+				}
+		};
+		class InvalidRootException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "Invalid location root.\n";
+				}
+		};
 };
 
 #endif
