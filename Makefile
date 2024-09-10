@@ -17,6 +17,7 @@ DEPS	=	${INCL}/webserv.hpp\
 			${INCL}/Requests/Post.hpp\
 			${INCL}/Requests/Delete.hpp\
 			${INCL}/Requests/HttpRequest.hpp\
+			${INCL}/Requests/HttpResponse.hpp\
 			${SRCS}
 
 SRCS	=	${SUBDIR}/webserv.cpp\
@@ -28,6 +29,7 @@ SRCS	=	${SUBDIR}/webserv.cpp\
 			${SUBDIR}/Requests/Post.cpp\
 			${SUBDIR}/Requests/Delete.cpp\
 			${SUBDIR}/Requests/HttpRequest.cpp\
+			${SUBDIR}/Requests/HttpResponse.cpp\
 
 
 SUBDIR	= srcs

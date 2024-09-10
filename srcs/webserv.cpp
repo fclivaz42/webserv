@@ -9,7 +9,6 @@ int main (int ac, char **av)
 	Servers				serv;
 	std::string			config_file;
 
-	
 	if (ac > 2) {
 		std::cerr << RED << "Error: " << RESET << "Too many arguments.\n";
 		return (1);
@@ -27,13 +26,13 @@ int main (int ac, char **av)
 	}
 	try {
 		serv = Servers(config_file);
-		SocketManager socket(serv.getServConf(1).getPort());
+		SocketManager socket(serv.getServConf(1));
 
 		serv.printConfigs();
 		socket.setHost(serv.getServConf(1).getIpAddr());
 		if (!socket.createSocket() || !socket.bindSocket() || !socket.startListening())
 			return (-1);
-		socket.start();
+		socket.start(serv.getServConf(1));
 	}
 	catch (const Servers::AlreadyPrintedException &e) {
 	}
