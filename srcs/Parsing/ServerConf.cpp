@@ -139,7 +139,7 @@ void     ServerConf::checkAttribut(void) const {
 		throw MissingArgsException();
 	if (_root[0] != '/')
 		throw InvalidRootPathException();
-	if (_errorPage.size() < 15 || _errorPage.substr(0, 8) != "/errors/" || _errorPage.substr(11, 5) != ".html")
+	if (_errorPage.size() < 15 || _errorPage.substr(0, 15) != "/public/errors/" || _errorPage.substr(18, 5) != ".html")
 		throw InvalidErrorPageException();
     return ;
 }

@@ -35,6 +35,7 @@ int main (int ac, char **av)
 		socket.start(serv.getServConf(1));
 	}
 	catch (const Servers::AlreadyPrintedException &e) {
+		(void)e;
 	}
 	catch (const std::exception &e){
 		std::cerr << RED << "Error: " << RESET << e.what();

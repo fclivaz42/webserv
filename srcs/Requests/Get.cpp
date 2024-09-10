@@ -1,15 +1,3 @@
-// ************************************************************************** //
-//                                                                            //
-//                                                        :::      ::::::::   //
-//   Get.cpp                                            :+:      :+:    :+:   //
-//                                                    +:+ +:+         +:+     //
-//   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
-//                                                +#+#+#+#+#+   +#+           //
-//   Created: 2024/08/30 14:33:20 by lmedrano          #+#    #+#             //
-//   Updated: 2024/09/07 18:52:15 by lmedrano         ###   ########.fr       //
-//                                                                            //
-// ************************************************************************** //
-
 #include "Requests/Get.hpp"
 #include "Requests/HttpRequest.hpp"
 #include "Requests/HttpResponse.hpp"

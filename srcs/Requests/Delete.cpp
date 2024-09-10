@@ -1,15 +1,3 @@
-// ************************************************************************** //
-//                                                                            //
-//                                                        :::      ::::::::   //
-//   Delete.cpp                                         :+:      :+:    :+:   //
-//                                                    +:+ +:+         +:+     //
-//   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
-//                                                +#+#+#+#+#+   +#+           //
-//   Created: 2024/09/04 10:46:15 by lmedrano          #+#    #+#             //
-//   Updated: 2024/09/04 11:15:46 by lmedrano         ###   ########.fr       //
-//                                                                            //
-// ************************************************************************** //
-
 #include "Requests/Get.hpp"
 #include "Requests/Delete.hpp"
 #include "Requests/HttpRequest.hpp"

@@ -1,44 +1,26 @@
-// ************************************************************************** //
-//                                                                            //
-//                                                        :::      ::::::::   //
-//   HttpResponse.cpp                                   :+:      :+:    :+:   //
-//                                                    +:+ +:+         +:+     //
-//   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
-//                                                +#+#+#+#+#+   +#+           //
-//   Created: 2024/09/07 18:24:02 by lmedrano          #+#    #+#             //
-//   Updated: 2024/09/07 18:50:02 by lmedrano         ###   ########.fr       //
-//                                                                            //
-// ************************************************************************** //
-
 #include "Requests/HttpResponse.hpp"
 #include "Requests/Get.hpp"
 
 HttpResponse::HttpResponse(const ServerConf& serverConf) : serverConf(serverConf)
 {}
 
-std::string		HttpResponse::generateResponse(const std::string& statusCode, const std::string& path) const
+const std::string	HttpResponse::generateResponse(int statusCode, const std::string& path) const
 {
-	if (statusCode == "404")
-	{
-		std::string content = SocketManager::readFile(path);
-		std::cout << RED << content << RESET << std::endl;
-		std::string contentType = getContentType(path);
-		std::cout << RED << contentType << RESET << std::endl;
-		return ("HTTP/1.1 404 Not Found\r\nContent-Type: " + contentType +  "\r\n\r\n" + content);
+	std::string content = SocketManager::readFile(path);
+	std::string contentType = getContentType(path);
+
+	switch (statusCode) {
+		case (200):
+			return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n\r\n" + content);
+		case (403):
+			return ("HTTP/1.1 403 Forbidden\r\n" + getErrorPage("403") + "\r\n");
+		case (404):
+			std::cout << RED << content << RESET << std::endl;
+			std::cout << RED << contentType << RESET << std::endl;
+			return ("HTTP/1.1 404 Not Found\r\nContent-Type: " + contentType +  "\r\n\r\n" + content);
+		default:
+			return ("HTTP/1.1 500 Internal Server Error\r\n\r\n");
 	}
-	else if (statusCode == "403")
-	{
-		std::string content = SocketManager::readFile(path);
-		std::string contentType = getContentType(path);
-		return ("HTTP/1.1 403 Forbidden\r\n" + getErrorPage("403") + "\r\n");
-	}
-	else if (statusCode == "200")
-	{
-		std::string content = SocketManager::readFile(path);
-		std::string contentType = getContentType(path);
-		return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n\r\n" + content);
-	}
-	return ("HTTP/1.1 500 Internal Server Error\r\n\r\n");
 }
 
 std::string		HttpResponse::getErrorPage(const std::string& errorCode) const

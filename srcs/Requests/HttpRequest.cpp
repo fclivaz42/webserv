@@ -1,15 +1,3 @@
-// ************************************************************************** //
-//                                                                            //
-//                                                        :::      ::::::::   //
-//   HttpRequest.cpp                                    :+:      :+:    :+:   //
-//                                                    +:+ +:+         +:+     //
-//   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
-//                                                +#+#+#+#+#+   +#+           //
-//   Created: 2024/09/03 14:35:14 by lmedrano          #+#    #+#             //
-//   Updated: 2024/09/04 11:31:23 by lmedrano         ###   ########.fr       //
-//                                                                            //
-// ************************************************************************** //
-
 #include "Requests/HttpRequest.hpp"
 
 HttpRequest::HttpRequest() : method(""), path(""), version(""), body("")
@@ -85,7 +73,7 @@ void	HttpRequest::parseRequest(const std::string& request)
 	std::cout << request<< std::endl;
 	if (!std::getline(iss, line) || line.empty())
 	{
-		std::cerr << RED << "ERROR: Empty request" << RESET << std::endl;
+		std::cerr << ORANGE << "Waiting for request . . ." << RESET << std::endl;
 		return ;
 	}
 	std::istringstream requestLine(line);
