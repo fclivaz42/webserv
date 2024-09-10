@@ -161,7 +161,7 @@ std::string	SocketManager::readMessage(int clientFd)
 	}
 	else if (bytesRead == 0)
 	{
-		std::cout << ORANGE << "Client disconnected. . ." << RESET << std::endl;
+		//std::cout << ORANGE << "Client disconnected. . ." << RESET << std::endl;
 		return ("");
 	}
 	else
@@ -230,32 +230,20 @@ void	SocketManager::handleClient(int clientFd, const ServerConf& serverConf)
 {
 	std::string message = readMessage(clientFd);
 	std::string response;
-	if (message.empty())
-	{
-		std::cerr << RED << "Client disconnected or empty message" << RESET << "" << std::endl;
-		close(clientFd);
-	}
+	//if (message.empty())
+	//{
+	//	std::cerr << RED << "Client disconnected or empty message" << RESET << "" << std::endl;
+	//	close(clientFd);
+	//}
 	try
 	{
 		HttpRequest request = HttpRequest(message);
-		try
-		{
 			if (request.getMethod() == "GET")
 				response = processGetRequest(request, serverConf);
 			else if (request.getMethod() == "POST")
 				response = processPostRequest(request);
 			else if (request.getMethod() == "DELETE")
 				response = processDeleteRequest(request);
-			else
-				throw std::runtime_error("405 Method Not Allowed");
-		}
-		catch (const std::exception& error)
-		{
-			std::cerr << RED << "Method processing failed: " << error.what() << RESET << std::endl;
-			response = "HTTP/1.1 405 Method Not Allowed\r\n\r\n" + std::string(error.what());
-			//TODO send response error back to client
-		}
-
 
 	}
 	catch (const std::exception& error)

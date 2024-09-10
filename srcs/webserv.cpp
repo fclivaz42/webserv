@@ -33,7 +33,7 @@ int main (int ac, char **av)
 		socket.setHost(serv.getServConf(1).getIpAddr());
 		if (!socket.createSocket() || !socket.bindSocket() || !socket.startListening())
 			return (-1);
-		socket.start(servOne);
+		socket.start(serv.getServConf(1));
 	}
 	catch (std::exception &e){
 		std::cout << e.what() << std::endl;

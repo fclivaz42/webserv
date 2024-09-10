@@ -144,7 +144,7 @@ void     ServerConf::checkAttribut(void) const{
 		std::cerr << "Error: " << RED << "Invalid root path. " << RED << "\n" << RESET;
         throw InvalidServerConfException();
 	}
-	else if (_errorPage.size() < 15 || _errorPage.substr(0, 8) != "/errors/" || _errorPage.substr(11, 5) != ".html"){
+	else if (_errorPage.size() < 15 || _errorPage.substr(0, 15) != "/public/errors/" || _errorPage.substr(18, 5) != ".html"){
 		std::cerr << "Error: " << RED << "Invalid error page path. " << RED << std::endl << RESET;
 		throw InvalidServerConfException();
 	}

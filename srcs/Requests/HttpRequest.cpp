@@ -85,7 +85,7 @@ void	HttpRequest::parseRequest(const std::string& request)
 	std::cout << request<< std::endl;
 	if (!std::getline(iss, line) || line.empty())
 	{
-		std::cerr << RED << "ERROR: Empty request" << RESET << std::endl;
+		std::cerr << ORANGE << "Waiting for request . . ." << RESET << std::endl;
 		return ;
 	}
 	std::istringstream requestLine(line);
