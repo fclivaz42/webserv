@@ -39,20 +39,7 @@ std::string	updatePath(const std::string &path)
 
 bool		fileExists(const std::string& localPath)
 {
-	bool isOpen;
-	std::ifstream file(localPath.c_str());
-
-	std::cout << localPath.c_str() << "\n";
-	if (file.good()) {
-		isOpen = true;
-		std::cout << "FILE IS OPEN\n";
-	}
-	else {
-		isOpen = false;
-		std::cout << "FILE IS NOT OPEn\n";
-	}
-	file.close();
-	return isOpen;
+	return (access(localPath.c_str(), F_OK) != -1);
 }
 
 bool		hasAccess(std::string localPath)
@@ -71,7 +58,7 @@ bool		hasAccess(std::string localPath)
 	}
 	else if (!S_ISREG(fileInfo.st_mode))
 	{
-		std::cerr << RED << "ERROR: Not a regualr file." << RESET << std::endl;
+		std::cerr << RED << "ERROR: Not a regular file." << RESET << std::endl;
 		return (false);
 	}
 	return (true);
@@ -93,64 +80,59 @@ bool	checkRedir(const std::string& path, const ServerConf& serverConf)
 	return (false);
 }
 
-std::string	createLocalPathFromLocation(const std::string&path, const ServerConf& serverConf)
+const std::string createPath(const std::string& path, const ServerConf& serverConf)
 {
-	const std::map<std::string, Location>& locations = serverConf.getLocation();
-	
-	for (std::map<std::string, Location>::const_iterator iter = locations.begin(); iter != locations.end(); iter++)
-	{
-		const Location& loc = iter->second;
-		if (path.find(iter->first) == 0)
-		{
-			std::string localPath = loc.getRoot() + path.substr(iter->first.length());
-			return (localPath);
+	std::map<std::string, Location> locationMap = serverConf.getLocation();
+	std::string	returnPath;
+	struct stat	s;
+	bool		getFlag = false;
+
+	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++) {
+		const	Location& loc = iter->second;
+		const	std::vector<std::string>& methods = loc.getAllowMethods();
+		for (std::vector<std::string>::const_iterator it = methods.begin(); it != methods.end(); it++) {
+			std::string cmp = *it;
+			if (!cmp.compare("GET")) {
+				getFlag = true;
+				break;
+			}
 		}
+		if (getFlag) {
+			if (loc.getRoot().empty())
+				returnPath = loc.getPath() + path;
+			else
+				returnPath = loc.getRoot() + path;
+			if (stat(returnPath.c_str(), &s) == 0)
+			{
+				if (s.st_mode & S_IFDIR)
+					returnPath += loc.getIndex();
+				break;
+			}
+		}
+		getFlag = false;
 	}
-	return ("");
-}
-
-std::string 	createLocalPathFromRoot(const std::string& path, const ServerConf& serverConf)
-{
-	const std::map<std::string, Location>& locations = serverConf.getLocation();
-	std::string	serverRoot = "/public";
-
-	if (path == "/" || path.empty())
-		return (serverRoot + "/index.html");
-	return (serverRoot + path);
-}
-
-
-bool 	isLocationPath(const std::string& path, const ServerConf& serverConf)
-{
-	const std::map<std::string, Location>& locations = serverConf.getLocation();
-	return (locations.find(path) != locations.end());
+	return returnPath;
 }
 
 std::string	processGetRequest(const HttpRequest& request, const ServerConf& serverConf)
 {
 	HttpResponse	ret(serverConf);
+	std::string localPath;
+	std::string path = request.getPath();
+
 	if (request.getBody().size() > serverConf.getMaxBodySize())
 		return (ret.generateResponse(413, ""));
 	//TODO send http error response instead
 	
-	std::string path = request.getPath();
-
 	if (checkRedir(path, serverConf))
 		return (ret.generateResponse(302, path));
 
 	std::cout << GREEN << "PATH IS: " << path << RESET << std::endl;
 
-	std::string localPath;
-	if (isLocationPath(path, serverConf))
-	{
-		localPath = createLocalPathFromLocation(path, serverConf);
-		std::cout << GREEN << "Created Local Path: " << localPath << RESET << std::endl;
-	}
-	else
-	{
-		localPath = createLocalPathFromRoot(path, serverConf);
-		std::cout << PURPLE << "Created Local Path from ROOT: " << localPath << RESET << std::endl;
-	}
+	localPath = createPath(path, serverConf);
+
+	std::cout << GREEN << "Created Local Path: " << localPath << RESET << std::endl;
+
 	if (!fileExists(localPath))
 	{
 		std::cerr << RED << "ERROR: File not found: " << localPath << RESET << std::endl;
@@ -162,8 +144,7 @@ std::string	processGetRequest(const HttpRequest& request, const ServerConf& serv
 		return (ret.generateResponse(403, ""));
 	}
 
-	std::string fileContent = SocketManager::readFile("." + localPath);
-	std::cout << PURPLE << "fileContent is: " << fileContent << RESET << std::endl; 
+	std::string fileContent = SocketManager::readFile(localPath);
 
 	std::string contentType = getMimeType(localPath);
 	std::cout << PURPLE << "contentType is: " << contentType << RESET << std::endl; 

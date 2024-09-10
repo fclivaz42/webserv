@@ -6,7 +6,6 @@
 #include "Requests/HttpRequest.hpp"
 #include <sys/stat.h>
 #include <unistd.h>
-# define MAX_BODY_SIZE 10485760
 
 std::string	processGetRequest(const HttpRequest& request, const ServerConf& serverConf);
 std::string	getMimeType(const std::string& path);
