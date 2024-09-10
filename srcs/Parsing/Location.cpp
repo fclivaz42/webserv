@@ -156,8 +156,6 @@ void     Location::checkAttribut(void) const{
 				throw InvalidMethodsException();
 		}
 	}
-	if (!_root.empty() && _root[0] != '/')
-		throw InvalidRootException();
 	return ;
 }
 

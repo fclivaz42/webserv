@@ -263,7 +263,7 @@ void	SocketManager::handleClient(int clientFd, const ServerConf& serverConf)
 std::string	SocketManager::readFile(const std::string& filePath)
 {
 	std::ifstream file(filePath.c_str(), std::ios::in | std::ios::binary);
-	if (!file)
+	if (!file.is_open())
 	{
 		std::cerr << "ERROR: Could not open file " << filePath << std::endl;
 		return ("");

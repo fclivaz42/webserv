@@ -6,9 +6,10 @@
 
 ServerConf::ServerConf() : _ipAddr("127.0.0.1") {}
 
-ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1"){
+ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAddr("127.0.0.1") {
 	std::stringstream	configStream(configString);
 	std::string			line, locationString, locationPath;
+	std::size_t			maxBodySize;
 	long				bigPortCheck;
 	short				port;
 	char				*ptr;
@@ -56,7 +57,11 @@ ServerConf::ServerConf(const std::string& configString) : _ipAddr("127.0.0.1"){
 			line.erase(0, line.find_first_not_of("max_body_size"));
 			line.erase(0, line.find_first_not_of(WHITESPACES));
 			line.erase(line.find_last_not_of(WHITESPACES) + 1);
-			this->_maxBodySize = line;
+			maxBodySize = strtoul(line.c_str(), &ptr, 10);
+			bigPortCheck = strtol(line.c_str(), &ptr, 10);
+			if (ptr[0] != 0 || bigPortCheck < 1)
+				throw InvalidBodySizeException();
+			this->_maxBodySize = maxBodySize;
 		}
 		else if (!line.find("location ")) {
 			line.erase(0, line.find_first_not_of("location"));
@@ -116,7 +121,7 @@ std::string ServerConf::getIndex(void) const{
     return (this->_index);
 }
 
-std::string ServerConf::getMaxBodySize(void) const{
+std::size_t ServerConf::getMaxBodySize(void) const{
 	return (this->_maxBodySize);
 }
 
@@ -135,12 +140,8 @@ std::string ServerConf::getIpAddr(void)	const{
 void     ServerConf::checkAttribut(void) const {
     std::vector<unsigned short>::const_iterator it;
 
-	if (_serverName.empty() || _port.empty() || _errorPage.empty() || _maxBodySize.empty() || _location.empty())
+	if (_serverName.empty() || _port.empty() || _errorPage.empty() || _maxBodySize == 0 || _location.empty())
 		throw MissingArgsException();
-	if (_root[0] != '/')
-		throw InvalidRootPathException();
-	if (_errorPage.size() < 15 || _errorPage.substr(0, 15) != "/public/errors/" || _errorPage.substr(18, 5) != ".html")
-		throw InvalidErrorPageException();
     return ;
 }
 
