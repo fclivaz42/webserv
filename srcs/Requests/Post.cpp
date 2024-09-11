@@ -1,4 +1,7 @@
 #include "Requests/Post.hpp"
+#include "Parsing/ServerConf.hpp"
+#include "Requests/HttpRequest.hpp"
+#include "Requests/HttpResponse.hpp"
 
 std::string urlDecode(const std::string& str) {
     std::string result;
@@ -22,12 +25,22 @@ std::string urlDecode(const std::string& str) {
     return result;
 }
 
-
-std::string	processPostRequest(const HttpRequest& request)
+const std::string	uploadRequest(const HttpRequest& request)
 {
+	std::cout << "WE HIT UPLOAD !!!!!!!!!!!!! \n\n\n";
+	return "";
+}
+
+const std::string	processPostRequest(const HttpRequest& request, const ServerConf& serverConf)
+{
+	std::map<std::string, std::string> headers(request.getHeaders());
+
+	if (headers["Content-Type"].find("multipart") != std::string::npos)
+		return (uploadRequest(request));
+
 	std::map<std::string, std::string> formData;
 	std::istringstream bodyStream(request.getBody());
-	std::string keyValue;
+	std::string keyValue, username, email, message, alive;
 
 	while (std::getline(bodyStream, keyValue, '&'))
 	{
@@ -40,43 +53,11 @@ std::string	processPostRequest(const HttpRequest& request)
 		}
 	}
 
-	std::string	username = formData["name"];
-	std::string	email = formData["email"];
-	std::string	message = formData["message"];
-	std::string	alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
+	username = formData["name"];
+	email = formData["email"];
+	message = formData["message"];
+	alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
 
-	std::string htmlRes = 
-	"<!doctype html>"
-	"<html lang=\"en\">"
-	"<head>"
-	"<meta charset=\"utf-8\">"
-	"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-	"<title>Contact Form</title>"
-	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"/>"
-	"</head>"
-	"<body>"
-	"<nav>"
-	"<a class=\"request_button\" href=\"/formulaire.html\">Get in Touch !</a>"
-	"<a class=\"black request_button\" href=\"/index.html\">Welcome Page</a>"
-	"<a class=\"request_button\" href=\"/upload.html\">Upload a picture</a>"
-	"</nav>"
-	"<h1>Form successfully submitted!</h1>"
-	"<p>Thank you for your submission " + username + ".</p>"
-	"<p>Your email is: " + email + "</p>"
-	"<p>Your message is: " + message + "</p>"
-	"</br>"
-	"</br>"
-	"</br>"
-    	"<p><a class=\"request_button\" href=\"/index.html\">Return to Home</a></p>"
-	"<p></p>"
-	"</body>"
-	"</html>";
-
-	std::string response = 
-	"HTTP/1.1 200 OK\r\n"
-	"Content-Type: text/html\r\n" +
-	alive + "\r\n" +
-	htmlRes + "\r\n";
-
-	return (response);
+	const HttpResponse	res(serverConf);
+	return (res.generateResponse("200", "public/uploadFormReturn.html"));
 }

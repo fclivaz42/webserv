@@ -228,12 +228,12 @@ void	SocketManager::handleClient(int clientFd, const ServerConf& serverConf)
 	try
 	{
 		HttpRequest request = HttpRequest(message);
-			if (request.getMethod() == "GET")
-				response = processGetRequest(request, serverConf);
-			else if (request.getMethod() == "POST")
-				response = processPostRequest(request);
-			else if (request.getMethod() == "DELETE")
-				response = processDeleteRequest(request);
+		if (request.getMethod() == "GET")
+			response = processGetRequest(request, serverConf);
+		else if (request.getMethod() == "POST")
+			response = processPostRequest(request, serverConf);
+		else if (request.getMethod() == "DELETE")
+			response = processDeleteRequest(request);
 
 	}
 	catch (const std::exception& error)

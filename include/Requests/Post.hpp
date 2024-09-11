@@ -3,9 +3,10 @@
 
 #include <string>
 #include <map>
+#include "Parsing/ServerConf.hpp"
 #include "Sockets/SocketManager.hpp"
 #include "Requests/HttpRequest.hpp"
 
-std::string	processPostRequest(const HttpRequest& request);
+const std::string	processPostRequest(const HttpRequest& request, const ServerConf& serverConf);
 
 #endif

@@ -30,17 +30,17 @@ HttpRequest &HttpRequest::operator=(HttpRequest const &rhs)
 	return (*this);
 }
 
-std::string				HttpRequest::getMethod() const
+std::string	HttpRequest::getMethod() const
 {
 	return (method);
 }
 
-std::string				HttpRequest::getPath() const
+std::string	HttpRequest::getPath() const
 {
 	return (path);
 }
 
-std::string				HttpRequest::getVersion() const
+std::string	HttpRequest::getVersion() const
 {
 	return (version);
 }
@@ -50,7 +50,7 @@ std::map<std::string, std::string>	HttpRequest::getHeaders() const
 	return (headers);
 }
 
-std::string				HttpRequest::getBody() const
+std::string	HttpRequest::getBody() const
 {
 	return (body);
 }
