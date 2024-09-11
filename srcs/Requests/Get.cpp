@@ -67,7 +67,7 @@ bool		hasAccess(std::string localPath)
 	}
 	else if (!S_ISREG(fileInfo.st_mode))
 	{
-		std::cerr << RED << "ERROR: Not a regualr file." << RESET << std::endl;
+		std::cerr << RED << "ERROR: Not a regular file." << RESET << std::endl;
 		return (false);
 	}
 	return (true);
@@ -158,5 +158,4 @@ std::string	processGetRequest(const HttpRequest& request, const ServerConf& serv
 		return (ret.generateResponse("403", localPath, alive));
 	}
 	return (ret.generateResponse("200", localPath , alive));
-	
 }

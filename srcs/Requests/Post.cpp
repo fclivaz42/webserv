@@ -58,6 +58,7 @@ const std::string	processPostRequest(const HttpRequest& request, const ServerCon
 	message = formData["message"];
 	alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
 
-	const HttpResponse	res(serverConf);
-	return (res.generateResponse("200", "public/uploadFormReturn.html"));
+	HttpResponse	res(serverConf);
+	std::string		path("public/uploadFormReturn.html"); // TODO: UN-HARDCODE THIS!!
+	return (res.generateResponse("200", path, alive));
 }
