@@ -12,24 +12,20 @@ Location::Location(const std::string &path, const std::string& locationString) :
 
 	while(std::getline(locationStream, line))
 	{
-		line.erase(0, line.find_first_not_of(WHITESPACES));
-		line.erase(line.find_last_not_of(WHITESPACES) + 1);
+		ptrim(line);
 		if (!line.find("root")) {
 			line.erase(0, line.find_first_not_of("root"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			this->_root = line;
 		}
 		else if (!line.find("index")) {
 			line.erase(0, line.find_first_not_of("index"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			this->_index = line;
 		}
 		else if (!line.find("accept_uploads")) {
 			line.erase(0, line.find_first_not_of("accept_uploads"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			if (line.compare("1") || line.compare("yes") || line.compare("true"))
 				this->_upload = true;
 			else if (line.compare("0") || line.compare("no") || line.compare("false"))
@@ -41,8 +37,7 @@ Location::Location(const std::string &path, const std::string& locationString) :
 		}
 		else if (!line.find("auto_index")) {
 			line.erase(0, line.find_first_not_of("auto_index"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			if (line.compare("1") || line.compare("yes") || line.compare("true"))
 				this->_upload = true;
 			else {
@@ -51,10 +46,9 @@ Location::Location(const std::string &path, const std::string& locationString) :
 		}
 		else if (!line.find("methods")) {
 			line.erase(0, line.find_first_not_of("methods"));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
 			while (pos != std::string::npos)
 			{
-				line.erase(0, line.find_first_not_of(WHITESPACES));
+				ptrim(line);
 				this->_allowMethods.push_back(line.substr(0, line.find_first_of(WHITESPACES)));
 				pos = line.find_first_of(WHITESPACES);
 				if (pos == std::string::npos)
@@ -64,14 +58,12 @@ Location::Location(const std::string &path, const std::string& locationString) :
 		}
 		else if (!line.find("fastcgiPass")){
 			line.erase(0, line.find_first_not_of("fastcgiPass"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			this->_fastcgiPass = line;
 		}
 		else if (!line.find("fastcgiIndex")){
 			line.erase(0, line.find_first_not_of("fastcgiIndex"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			this->_fastcgiIndex = line;
 		}
 		else if (line.empty())
@@ -160,16 +152,27 @@ void     Location::checkAttribut(void) const{
 }
 
 void Location::print() const {
-		std::cout << "  Location: " << _path << std::endl;
+		std::cout << BGREEN << "\n│ " << CYAN << "┌────────── LOCATION " << _path << " ───\n";
+		std::cout << BGREEN << "│ " << CYAN "│ " << MAGENTA << "Methods: " << RESET;
 		std::vector<std::string>::const_iterator it;
 		for (it = _allowMethods.begin(); it != _allowMethods.end(); ++it) {
-			std::cout << "    Methods: " << *it << std::endl;
+			if (it + 1 == _allowMethods.end())
+				std::cout << *it << std::endl;
+			else
+				std::cout << *it << ", ";
 		}
-		std::cout << "    Root: " << _root << std::endl;
-		std::cout << "    Index: " << _index << std::endl;
-		std::cout << "    Return URL: " << _returnURL << std::endl;
-		std::cout << "    FastCgiPass: " << _fastcgiPass << std::endl;
-		std::cout << "    FastCgiIndex: " << _fastcgiIndex << std::endl;
-		std::cout << "    Accept Uploads: " << (_upload ? "Yes" : "No") << std::endl;
-		std::cout << "    Auto Index: " << (_autoIndex ? "Yes" : "No") << std::endl;
+		std::cout << BGREEN << "│ " << CYAN "│ " << MAGENTA << "Root: " << RESET << _root << std::endl;
+		std::cout << BGREEN << "│ " << CYAN "│ " << MAGENTA << "Index: " << RESET << _index << std::endl;
+		std::cout << BGREEN << "│ " << CYAN "│ " << MAGENTA << "Return URL: " << RESET << _returnURL << std::endl;
+		std::cout << BGREEN << "│ " << CYAN "│ " << MAGENTA << "FastCgiPass: " << RESET << _fastcgiPass << std::endl;
+		std::cout << BGREEN << "│ " << CYAN "│ " << MAGENTA << "FastCgiIndex: " << RESET << _fastcgiIndex << std::endl;
+		std::cout << BGREEN << "│ " << CYAN "│ " << MAGENTA << "Accept Uploads: " << RESET << (_upload ? "Yes" : "No") << std::endl;
+		std::cout << BGREEN << "│ " << CYAN "│ " << MAGENTA << "Auto Index: " << RESET << (_autoIndex ? "Yes" : "No") << std::endl;
+		std::cout << BGREEN << "│ " << CYAN <<"└──────────────────────────";
+}
+
+void	ptrim(std::string& str)
+{
+	str.erase(0, str.find_first_not_of(WHITESPACES));
+	str.erase(str.find_last_not_of(WHITESPACES) + 1);
 }

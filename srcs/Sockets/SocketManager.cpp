@@ -119,15 +119,12 @@ int	SocketManager::acceptConnection(int serverFd)
 	struct sockaddr_in clientAddress;
 	socklen_t clientLen = sizeof(clientAddress);
 	int clientFd = accept(serverFd, (struct sockaddr*)&clientAddress, &clientLen);
-
-	if (clientFd == -1)
+	if (DEBUG)
 	{
-		std::cerr << RED << "ERROR : Connection failure" << RESET << std::endl;
-	}
-	else
-	{
-		std::cerr << GREEN << "New connection from " << inet_ntoa(clientAddress.sin_addr) << RESET << std::endl;
-		std::cout << std::endl;
+		if (clientFd == -1)
+			std::cerr << RED << "\nERROR : Connection failure" << RESET << std::endl;
+		else
+			std::cerr << GREEN << "\n┌──────────\n│ New connection from: " << inet_ntoa(clientAddress.sin_addr) << "\n└──────────" << RESET << std::endl;
 	}
 	return (clientFd);
 }
@@ -141,7 +138,7 @@ int	SocketManager::acceptConnection(int serverFd)
 // Si le client s'est deco, je ne return rien
 std::string	SocketManager::readMessage(int clientFd)
 {
-	char		buffer[BUFFER_SIZE];
+	char	buffer[BUFFER_SIZE];
 	ssize_t	bytesRead = read(clientFd, buffer, sizeof(buffer) - 1);
 	
 	if (bytesRead > 0)

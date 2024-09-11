@@ -81,4 +81,6 @@ class Location {
 		};
 };
 
+void	ptrim(std::string& str);
+
 #endif

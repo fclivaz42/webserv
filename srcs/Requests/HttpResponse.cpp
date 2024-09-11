@@ -17,11 +17,8 @@ std::string	HttpResponse::generateResponse(std::string statusCode, std::string& 
 			return ("HTTP/1.1 302 Found\r\nLocation: " + path + "\r\nConnection: close\r\n\r\n");
 	else if (statusCode == "403")
 			return ("HTTP/1.1 403 Forbidden\r\n" + contentType + "\r\n" + alive + "\r\n" + content);
-	else if (statusCode == "404"){
-			std::cout << RED << content << RESET << std::endl;
-			std::cout << RED << contentType << RESET << std::endl;
+	else if (statusCode == "404")
 			return ("HTTP/1.1 404 Not Found\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + content);
-	}
 	else if (statusCode == "413")
 		return ("HTTP/1.1 413 Payload Too Large\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + content);
 	else

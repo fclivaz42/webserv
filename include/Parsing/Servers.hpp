@@ -29,12 +29,13 @@ class Servers{
 		Servers &operator=(Servers const &rhs);
 
 		/* GETTERS */
-		ServerConf 				getServConf(int lequel) const;
+		ServerConf	getServConf(int lequel) const;
+		int			getAmountOfServers(void) const;
 		
 		/* MEMBERS FUNCTIONS */
-		void					loadConfig(const std::string &confFile);
-		void 					printConfigs(void) const;
-		bool					isConfigured(void) const;
+		void	loadConfig(const std::string &confFile);
+		void	printConfigs(void) const;
+		bool	isConfigured(void) const;
 
 		/* EXCEPTIONS */
 		class InvalidServersException : public std::exception{

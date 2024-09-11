@@ -1,13 +1,14 @@
 #include "Parsing/Servers.hpp"
 #include "Parsing/ServerConf.hpp"
+#include "Parsing/Location.hpp"
 #include "webserv.hpp"
 
 /* ------------------- CONSTRUCTORS ----------------------*/
 Servers::Servers() {}
 
 Servers::Servers(const std::string &conf_file){
-	std::ifstream		confFile;
-	std::string 		line, configString;
+	std::ifstream	confFile;
+	std::string 	line, configString;
 
 	confFile.open(conf_file.c_str(), std::ios::in);
 	if (!confFile.is_open()) {
@@ -15,8 +16,7 @@ Servers::Servers(const std::string &conf_file){
 		throw AlreadyPrintedException();
 	}
 	while (std::getline(confFile, line)){
-		line.erase(0, line.find_first_not_of(WHITESPACES));
-		line.erase(line.find_last_not_of(WHITESPACES) + 1);
+		ptrim(line);
 		if (line.empty() || line[0] == '#')
 			continue;
 		else if (line.find("server {") != std::string::npos) {
@@ -70,6 +70,11 @@ ServerConf	Servers::getServConf(int lequel) const{
 		std::cerr << "Error: No config number found." << std::endl;
 	}
 	return (*it);
+}
+
+int	Servers::getAmountOfServers(void) const
+{
+	return (this->_servConf.size());
 }
 
 /* ------------------- MEMBERS FUNCTIONS ----------------------*/

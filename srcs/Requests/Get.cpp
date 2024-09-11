@@ -57,17 +57,17 @@ bool		hasAccess(std::string localPath)
 
 	if (stat(localPath.c_str(), &fileInfo) != 0)
 	{
-		std::cerr << RED << "ERROR: file does not exist." << RESET << std::endl;
+		std::cerr << RED << "GET: ERROR: file does not exist." << RESET << std::endl;
 		return (false);
 	}
 	else if (access(localPath.c_str(), R_OK) != 0)
 	{
-		std::cerr << RED << "ERROR: No access to file." << RESET << std::endl;
+		std::cerr << RED << "GET: ERROR: No access to file." << RESET << std::endl;
 		return (false);
 	}
 	else if (!S_ISREG(fileInfo.st_mode))
 	{
-		std::cerr << RED << "ERROR: Not a regular file." << RESET << std::endl;
+		std::cerr << RED << "GET: ERROR: Not a regular file." << RESET << std::endl;
 		return (false);
 	}
 	return (true);
@@ -89,7 +89,7 @@ bool	checkRedir(const std::string& path, const ServerConf& serverConf)
 	return (false);
 }
 
-const std::string createPath(const std::string& path, const ServerConf& serverConf)
+const std::string createPath(const std::string& path, const ServerConf& serverConf, const std::string method)
 {
 	std::map<std::string, Location> locationMap = serverConf.getLocation();
 	std::string	returnPath;
@@ -101,7 +101,7 @@ const std::string createPath(const std::string& path, const ServerConf& serverCo
 		const	std::vector<std::string>& methods = loc.getAllowMethods();
 		for (std::vector<std::string>::const_iterator it = methods.begin(); it != methods.end(); it++) {
 			std::string cmp = *it;
-			if (!cmp.compare("GET")) {
+			if (!cmp.compare(method)) {
 				getFlag = true;
 				break;
 			}
@@ -139,22 +139,24 @@ std::string	processGetRequest(const HttpRequest& request, const ServerConf& serv
 	if (checkRedir(path, serverConf))
 		return (ret.generateResponse("302", path, alive));
 
-	std::cout << GREEN << "PATH IS: " << path << RESET << std::endl;
+	if (DEBUG)
+		std::cout << GREEN << "GET: PATH IS: " << path << RESET << std::endl;
 
-	localPath = createPath(path, serverConf);
+	localPath = createPath(path, serverConf, "GET");
 
-	std::cout << GREEN << "Created Local Path: " << localPath << RESET << std::endl;
+	if (DEBUG)
+		std::cout << GREEN << "GET: Created Local Path: " << localPath << RESET << std::endl;
 
 	if (!fileExists(localPath))
 	{
 		localPath = serverConf.getErrorPage();
-		std::cerr << RED << "ERROR: File not found: " << localPath << RESET << std::endl;
+		std::cerr << RED << "GET: ERROR: File not found: " << localPath << RESET << std::endl;
 		return (ret.generateResponse("404", localPath, alive));
 	}
 	if (!hasAccess(localPath))
 	{
 		localPath = serverConf.getErrorPage();
-		std::cerr << RED << "ERROR: Access denied to file: " << localPath << RESET << std::endl;
+		std::cerr << RED << "GET: ERROR: Access denied to file: " << localPath << RESET << std::endl;
 		return (ret.generateResponse("403", localPath, alive));
 	}
 	return (ret.generateResponse("200", localPath , alive));

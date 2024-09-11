@@ -3,6 +3,18 @@
 #include "Parsing/ServerConf.hpp"
 #include "Sockets/SocketManager.hpp"
 
+int	launchServer(const ServerConf& servConf)
+{
+	SocketManager socket(servConf);
+
+	std::cout << "Launching server " << servConf.getServerName() << "\n";
+	socket.setHost(servConf.getIpAddr());
+	if (!socket.createSocket() || !socket.bindSocket() || !socket.startListening())
+		return (-1);
+	socket.start(servConf);
+	return (0);
+}
+
 int main (int ac, char **av)
 {
 	size_t				npos;
@@ -26,13 +38,9 @@ int main (int ac, char **av)
 	}
 	try {
 		serv = Servers(config_file);
-		SocketManager socket(serv.getServConf(1));
-
 		serv.printConfigs();
-		socket.setHost(serv.getServConf(1).getIpAddr());
-		if (!socket.createSocket() || !socket.bindSocket() || !socket.startListening())
-			return (-1);
-		socket.start(serv.getServConf(1));
+		for (int i = 1; i <= serv.getAmountOfServers(); i++)
+			return (launchServer(serv.getServConf(i)));
 	}
 	catch (const Servers::AlreadyPrintedException &e) {
 		(void)e;

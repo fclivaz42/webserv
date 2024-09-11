@@ -4,6 +4,7 @@
 #include "webserv.hpp"
 #include <string>
 #include <map>
+#include <cstdio>
 #include <sstream>
 #include <iostream>
 #include <algorithm>

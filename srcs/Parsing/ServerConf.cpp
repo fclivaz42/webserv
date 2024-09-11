@@ -17,36 +17,30 @@ ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAd
 	while(!configStream.eof())
 	{
 		std::getline(configStream, line);
-		line.erase(0, line.find_first_not_of(WHITESPACES));
-		line.erase(line.find_last_not_of(WHITESPACES) + 1);
+		ptrim(line);
 		if (!line.find("server_name")) {
 			line.erase(0, line.find_first_not_of("server_name"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			this->_serverName = line;
 		}
 		else if (!line.find("root")) {
 			line.erase(0, line.find_first_not_of("root"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			this->_root = line;
 		}
 		else if (!line.find("index")) {
 			line.erase(0, line.find_first_not_of("index"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			this->_index = line;
 		}
 		else if (!line.find("error_page")) {
 			line.erase(0, line.find_first_not_of("error_page"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			this->_errorPage = line;
 		}
 		else if (!line.find("listen")) {
 			line.erase(0, line.find_first_not_of("listen"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			port = strtol(line.c_str(), &ptr, 10);
 			bigPortCheck = strtol(line.c_str(), &ptr, 10);
 			if (ptr[0] != 0 || port != bigPortCheck || port == 0)
@@ -55,8 +49,7 @@ ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAd
 		}
 		else if (!line.find("max_body_size")){
 			line.erase(0, line.find_first_not_of("max_body_size"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			maxBodySize = strtoul(line.c_str(), &ptr, 10);
 			bigPortCheck = strtol(line.c_str(), &ptr, 10);
 			if (ptr[0] != 0 || bigPortCheck < 1)
@@ -65,7 +58,7 @@ ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAd
 		}
 		else if (!line.find("location ")) {
 			line.erase(0, line.find_first_not_of("location"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
+			ptrim(line);
 			locationPath = line.substr(0, line.find_first_of(WHITESPACES));
 			while (!(line.find('}') == 4 && configStream.peek() != EOF)) {
 				if (std::getline(configStream, line).eof())
@@ -146,18 +139,24 @@ void     ServerConf::checkAttribut(void) const {
 }
 
 void    ServerConf::print(void) const {
-        std::cout << "  Server: " << this->_serverName << std::endl;
+		std::cout << BGREEN << "\n┌────────── SERVER ──────────\n";
+        std::cout << BGREEN << "│ " << YELLOW << "Server: " << RESET << this->_serverName << std::endl;
+		std::cout << BGREEN << "│ " << YELLOW << "Ports: " << RESET;
         std::vector<unsigned short>::const_iterator it = _port.begin();
         for (; it != _port.end(); ++it){
-           std::cout << "  Port: " << *it << std::endl;
-        }
-        std::cout << "  Root: " << this->_root << std::endl;
-        std::cout << "  Index: " << this->_index << std::endl;
-		std::cout << "  MaxBodySize: " << this->_maxBodySize << std::endl;
-        std::cout << "  Error Page: " << this->_errorPage << std::endl;
-		std::cout << "  IP Address: " << this->_ipAddr << std::endl;
+			if (it + 1 == _port.end())
+				std::cout << *it << std::endl;
+			else
+				std::cout << *it << ", ";
+		}
+        std::cout << BGREEN << "│ " << YELLOW << "Root: " << RESET << this->_root << std::endl;
+        std::cout << BGREEN << "│ " << YELLOW << "Index: " << RESET << this->_index << std::endl;
+		std::cout << BGREEN << "│ " << YELLOW << "MaxBodySize: " << RESET << this->_maxBodySize << std::endl;
+        std::cout << BGREEN << "│ " << YELLOW << "Error Page: " << RESET << this->_errorPage << std::endl;
+		std::cout << BGREEN << "│ " << YELLOW << "IP Address: " << RESET << this->_ipAddr;
         std::map<std::string, Location>::const_iterator it2 = _location.begin();
         for (; it2 != _location.end(); ++it2) {
             it2->second.print();
         }
+		std::cout << BGREEN << "\n└────────────────────────────\n\n" << RESET;
 }

@@ -1,4 +1,6 @@
 #include "Requests/HttpRequest.hpp"
+#include <algorithm>
+#include <string>
 
 HttpRequest::HttpRequest() : method(""), path(""), version(""), body("")
 {}
@@ -70,7 +72,14 @@ void	HttpRequest::parseRequest(const std::string& request)
 	std::istringstream	iss(request);
 	std::string		line;
 	
-	std::cout << request<< std::endl;
+	if (DEBUG) {
+		std::stringstream	stRequest(request);
+		std::string			prRequest;
+		std::cout << "\n┌────────── NEW REQUEST ──────────\n";
+		while (std::getline(stRequest, prRequest))
+			if (stRequest.peek() != EOF)
+				std::cout << "│ " << prRequest << std::endl;
+	}
 	if (!std::getline(iss, line) || line.empty())
 	{
 		std::cerr << ORANGE << "Waiting for request . . ." << RESET << std::endl;
@@ -79,9 +88,12 @@ void	HttpRequest::parseRequest(const std::string& request)
 	std::istringstream requestLine(line);
 	requestLine >> method >> path >> version;
 
-	std::cout << "method: " << "" << method << "" << std:: endl;
-	std::cout << "path: " << path << std:: endl;
-	std::cout << "version: " << version << std:: endl;
+	if (DEBUG) {
+		std::cout << "├────────── REQUEST METADATA ──────────\n";
+		std::cout << "│ method: " << "" << method << "" << std:: endl;
+		std::cout << "│ path: " << path << std:: endl;
+		std::cout << "│ version: " << version << "\n└────────── END REQUEST  ──────────\n\n";
+	}
 	//TODO throw real error response
 	if (method != "GET" && method != "POST" && method != "DELETE")
 		throw std::runtime_error("ERROR: Request not allowed");
