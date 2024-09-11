@@ -11,6 +11,7 @@ bool		hasExtension(const std::string& path, const std::string& extension)
 
 std::string	getMimeType(const std::string& path)
 {
+	std::cout << "PATH-TYPE: " << path << std::endl;
 	if (hasExtension(path, ".css"))
 		return ("text/css");
 	if (hasExtension(path, ".html"))
@@ -129,14 +130,16 @@ bool 	isLocationPath(const std::string& path, const ServerConf& serverConf)
 std::string	processGetRequest(const HttpRequest& request, const ServerConf& serverConf)
 {
 	HttpResponse	ret(serverConf);
+	std::string alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
+	std::string vide = "";
 	if (request.getBody().size() > serverConf.getMaxBodySize())
-		return (ret.generateResponse(413, ""));
+		return (ret.generateResponse(413, vide, alive));
 	//TODO send http error response instead
 	
 	std::string path = request.getPath();
 
 	if (checkRedir(path, serverConf))
-		return (ret.generateResponse(302, path));
+		return (ret.generateResponse(302, path, alive));
 
 	std::cout << GREEN << "PATH IS: " << path << RESET << std::endl;
 
@@ -151,25 +154,25 @@ std::string	processGetRequest(const HttpRequest& request, const ServerConf& serv
 		localPath = createLocalPathFromRoot(path, serverConf);
 		std::cout << PURPLE << "Created Local Path from ROOT: " << localPath << RESET << std::endl;
 	}
-	if (!fileExists(localPath))
-	{
-		std::cerr << RED << "ERROR: File not found: " << localPath << RESET << std::endl;
-		return (ret.generateResponse(404, ""));
-	}
-	if (!hasAccess(localPath))
-	{
-		std::cerr << RED << "ERROR: Access denied to file: " << localPath << RESET << std::endl;
-		return (ret.generateResponse(403, ""));
-	}
+	//if (!fileExists(localPath))
+	//{
+	//	std::cerr << RED << "ERROR: File not found: " << localPath << RESET << std::endl;
+	//	return (ret.generateResponse(404, "", alive));
+	//}
+	//if (!hasAccess(localPath))
+	//{
+	//	std::cerr << RED << "ERROR: Access denied to file: " << localPath << RESET << std::endl;
+	//	return (ret.generateResponse(403, "", alive));
+	//}
+	return (ret.generateResponse(200, localPath , alive));
+	//std::string fileContent = SocketManager::readFile("." + localPath);
+	//std::cout << PURPLE << "fileContent is: " << fileContent << RESET << std::endl; 
 
-	std::string fileContent = SocketManager::readFile("." + localPath);
-	std::cout << PURPLE << "fileContent is: " << fileContent << RESET << std::endl; 
+	//std::string contentType = getMimeType(localPath);
+	//std::cout << PURPLE << "contentType is: " << contentType << RESET << std::endl; 
 
-	std::string contentType = getMimeType(localPath);
-	std::cout << PURPLE << "contentType is: " << contentType << RESET << std::endl; 
+	//std::cout << "CONTENTTYPE : " << contentType << std::endl;
 
-	std::string alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
-
-	//return (ret.generateResponse("200", localPath));
-	return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + fileContent);
+	
+	//return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + fileContent);
 }
