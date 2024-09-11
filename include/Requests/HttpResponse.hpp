@@ -11,11 +11,11 @@ class HttpResponse
 {
 	public:
 		HttpResponse(const ServerConf& serverConf);
-		const std::string	generateResponse(int statusCode, const std::string& path) const;
-		std::string	getErrorPage(const std::string& errorCode) const;
+		std::string	generateResponse(std::string statusCode, std::string& path, std::string &alive);
+		std::string	loadErrorPage(const std::string& errorCode) const;
 
 	private:
-		std::string	getContentType(const std::string& path) const;
+		std::string getContentType(const std::string& path);
 		std::string	readFileContent(const std::string& path) const;
 		const ServerConf&	serverConf;
 };
