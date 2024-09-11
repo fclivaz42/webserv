@@ -11,8 +11,8 @@ class HttpResponse
 {
 	public:
 		HttpResponse(const ServerConf& serverConf);
-		std::string	generateResponse(int statusCode, std::string& path, std::string &alive);
-		std::string	getErrorPage(const std::string& errorCode) const;
+		std::string	generateResponse(std::string statusCode, std::string& path, std::string &alive);
+		std::string	loadErrorPage(const std::string& errorCode) const;
 
 	private:
 		std::string getContentType(const std::string& path);

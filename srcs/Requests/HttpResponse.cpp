@@ -4,38 +4,36 @@
 HttpResponse::HttpResponse(const ServerConf& serverConf) : serverConf(serverConf)
 {}
 
-std::string	HttpResponse::generateResponse(int statusCode, std::string& path, std::string &alive)
+std::string	HttpResponse::generateResponse(std::string statusCode, std::string& path, std::string &alive)
 {
-	std::string content = SocketManager::readFile("." + path);
+	if (statusCode[0] == '4')
+		path = loadErrorPage(statusCode);
+	std::string content = SocketManager::readFile(path);
 	std::string contentType = getContentType(path);
 
-	switch (statusCode) {
-		case (200):
+	if (statusCode == "200")
 			return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + content);
-		case (302):
+	else if (statusCode == "302")
 			return ("HTTP/1.1 302 Found\r\nLocation: " + path + "\r\nConnection: close\r\n\r\n");
-		case (403):
-			return ("HTTP/1.1 403 Forbidden\r\n" + getErrorPage("403") + "\r\n");
-		case (404):
+	else if (statusCode == "403")
+			return ("HTTP/1.1 403 Forbidden\r\n" + contentType + "\r\n" + alive + "\r\n" + content);
+	else if (statusCode == "404"){
 			std::cout << RED << content << RESET << std::endl;
 			std::cout << RED << contentType << RESET << std::endl;
 			return ("HTTP/1.1 404 Not Found\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + content);
-		case (413):
-			return ("HTTP/1.1 413 Payload Too Large\r\nConnection: close\r\n\r\n");
-		default:
-			return ("HTTP/1.1 500 Internal Server Error\r\n\r\n");
 	}
+	else if (statusCode == "413")
+		return ("HTTP/1.1 413 Payload Too Large\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + content);
+	else
+		return ("HTTP/1.1 500 Internal Server Error\r\n\r\n");
 }
 
-std::string		HttpResponse::getErrorPage(const std::string& errorCode) const
-{
-	std::string	errorPath;
-	(void) errorCode;
-	//TODO create this muddafucka
-	//errorPath = serverConf.getErrorPage(errorCode);
-	if (errorPath.empty())
-		errorPath = "/public/errors/404.html";
-	return (readFileContent(errorPath));
+std::string		HttpResponse::loadErrorPage(const std::string& errorCode) const{
+	std::string	errorPath = serverConf.getErrorPage();
+
+	errorPath.replace(16, 3, errorCode);
+
+	return (errorPath);
 }
 
 std::string		HttpResponse::getContentType(const std::string& path)
