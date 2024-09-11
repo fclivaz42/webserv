@@ -105,6 +105,16 @@ nav a
 	transition: background-color 0.2s ease;
 }
 
+#delete_button
+{
+	margin-top: 50px;
+}
+
+#delete_button:hover
+{
+	background-color: red;
+}
+
 form
 {
 	margin: 50px;
