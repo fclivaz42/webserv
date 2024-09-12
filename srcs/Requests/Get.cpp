@@ -108,7 +108,7 @@ const std::string createPath(const std::string& path, const ServerConf& serverCo
 		}
 		if (getFlag) {
 			if (loc.getRoot().empty())
-				returnPath = loc.getPath() + path;
+				returnPath = serverConf.getRoot() + path;
 			else
 				returnPath = loc.getRoot() + path;
 			if (stat(returnPath.c_str(), &s) == 0)

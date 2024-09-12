@@ -30,8 +30,13 @@ const std::string	uploadRequest(const HttpRequest& request, const ServerConf& se
 {
 	if (DEBUG)
 		std::cout << GREEN << "POST: Image being uploaded.\n";
-	(void)request;
-	(void)serverConf;
+	std::string	body = request.getBody();
+	body = body.substr(body.find("filename="));
+	body = body.substr(0, body.find_last_of('"'));
+	body = body.erase(0, body.find_first_of('"') + 1);
+	std::string path = createPath("/" + body, serverConf, "POST");
+	std::cout << "POST: Created path: " << path << "\n";
+	std::cout << "POST: DATA: " << request.getBody() << "\n";
 	return "";
 }
 
