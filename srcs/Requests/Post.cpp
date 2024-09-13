@@ -28,18 +28,40 @@ std::string urlDecode(const std::string& str)
 
 const std::string	uploadRequest(const HttpRequest& request, const ServerConf& serverConf)
 {
-	if (DEBUG)
-		std::cout << GREEN << "POST: Image being uploaded.\n";
-	std::string	body = request.getBody();
-	body = body.substr(body.find("filename="));
-	body = body.substr(0, body.find_last_of('"'));
-	body = body.erase(0, body.find_first_of('"') + 1);
-	std::string path = createPath("/" + body, serverConf, "POST");
-	std::cout << "POST: Created path: " << path << "\n";
-	std::cout << "POST: DATA: " << request.getBody() << "\n";
-	return "";
-}
+	(void)request;
+	(void)serverConf;
+	//if (DEBUG == 0)
+	//	std::cout << GREEN << "POST: Image being uploaded.\n";
+//	std::string	body = request.getBody();
+//	std::cout << "BODY : " << body << std::endl;
+//	body = body.substr(body.find("filename="));
+//	body = body.substr(0, body.find_last_of('"'));
+//	body = body.erase(0, body.find_first_of('"') + 1);
+//	std::string path = createPath("/" + body, serverConf, "POST");
+//	std::cout << "POST: Created path: " << path << "\n";
+//	std::cout << "POST: DATA: " << request.getBody() << "\n";
+//	return "";
+//	std::istringstream bodyStream(request.getBody());
+	std::string response;
 
+	HttpResponse res(serverConf);
+
+	// Generate redirection header
+	response += "HTTP/1.1 302 Found\r\n";
+	response += "Location: /success.html\r\n";
+	response += "Content-Type: text/html\r\n";
+
+	// Construct Connection header
+	std::string connectionHeader = request.isKeepAlive() ? "keep-alive" : "close";
+	response += "Connection: " + connectionHeader + "\r\n";
+
+	response += "\r\n"; // End of headers
+//
+	// Optionally, add content here if needed, e.g., an HTML message indicating the redirect
+	response += "<html><body><p>Redirecting to <a href=\"/success.html\">success.html</a></p></body></html>";
+
+	return response;
+}
 const std::string	formRequest(const HttpRequest& request, const ServerConf& serverConf)
 {
 	std::map<std::string, std::string> formData;
@@ -91,6 +113,8 @@ const std::string	processPostRequest(const HttpRequest& request, const ServerCon
 	std::map<std::string, std::string> headers(request.getHeaders());
 
 	if (headers["Content-Type"].find("multipart") != std::string::npos)
+	{
 		return (uploadRequest(request, serverConf));
+	}
 	return (formRequest(request, serverConf));
 }

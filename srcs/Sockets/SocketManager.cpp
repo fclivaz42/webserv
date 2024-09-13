@@ -138,24 +138,32 @@ int	SocketManager::acceptConnection(int serverFd)
 // Si le client s'est deco, je ne return rien
 std::string	SocketManager::readMessage(int clientFd)
 {
+	std::string message;
 	char	buffer[BUFFER_SIZE];
-	ssize_t	bytesRead = read(clientFd, buffer, sizeof(buffer) - 1);
-	
-	if (bytesRead > 0)
+	ssize_t	bytesRead;
+
+	while (true)
 	{
-		buffer[bytesRead] = '\0';
-		return (std::string(buffer));
+		bytesRead = read(clientFd, buffer, sizeof(buffer) - 1);
+		if (bytesRead > 0)
+		{
+			buffer[bytesRead] = '\0';
+			message.append(buffer);
+			if (message.find("\r\n\r\n") != std::string::npos)
+				break ;
+		}
+		else if (bytesRead == 0)
+		{
+			//std::cout << ORANGE << "Client disconnected. . ." << RESET << std::endl;
+			break ;
+		}
+		else
+		{
+			std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
+			return ("");
+		}
 	}
-	else if (bytesRead == 0)
-	{
-		//std::cout << ORANGE << "Client disconnected. . ." << RESET << std::endl;
-		return ("");
-	}
-	else
-	{
-		std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
-		return ("");
-	}
+	return (message);	
 }
 
 //FUNCTION START MANAGES MULTIPLE CLIENT CONNECTIONS USING POLL()
@@ -216,6 +224,11 @@ int	SocketManager::start(const ServerConf& serverConf)
 void	SocketManager::handleClient(int clientFd, const ServerConf& serverConf)
 {
 	std::string message = readMessage(clientFd);
+	size_t headerEnd = message.find("\r\n\r\n");
+	if (headerEnd != std::string::npos) {
+	    std::string headers = message.substr(0, headerEnd);
+	    std::string body = message.substr(headerEnd + 4);  // Skip the "\r\n\r\n"
+	}
 	std::string response;
 	//if (message.empty())
 	//{

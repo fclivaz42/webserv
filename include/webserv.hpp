@@ -15,7 +15,7 @@
 #define WHITESPACES " \t\f\v\n\r"
 // Buffer size
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
 
 # ifndef DEBUG
 #  define DEBUG 0

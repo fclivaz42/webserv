@@ -71,8 +71,8 @@ void	HttpRequest::parseRequest(const std::string& request)
 {
 	std::istringstream	iss(request);
 	std::string		line;
-	
-	if (DEBUG) {
+
+	if (DEBUG == 0) {
 		std::stringstream	stRequest(request);
 		std::string			prRequest;
 		std::cout << "\n┌────────── NEW REQUEST ──────────\n";
@@ -88,7 +88,7 @@ void	HttpRequest::parseRequest(const std::string& request)
 	std::istringstream requestLine(line);
 	requestLine >> method >> path >> version;
 
-	if (DEBUG) {
+	if (DEBUG == 0) {
 		std::cout << "├────────── REQUEST METADATA ──────────\n";
 		std::cout << "│ method: " << "" << method << "" << std:: endl;
 		std::cout << "│ path: " << path << std:: endl;
@@ -118,21 +118,88 @@ void	HttpRequest::parseRequest(const std::string& request)
 			throw std::runtime_error("ERROR: Invalid headers");
 	}
 
+	std::getline(iss, line);
 
 	if (version == "HTTP/1.1" && headers.find("Host") == headers.end())
 		throw std::runtime_error("ERROR: Missing host");
 
-	if (headers.find("Content-Length") != headers.end())
+	if (method == "POST" && headers.find("Content-Length") != headers.end())
 	{
 		std::istringstream contentLenStream(headers["Content-Length"]);
-		size_t contentLength = 0;
-		contentLenStream >> contentLength;
-		body.resize(contentLength);
-		iss.read(&body[0], contentLength);
+		size_t contentLen = 0;
+		contentLenStream >> contentLen;
+
+		if (contentLen > 0)
+		{
+			body.resize(contentLen);
+			iss.read(&body[0], contentLen);
+			if (body.size() != contentLen)
+				std::cerr << "ERROR body size does not match content Len" << std::endl;
+			else
+				std::cout << "SUCCESS: Body Read" << body << std::endl;
+			if (DEBUG == 0)
+			{
+				std::cout << "\n├────────── REQUEST BODY ──────────\n";
+				std::cout << body << "\n└────────── END BODY ──────────\n";
+			}
+		}
+		specialPostParsing();
 	}
 }
 
-bool	HttpRequest::isKeepAlive() const
+void 		HttpRequest::specialPostParsing()
+{
+	if (headers.find("Content-Type") != headers.end())
+	{
+		std::string contentType = headers["Content-Type"];
+		if (contentType.find("multipart/form-data") != std::string::npos)
+		{
+			std::string boundary = getBoundary(contentType);
+			parseMultiPartBody(body, boundary);
+		}
+	}
+}
+
+std::string 	HttpRequest::getBoundary(const std::string& contentType)
+{
+	std::string boundary = "";
+	size_t pos = contentType.find("boundary");
+	if (pos != std::string::npos)
+		boundary = "--" + contentType.substr(pos + 9);
+	return (boundary);
+}
+
+void 		HttpRequest::parseMultiPartBody(const std::string& body, const std::string& boundary)
+{
+	size_t pos = 0;
+	std::string del = boundary + "\r\n";
+
+	while ((pos = body.find(del)) != std::string::npos)
+	{
+		size_t endPart = body.find(boundary, pos + del.length());
+		std::string part = body.substr(pos + del.length(), endPart - (pos + del.length()));
+
+		std::istringstream partStream(part);
+		std::string partHeader;
+		std::getline(partStream, partHeader);
+
+		if (partHeader.find("Content-Disposition:") != std::string::npos)
+		{
+			size_t filenamePos = partHeader.find("filename=");
+			if (filenamePos != std::string::npos)
+			{
+				size_t fileStart = part.find("\r\n\r\n", filenamePos) + 4;
+				size_t fileEnd = part.rfind("\r\n");
+				std::string fileData = part.substr(fileStart, fileEnd - fileStart);
+				std::ofstream outFile("uploaded_file.jpeg", std::ios::binary);
+				outFile.write(fileData.c_str(), fileData.size());
+				outFile.close();
+			}
+		}
+	}
+}
+
+bool		HttpRequest::isKeepAlive() const
 {
 	std::map<std::string, std::string>::const_iterator iter = headers.find("Connection");
 
