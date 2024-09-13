@@ -171,32 +171,57 @@ std::string 	HttpRequest::getBoundary(const std::string& contentType)
 
 void 		HttpRequest::parseMultiPartBody(const std::string& body, const std::string& boundary)
 {
-	size_t pos = 0;
-	std::string del = boundary + "\r\n";
+    size_t pos = 0;
 
-	while ((pos = body.find(del)) != std::string::npos)
-	{
-		size_t endPart = body.find(boundary, pos + del.length());
-		std::string part = body.substr(pos + del.length(), endPart - (pos + del.length()));
+    std::string boundaryDelim = "--" + boundary;
+    std::string endBoundaryDelim = boundaryDelim + "--";
+    std::string delim = boundaryDelim + "\r\n";
 
-		std::istringstream partStream(part);
-		std::string partHeader;
-		std::getline(partStream, partHeader);
+    while ((pos = body.find(delim, pos)) != std::string::npos)
+    {
+        size_t partEnd = body.find(delim, pos + delim.length());
+        if (partEnd == std::string::npos)
+        {
+            partEnd = body.find(endBoundaryDelim, pos + delim.length());
+        }
 
-		if (partHeader.find("Content-Disposition:") != std::string::npos)
-		{
-			size_t filenamePos = partHeader.find("filename=");
-			if (filenamePos != std::string::npos)
-			{
-				size_t fileStart = part.find("\r\n\r\n", filenamePos) + 4;
-				size_t fileEnd = part.rfind("\r\n");
-				std::string fileData = part.substr(fileStart, fileEnd - fileStart);
-				std::ofstream outFile("uploaded_file.jpeg", std::ios::binary);
-				outFile.write(fileData.c_str(), fileData.size());
-				outFile.close();
-			}
-		}
-	}
+        if (partEnd == std::string::npos)
+        {
+            break; // No more parts or invalid format
+        }
+
+        std::string part = body.substr(pos + delim.length(), partEnd - (pos + delim.length()));
+
+         std::string::size_type headerEndPos = part.find("\r\n\r\n");
+        if (headerEndPos == std::string::npos) {
+            continue; // Malformed part
+        }
+
+        std::string headers = part.substr(0, headerEndPos);
+        std::string fileData = part.substr(headerEndPos + 4); // Skip past "\r\n\r\n"
+
+        std::string fileName;
+        std::string::size_type filenamePos = headers.find("filename=");
+        if (filenamePos != std::string::npos) {
+            filenamePos += 9; // Skip past "filename="
+            std::string::size_type filenameEnd = headers.find("\"", filenamePos);
+            if (filenameEnd != std::string::npos) {
+                fileName = headers.substr(filenamePos, filenameEnd - filenamePos);
+            }
+        }
+
+        // Save the file
+        if (!fileName.empty()) {
+            std::ofstream outFile("upload/" + fileName, std::ios::binary);
+            if (outFile.is_open()) {
+                outFile.write(fileData.c_str(), fileData.size());
+                outFile.close();
+            } else {
+                std::cerr << "ERROR: Failed to open file for writing" << std::endl;
+            }
+        }
+
+        pos = partEnd + delim.length();    }
 }
 
 bool		HttpRequest::isKeepAlive() const

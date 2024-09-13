@@ -41,7 +41,7 @@ const std::string	uploadRequest(const HttpRequest& request, const ServerConf& se
 //	std::cout << "POST: Created path: " << path << "\n";
 //	std::cout << "POST: DATA: " << request.getBody() << "\n";
 //	return "";
-//	std::istringstream bodyStream(request.getBody());
+	std::istringstream bodyStream(request.getBody());
 	std::string response;
 
 	HttpResponse res(serverConf);
