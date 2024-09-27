@@ -9,7 +9,7 @@ SHELL	= /bin/bash
 CXX	= c++
 
 DEPS	=	${INCL}/webserv.hpp\
-			${INCL}/Sockets/SocketManager.hpp\
+			${INCL}/Network/ConnectManager.hpp\
 			${INCL}/Parsing/Location.hpp\
 			${INCL}/Parsing/ServerConf.hpp\
 			${INCL}/Parsing/Servers.hpp\
@@ -21,7 +21,7 @@ DEPS	=	${INCL}/webserv.hpp\
 			${SRCS}
 
 SRCS	=	${SUBDIR}/webserv.cpp\
-			${SUBDIR}/Sockets/SocketManager.cpp\
+			${SUBDIR}/Network/ConnectManager.cpp\
 			${SUBDIR}/Parsing/Servers.cpp\
 			${SUBDIR}/Parsing/ServerConf.cpp\
 			${SUBDIR}/Parsing/Location.cpp\

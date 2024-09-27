@@ -13,12 +13,19 @@
 #define RED "\x1b[31m"
 #define PURPLE "\x1b[35m"
 #define WHITESPACES " \t\f\v\n\r"
-// Buffer size
+
+//	Buffer size
 
 #define BUFFER_SIZE 2048
+
+//	Debug switch
 
 # ifndef DEBUG
 #  define DEBUG 0
 # endif
+
+//	bzero because it's useful
+
+void	ft_bzero(void *s, unsigned long len);
 
 #endif // WEBSERV_HPP

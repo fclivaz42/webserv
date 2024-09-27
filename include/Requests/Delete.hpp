@@ -3,7 +3,7 @@
 
 #include <string>
 #include <map>
-#include "Sockets/SocketManager.hpp"
+#include "Network/ConnectManager.hpp"
 #include "Requests/HttpRequest.hpp"
 
 std::string	processDeleteRequest(const HttpRequest& request);

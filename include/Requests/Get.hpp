@@ -2,7 +2,7 @@
 # define GET_HPP
 
 #include <string>
-#include "Sockets/SocketManager.hpp"
+#include "Network/ConnectManager.hpp"
 #include "Requests/HttpRequest.hpp"
 #include <sys/stat.h>
 #include <unistd.h>

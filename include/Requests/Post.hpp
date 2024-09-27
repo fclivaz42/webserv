@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include "Parsing/ServerConf.hpp"
 #include "Parsing/Location.hpp"
-#include "Sockets/SocketManager.hpp"
+#include "Network/ConnectManager.hpp"
 #include "Requests/HttpRequest.hpp"
 #include "Requests/HttpResponse.hpp"
 

@@ -8,7 +8,7 @@ std::string	HttpResponse::generateResponse(std::string statusCode, std::string& 
 {
 	if (statusCode[0] == '4')
 		path = loadErrorPage(statusCode);
-	std::string content = SocketManager::readFile(path);
+	std::string content = ConnectManager::readFile(path);
 	std::string contentType = getContentType(path);
 
 	if (statusCode == "200")

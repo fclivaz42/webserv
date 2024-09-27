@@ -10,7 +10,7 @@ std::string	processDeleteRequest(const HttpRequest& request)
 	path = updatePath(path);
 	std::cout << path << std::endl;
 
-	std::string fileContent = SocketManager::readFile("." + path);
+	std::string fileContent = ConnectManager::readFile("." + path);
 	std::cout << PURPLE << "fileContent is: " << fileContent << RESET << std::endl; 
 
 	std::string contentType = getMimeType(path);
