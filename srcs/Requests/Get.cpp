@@ -89,12 +89,12 @@ bool	checkRedir(const std::string& path, const ServerConf& serverConf)
 	return (false);
 }
 
-const std::string createPath(const std::string& path, const ServerConf& serverConf, const std::string method)
+const std::string createPath(const std::string& path, const ServerConf& serverConf, const std::string& method)
 {
-	std::map<std::string, Location> locationMap = serverConf.getLocation();
-	std::string	returnPath;
-	struct stat	s;
-	bool		getFlag = false;
+	std::map<std::string, Location>	locationMap = serverConf.getLocation();
+	std::string						returnPath;
+	struct stat						s;
+	bool							getFlag = false;
 
 	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++) {
 		const	Location& loc = iter->second;

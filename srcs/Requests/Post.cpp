@@ -28,20 +28,27 @@ std::string urlDecode(const std::string& str)
 
 const std::string	uploadRequest(const HttpRequest& request, const ServerConf& serverConf)
 {
-	(void)request;
-	(void)serverConf;
-	//if (DEBUG == 0)
-	//	std::cout << GREEN << "POST: Image being uploaded.\n";
-//	std::string	body = request.getBody();
-//	std::cout << "BODY : " << body << std::endl;
-//	body = body.substr(body.find("filename="));
-//	body = body.substr(0, body.find_last_of('"'));
-//	body = body.erase(0, body.find_first_of('"') + 1);
-//	std::string path = createPath("/" + body, serverConf, "POST");
-//	std::cout << "POST: Created path: " << path << "\n";
-//	std::cout << "POST: DATA: " << request.getBody() << "\n";
-//	return "";
-	std::istringstream bodyStream(request.getBody());
+	std::string			body = request.getBody();
+	std::istringstream	bodyStream(request.getBody());
+
+	if (DEBUG)
+		std::cout << GREEN << "POST: Image being uploaded.\n";
+	std::cout << "BODY : " << body << std::endl;
+	body = body.substr(body.find("filename="));
+	body = body.substr(0, body.find_last_of('"'));
+	body = body.erase(0, body.find_first_of('"') + 1);
+	std::string path = createPath("/" + body, serverConf, "POST");
+	std::cout << "POST: Created path: " << path << "\n";
+	std::cout << "POST: DATA: " << request.getBody() << "\n";
+
+	std::ofstream outFile(path.c_str(), std::ios::binary);
+	if (outFile.is_open()) {
+		outFile.write(request.getBody().c_str(), request.getBody().size());
+		outFile.close();
+	} else {
+		std::cerr << "ERROR: Failed to open file for writing" << std::endl;
+	}
+
 	std::string response;
 
 	HttpResponse res(serverConf);
@@ -113,8 +120,6 @@ const std::string	processPostRequest(const HttpRequest& request, const ServerCon
 	std::map<std::string, std::string> headers(request.getHeaders());
 
 	if (headers["Content-Type"].find("multipart") != std::string::npos)
-	{
 		return (uploadRequest(request, serverConf));
-	}
 	return (formRequest(request, serverConf));
 }

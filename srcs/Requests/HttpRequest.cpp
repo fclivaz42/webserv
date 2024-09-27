@@ -72,7 +72,7 @@ void	HttpRequest::parseRequest(const std::string& request)
 	std::istringstream	iss(request);
 	std::string		line;
 
-	if (DEBUG == 0) {
+	if (DEBUG) {
 		std::stringstream	stRequest(request);
 		std::string			prRequest;
 		std::cout << "\n┌────────── NEW REQUEST ──────────\n";
@@ -88,7 +88,7 @@ void	HttpRequest::parseRequest(const std::string& request)
 	std::istringstream requestLine(line);
 	requestLine >> method >> path >> version;
 
-	if (DEBUG == 0) {
+	if (DEBUG) {
 		std::cout << "├────────── REQUEST METADATA ──────────\n";
 		std::cout << "│ method: " << "" << method << "" << std:: endl;
 		std::cout << "│ path: " << path << std:: endl;
@@ -123,31 +123,39 @@ void	HttpRequest::parseRequest(const std::string& request)
 	if (version == "HTTP/1.1" && headers.find("Host") == headers.end())
 		throw std::runtime_error("ERROR: Missing host");
 
-	if (method == "POST" && headers.find("Content-Length") != headers.end())
+	/*if (method == "POST" && headers.find("Content-Length") != headers.end())*/
+	/*{*/
+	/*	std::istringstream contentLenStream(headers["Content-Length"]);*/
+	/*	size_t contentLen = 0;*/
+	/*	contentLenStream >> contentLen;*/
+	/**/
+	/*	if (contentLen > 0)*/
+	/*	{*/
+	/*		body.resize(contentLen);*/
+	/*		iss.read(&body[0], contentLen);*/
+	/*		if (body.size() != contentLen)*/
+	/*			std::cerr << "ERROR body size does not match content Len" << std::endl;*/
+	/*		else*/
+	/*			std::cout << "SUCCESS: Body Read:\n" << body << std::endl;*/
+	/*		if (DEBUG)*/
+	/*		{*/
+	/*			std::cout << "\n├────────── REQUEST BODY ──────────\n";*/
+	/*			std::cout << body << "\n└────────── END BODY ──────────\n";*/
+	/*		}*/
+	/*	}*/
+	/*	specialPostParsing();*/
+	/*}*/
+	if (headers.find("Content-Length") != headers.end())
 	{
 		std::istringstream contentLenStream(headers["Content-Length"]);
-		size_t contentLen = 0;
-		contentLenStream >> contentLen;
-
-		if (contentLen > 0)
-		{
-			body.resize(contentLen);
-			iss.read(&body[0], contentLen);
-			if (body.size() != contentLen)
-				std::cerr << "ERROR body size does not match content Len" << std::endl;
-			else
-				std::cout << "SUCCESS: Body Read" << body << std::endl;
-			if (DEBUG == 0)
-			{
-				std::cout << "\n├────────── REQUEST BODY ──────────\n";
-				std::cout << body << "\n└────────── END BODY ──────────\n";
-			}
-		}
-		specialPostParsing();
+		size_t contentLength = 0;
+		contentLenStream >> contentLength;
+		body.resize(contentLength);
+		iss.read(&body[0], contentLength);
 	}
 }
 
-void 		HttpRequest::specialPostParsing()
+void		HttpRequest::specialPostParsing()
 {
 	if (headers.find("Content-Type") != headers.end())
 	{
@@ -160,7 +168,7 @@ void 		HttpRequest::specialPostParsing()
 	}
 }
 
-std::string 	HttpRequest::getBoundary(const std::string& contentType)
+std::string	HttpRequest::getBoundary(const std::string& contentType)
 {
 	std::string boundary = "";
 	size_t pos = contentType.find("boundary");
@@ -169,62 +177,62 @@ std::string 	HttpRequest::getBoundary(const std::string& contentType)
 	return (boundary);
 }
 
-void 		HttpRequest::parseMultiPartBody(const std::string& body, const std::string& boundary)
+void	HttpRequest::parseMultiPartBody(const std::string& body, const std::string& boundary)
 {
-    size_t pos = 0;
+	size_t pos = 0;
 
-    std::string boundaryDelim = "--" + boundary;
-    std::string endBoundaryDelim = boundaryDelim + "--";
-    std::string delim = boundaryDelim + "\r\n";
+	std::string boundaryDelim = "--" + boundary;
+	std::string endBoundaryDelim = boundaryDelim + "--";
+	std::string delim = boundaryDelim + "\r\n";
 
-    while ((pos = body.find(delim, pos)) != std::string::npos)
-    {
-        size_t partEnd = body.find(delim, pos + delim.length());
-        if (partEnd == std::string::npos)
-        {
-            partEnd = body.find(endBoundaryDelim, pos + delim.length());
-        }
+	while ((pos = body.find(delim, pos)) != std::string::npos)
+	{
+		size_t partEnd = body.find(delim, pos + delim.length());
+		if (partEnd == std::string::npos)
+		{
+			partEnd = body.find(endBoundaryDelim, pos + delim.length());
+		}
 
-        if (partEnd == std::string::npos)
-        {
-            break; // No more parts or invalid format
-        }
+		if (partEnd == std::string::npos)
+		{
+			break; // No more parts or invalid format
+		}
 
-        std::string part = body.substr(pos + delim.length(), partEnd - (pos + delim.length()));
+		std::string part = body.substr(pos + delim.length(), partEnd - (pos + delim.length()));
 
-         std::string::size_type headerEndPos = part.find("\r\n\r\n");
-        if (headerEndPos == std::string::npos) {
-            continue; // Malformed part
-        }
+		 std::string::size_type headerEndPos = part.find("\r\n\r\n");
+		if (headerEndPos == std::string::npos) {
+			continue; // Malformed part
+		}
 
-        std::string headers = part.substr(0, headerEndPos);
-        std::string fileData = part.substr(headerEndPos + 4); // Skip past "\r\n\r\n"
+		std::string headers = part.substr(0, headerEndPos);
+		std::string fileData = part.substr(headerEndPos + 4); // Skip past "\r\n\r\n"
 
-        std::string fileName;
-        std::string::size_type filenamePos = headers.find("filename=");
-        if (filenamePos != std::string::npos) {
-            filenamePos += 9; // Skip past "filename="
-            std::string::size_type filenameEnd = headers.find("\"", filenamePos);
-            if (filenameEnd != std::string::npos) {
-                fileName = headers.substr(filenamePos, filenameEnd - filenamePos);
-            }
-        }
+		std::string fileName;
+		std::string::size_type filenamePos = headers.find("filename=");
+		if (filenamePos != std::string::npos) {
+			filenamePos += 9; // Skip past "filename="
+			std::string::size_type filenameEnd = headers.find("\"", filenamePos);
+			if (filenameEnd != std::string::npos) {
+				fileName = headers.substr(filenamePos, filenameEnd - filenamePos);
+			}
+		}
 
-        // Save the file
-        if (!fileName.empty()) {
-            std::ofstream outFile("upload/" + fileName, std::ios::binary);
-            if (outFile.is_open()) {
-                outFile.write(fileData.c_str(), fileData.size());
-                outFile.close();
-            } else {
-                std::cerr << "ERROR: Failed to open file for writing" << std::endl;
-            }
-        }
+		// Save the file
+		if (!fileName.empty()) {
+			std::ofstream outFile(static_cast<std::string>("upload/" + fileName).c_str(), std::ios::binary);
+			if (outFile.is_open()) {
+				outFile.write(fileData.c_str(), fileData.size());
+				outFile.close();
+			} else {
+				std::cerr << "ERROR: Failed to open file for writing" << std::endl;
+			}
+		}
 
-        pos = partEnd + delim.length();    }
+		pos = partEnd + delim.length();	}
 }
 
-bool		HttpRequest::isKeepAlive() const
+bool	HttpRequest::isKeepAlive() const
 {
 	std::map<std::string, std::string>::const_iterator iter = headers.find("Connection");
 
