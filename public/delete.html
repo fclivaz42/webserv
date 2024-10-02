@@ -23,10 +23,9 @@
 
     <script>
         document.getElementById('deleteForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Empêche le rechargement de la page
+            event.preventDefault();
             const currentPort = window.location.port || 80;
             const filename = document.getElementById('filename').value;
-            // Forme l'URL avec le chemin correct du fichier à supprimer
             const url = `http://localhost:${currentPort}/delete/${filename}`;
 
             fetch(url, {
