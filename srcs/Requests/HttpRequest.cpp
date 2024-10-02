@@ -8,68 +8,6 @@ HttpRequest::HttpRequest() : method(""), path(""), version(""), body("")
 
 HttpRequest::HttpRequest(std::stringstream& request)
 {
-	parseRequest(request);
-}
-
-/* COPY CONSTRUCTOR */
-HttpRequest::HttpRequest(HttpRequest const &copy) : method(copy.method), path(copy.path), version(copy.version), headers(copy.headers), body(copy.body)
-{}
-
-/* DESTRUCTOR */
-HttpRequest::~HttpRequest()
-{}
-
-/* SURCHARGED OPERATORS */
-HttpRequest &HttpRequest::operator=(HttpRequest const &rhs)
-{
-	if (this != &rhs)
-	{
-		method = rhs.method;
-		path = rhs.path;
-		version = rhs.version;
-		headers = rhs.headers;
-		body = rhs.body;
-	}
-	return (*this);
-}
-
-std::string	HttpRequest::getMethod() const
-{
-	return (method);
-}
-
-std::string	HttpRequest::getPath() const
-{
-	return (path);
-}
-
-std::string	HttpRequest::getVersion() const
-{
-	return (version);
-}
-
-std::map<std::string, std::string>	HttpRequest::getHeaders() const
-{
-	return (headers);
-}
-
-std::string	HttpRequest::getBody() const
-{
-	return (body);
-}
-
-std::string	trim(const std::string& str)
-{
-	size_t	start = str.find_first_not_of(" \t");
-
-	if (start == std::string::npos)
-		return ("");
-	size_t end = str.find_last_not_of(" \t");
-	return (str.substr(start, end - start + 1));
-}
-
-void	HttpRequest::parseRequest(std::stringstream& request)
-{
 	std::string			line, key, value;
 	size_t				pos;
 
@@ -77,9 +15,11 @@ void	HttpRequest::parseRequest(std::stringstream& request)
 		std::stringstream	stRequest(request.str());
 		std::string			prRequest;
 		std::cout << "\n┌────────── NEW REQUEST ──────────\n";
-		/*while (std::getline(stRequest, prRequest))*/
-		/*	if (stRequest.peek() != EOF)*/
-		/*		std::cout << "│ " << prRequest << std::endl;*/
+		while (std::getline(stRequest, prRequest) && prRequest.find("Content-Disposition") == std::string::npos)
+			if (stRequest.peek() != EOF)
+				std::cout << "│ " << prRequest << std::endl;
+		stRequest.str(std::string());
+		stRequest.clear();
 	}
 	if (!std::getline(request, line) || line.empty())
 	{
@@ -138,7 +78,6 @@ void	HttpRequest::parseRequest(std::stringstream& request)
 				std::getline(request, line);
 				body.append(line).append("\n");
 			}
-			std::cout << "BODY SIZE: " << body.length() << std::endl;
 			break ;
 		}
 		else
@@ -147,6 +86,65 @@ void	HttpRequest::parseRequest(std::stringstream& request)
 
 	if (version == "HTTP/1.1" && headers.find("Host") == headers.end())
 		throw std::runtime_error("ERROR: Missing host\n");
+	request.str(std::string());
+	request.clear();
+}
+
+/* COPY CONSTRUCTOR */
+HttpRequest::HttpRequest(HttpRequest const &copy) : method(copy.method), path(copy.path), version(copy.version), headers(copy.headers), body(copy.body)
+{}
+
+/* DESTRUCTOR */
+HttpRequest::~HttpRequest()
+{}
+
+/* SURCHARGED OPERATORS */
+HttpRequest &HttpRequest::operator=(HttpRequest const &rhs)
+{
+	if (this != &rhs)
+	{
+		method = rhs.method;
+		path = rhs.path;
+		version = rhs.version;
+		headers = rhs.headers;
+		body = rhs.body;
+	}
+	return (*this);
+}
+
+const std::string&	HttpRequest::getMethod() const
+{
+	return (method);
+}
+
+const std::string&	HttpRequest::getPath() const
+{
+	return (path);
+}
+
+const std::string&	HttpRequest::getVersion() const
+{
+	return (version);
+}
+
+const std::map<std::string, std::string>&	HttpRequest::getHeaders() const
+{
+	return (headers);
+}
+
+const std::string&	HttpRequest::getBody() const
+{
+	return (body);
+}
+
+std::string	trim(const std::string& str)
+{
+	size_t	start = str.find_first_not_of(" \t");
+
+	if (start == std::string::npos)
+		return ("");
+	size_t end = str.find_last_not_of(" \t");
+	return (str.substr(start, end - start + 1));
 }
 
 bool	HttpRequest::isKeepAlive() const

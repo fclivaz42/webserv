@@ -183,8 +183,7 @@ ssize_t	ConnectManager::readMessage(int clientFd, std::stringstream& message)
 	ssize_t		bytesRead;
 
 	ft_bzero(buffer, BUFFER_SIZE);
-	std::cout << "Reading...\n";
-	std::cout << "Read " << (bytesRead = read(clientFd, buffer, BUFFER_SIZE)) << " bytes." << std::endl;
+	bytesRead = read(clientFd, buffer, BUFFER_SIZE);
 	if (bytesRead > 0)
 		message.write(buffer, bytesRead);
 	if (bytesRead < 0)
@@ -219,7 +218,6 @@ void	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 		std::cerr << RED << "ERROR: write() failure" << RESET << std::endl;
 	else if (bytesWritten != static_cast<ssize_t>(response.length())) 
 		std::cerr << RED << "ERROR: Failure to write all datas" << RESET << std::endl;
-	message.clear();
 }
 
 /*
@@ -296,11 +294,9 @@ void	ConnectManager::start()
 				readMessage(fds[i].fd, message);
 				if (std::find(readFds.begin(), readFds.end(), fds[i].fd) == readFds.end()) {
 					readFds.push_back(fds[i].fd);
-					std::cout << "Pushed FD " << fds[i].fd << "\n";
 				}
 			}
 			else {
-				std::cout << "No message to read...\n";
 				if (std::find(readFds.begin(), readFds.end(), fds[i].fd) != readFds.end()) {
 					for (int n = 0; n < this->_serverList.getAmountOfServers(); n++)
 					{
@@ -309,6 +305,8 @@ void	ConnectManager::start()
 						{
 							std::cout << "CLIENT " << fds[i].fd << " ON PORT " << swag[fds[i].fd] << " IS USING SERVER " << currentSConf.getServerName() << "\n";
 							handleClient(fds[i], currentSConf, message);
+							message.str(std::string());
+							message.clear();
 							readFds.erase(std::find(readFds.begin(), readFds.end(), fds[i].fd));
 							fds.erase(fds.begin() + i);
 							--i;

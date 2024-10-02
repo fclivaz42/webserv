@@ -34,12 +34,14 @@ class	HttpRequest
 		/* SURCHARGED OPERATORS */
 		HttpRequest &operator=(HttpRequest const &rhs);
 		/* GETTERS */
-		std::string				getMethod() const;
-		std::string				getPath() const;
-		std::string				getVersion() const;
-		std::map<std::string, std::string>	getHeaders() const;
-		std::string				getBody() const;
-		bool					isKeepAlive() const;
+		const std::map<std::string, std::string>&	getHeaders() const;
+		const std::string&							getMethod() const;
+		const std::string&							getPath() const;
+		const std::string&							getVersion() const;
+		const std::string&							getBody() const;
+		bool										isKeepAlive() const;
 };
+
+std::string	trim(const std::string& str);
 
 #endif
