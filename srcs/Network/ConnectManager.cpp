@@ -6,40 +6,43 @@
 #include "Requests/Get.hpp"
 #include "Requests/Post.hpp"
 #include "Requests/Delete.hpp"
+#include "webserv.hpp"
 #include <algorithm>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <vector>
+#include <fstream>
+#include <netinet/in.h>
+#include <string>
+#include <sys/poll.h>
 
-//SETTING UP THE SOCKET MANAGER
-// Initialise le fd pour le server scoket a -1 pour indiquer que le socket n'a pas ete cree
-// Initialise un port par defaut a 8080
-// clear memoire pour serverAddress et set to les bytes a 0 pour eviter les garbage data
-// set l'address family a AF_INET ce qui veut dire qu'on utilise le protocole IPv4
-// set le server sur INADDR_ANY pour binder le server a toutes les network interfaces available
-// htons(_port) convertis le numero de port de host byte a network byte order pour pouvoir lire sur tous les systemes
+/*
+	c tipar pour le construiseur d'une manager de connect
+	En vrai ce qui se passe ici c'est qu'on va d'abord initialiser _serverFds, _serverPorts et _port a NULL.
+		La raison pour laquelle on fait ca c'est pour eviter d'avoir des vecteurs alloues a leur max_size.
+	On va ensuite recuperer nos donnees parsees dans _serverList, comme ca on a acces a tout.
 
-ConnectManager::ConnectManager(const Servers& ServerList) : _serverFds(0), _serverPorts(0), _pairPortsNames(0), _serverList(ServerList)
+	Pour chaque port de chaque Serveur, on va push_back un sockaddr_in sur _serverPorts.
+		On set sin_family sur AF_INET pour preciser le protocole IPv4.
+		On set sin_addr.s_addr sur INADDR_ANY pour dire qu'on ecoute partout.
+		On ajoute le port sur lequel on veut ecouter sur sin_port.
+		Finalement, on push_back le port sur _port pour plus tard.
+
+*/
+
+ConnectManager::ConnectManager(const Servers& ServerList) : _serverFds(0), _serverPorts(0), _port(0), _serverList(ServerList)
 {
 	struct	sockaddr_in						servAddrin;
-	std::vector<unsigned short>				vecPort;
+	std::vector<ushort>				vecPort;
 
-	for (size_t i = 0; i < (size_t)ServerList.getAmountOfServers(); i++) {
+	for (int i = 0; i < ServerList.getAmountOfServers(); i++) {
 		vecPort = ServerList.getServConf(i).getPort();
 		for (size_t j = 0; j < vecPort.size(); j++) {
 			ft_bzero(&servAddrin, sizeof(struct sockaddr_in));
 			servAddrin.sin_family = AF_INET;
 			servAddrin.sin_addr.s_addr = htonl(INADDR_ANY);
 			servAddrin.sin_port = htons(vecPort[j]);
-			_pairPortsNames.push_back(std::pair<std::string, unsigned short>(ServerList.getServConf(i).getServerName(),vecPort[j]));
 			_serverPorts.push_back(servAddrin);
 			_port.push_back(vecPort[j]);
 		}
 	}
-
-	if (DEBUG)
-		for (size_t j = 0; j < _pairPortsNames.size(); j++)
-			std::cout << "Server \'" << _pairPortsNames[j].first << "\' has port: " << _pairPortsNames[j].second << "\n";
 }
 
 ConnectManager::~ConnectManager()
@@ -48,34 +51,54 @@ ConnectManager::~ConnectManager()
 		close(_serverFds[i]);
 }
 
+/*
+	Ptite fonction toute nulle qui nettoie un peu StartSocketListen
+	En vrai cette fonction va close() le fd si le socket fail ou bien si on arrive pas a bind.
+	Ensuite, on va erase les fd et ports associes, histoire d'etre plus propres pour la suite
+*/
+
 void	ConnectManager::closErase(size_t index)
 {
 	close(_serverFds[index]);
 	_serverFds.erase(_serverFds.begin() + index);
 	_serverPorts.erase(_serverPorts.begin() + index);
 	_port.erase(_port.begin() + index);
-	_pairPortsNames.erase(_pairPortsNames.begin() + index);
 }
 
 /*
-	StartSocketListen comprend 3 etapes:
+	StartSocketListen comprend 3 etapes et returne true ou false selon certains criteres:
 
-	1: Creer une socket avec la fonction socket()
-		AF_INET encore pour dire qu'on utiliose IPv4 protocol
-		SOCK_STREAM pour dire qu'on utilise un TCP stream 
-		Je ste les socket options avec setsockopt()
-		SOL_SOCKET == option que j'applique au niveau du socket
+	1ere boucle for:
+		On va creer un socket pour chaque port dans notre config.
+		AF_INET pour dire qu'on utilise IPv4 et SOCK_STREAM pour dire qu'on utilise le protocle TCP.
+		Ensuite, setsockopt() va mettre en place quelque regles:
+		SOL_SOCKET == option appliquee au niveau du socket
 		SO_REUSEADDR == autorise le server a reutilise l'addresse ip et le port si deja utilise.
 		Utile quand on restart le server et que l'adresse est toujours en TIME_WAIT state.
 
-	2: Bind au socket
-		j'assigne les bonnes infos contrairement au constructeur qui assignauit les valeurs par default
-		address info + ip address + port number
-		Je binde le socket a l'adresse du server avev bind()
+	Quand cette etape est terminee, on va check si _serverFds contient des valeurs.
+		Si oui, cela veut dire qu'on a pu creer des sockets, donc on continue.
+		Si non, cela veut dure que tout a fail donc ciao on se casse d'ici et on return false.
 
-	3: Demarrer le listen
-		je commmence a ecouter des connections avec la fonction listen()
-		backlog corresponds au nombre max de connections en attentes qui peuvent etre queue dans ma socket
+	2eme boucle for:
+		On va bind() chaque fd qu'on a a son port respectif.
+			Si bind fail, on close() le socket et on nettoie nos donnes.
+			Si bind reussit, yippie on ecoute sur le port qu'on lui a donne.
+
+	Quand cette etape est terminee, on va de nouveau check si _serverFds contient des valeurs.
+		Si oui, cela veut dire qu'on a pu correctement bind() AU MOINS un port a son fd, donc on continue.
+		Si non, cela veut dure que on n'a rien pu bind() donc ciao on se casse d'ici et on return false.
+
+	3eme boucle for:
+		On utilise listen() pour demarrer l'ecoute sur les fds qu'on lui a donne.
+			Si listen() fail, ca veut dire que le port est deja utilise. On close le fd et erase nos donnes.
+			Si listen() reussit, on a enfin fini la chaine port > socket > fd et donc on peut read/write.
+			backlog correspond au nombre max de connections en attente sur un socket. (il set a SOMAXCONN de base.)
+
+	Quand tout est fini, on re-check si _serverFds contient des valeurs.
+		Si oui, on a pu listen() au moins un port et on demarre webserv en retournant true.
+			Par ailleurs, on clear _port, qui n'est plus necessaire.
+		Si non, tout a fail et on se casse d'ici avec un return false.
 
 	NOTE: on fait en sorte d'ecouter quand meme si un seul port bind et arrive a listen. On close() les fd's qui sont inutilisables.
 */
@@ -92,7 +115,6 @@ bool	ConnectManager::startSocketListen(int backlog)
 			std::cerr << RED << "ERROR: Unable to create socket for port " << port << RESET << std::endl;
 			_serverPorts.erase(_serverPorts.begin() + i);
 			_port.erase(_port.begin() + i);
-			_pairPortsNames.erase(_pairPortsNames.begin() + i);
 			continue;
 		}
 		else if (setsockopt(serverFd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
@@ -100,7 +122,6 @@ bool	ConnectManager::startSocketListen(int backlog)
 			close(serverFd);
 			_serverPorts.erase(_serverPorts.begin() + i);
 			_port.erase(_port.begin() + i);
-			_pairPortsNames.erase(_pairPortsNames.begin() + i);
 			continue;
 		}
 		if (DEBUG)
@@ -115,13 +136,15 @@ bool	ConnectManager::startSocketListen(int backlog)
 	{
 		if (bind(_serverFds[i], (struct sockaddr*)&_serverPorts[i], sizeof(_serverPorts[i])) == -1)
 		{
-			std::cerr << RED << "ERROR: Failed to bind SFD " << _serverFds[i] << " to port " << ntohs(_serverPorts[i].sin_port) << RESET << std::endl;
+			std::cerr << RED << "ERROR: Failed to bind SFD " << _serverFds[i] \
+				<< " to port " << ntohs(_serverPorts[i].sin_port) << RESET << std::endl;
 			closErase(i);
 			--i;
 			continue;
 		}
 		if (DEBUG)
-			std::cerr << GREEN << "BOUND SFD " << _serverFds[i] << " to port " << ntohs(_serverPorts[i].sin_port) << RESET << std::endl;
+			std::cerr << GREEN << "BOUND SFD " << _serverFds[i] << " to port " \
+				<< ntohs(_serverPorts[i].sin_port) << RESET << std::endl;
 	}
 
 	if (_serverFds.empty())
@@ -131,7 +154,8 @@ bool	ConnectManager::startSocketListen(int backlog)
 	{
 		if (listen(_serverFds[i], backlog) == -1)
 		{
-			std::cerr << RED << "ERROR: Could not listen on port " << _port[i] << ". It may already be in use." << RESET << std::endl;
+			std::cerr << RED << "ERROR: Could not listen on port " << _port[i] \
+				<< ". It may already be in use." << RESET << std::endl;
 			closErase(i);
 			--i;
 			continue;
@@ -142,30 +166,8 @@ bool	ConnectManager::startSocketListen(int backlog)
 	if (_serverFds.empty())
 		return (false);
 
+	_port.clear();
 	return (true);
-}
-
-//FUNCTION TO ACCEPT INCOMING CONNECTIONS FROM CLIENT TO SERVER
-//quand un client essaye de se connecter a un server, cette fonction gere la requete de connection
-//et etablie une nouvelle connexion.
-//sockaddr__in est une struct utilise pour storer les infos du client comme l'ip address et le num de port
-//clientLen stores la size de clientAddress
-//que je passe a accept() qui est le system call qui accept les connections entrantes d'un client
-//La fonction retourne le clientFd qui represents la new co et print l'ip address client
-int	ConnectManager::acceptConnection(int serverFd, std::vector<unsigned short>& portlist)
-{
-	struct sockaddr_in clientAddress;
-	socklen_t clientLen = sizeof(clientAddress);
-	struct sockaddr_in serverPort;
-	socklen_t portLen = sizeof(serverPort);
-	int clientFd = accept(serverFd, (struct sockaddr*)&clientAddress, &clientLen);
-	if (clientFd == -1 || getsockname(serverFd, (struct sockaddr*)&serverPort, &portLen) == -1)
-		std::cerr << RED << "\nERROR : Connection failure" << RESET << std::endl;
-	if (DEBUG)
-		if (clientFd > 0)
-			std::cerr << GREEN << "\n┌──────────\n│ New connection from: " << inet_ntoa(clientAddress.sin_addr) << "\n└──────────" << RESET << std::endl;
-	portlist.push_back(ntohs(serverPort.sin_port));
-	return (clientFd);
 }
 
 //FONCTION READ MESSAGE
@@ -175,115 +177,25 @@ int	ConnectManager::acceptConnection(int serverFd, std::vector<unsigned short>& 
 // Je checke si read etait successful
 // si oui je convertis en string et je return.
 // Si le client s'est deco, je ne return rien
-std::string	ConnectManager::readMessage(int clientFd)
+ssize_t	ConnectManager::readMessage(int clientFd, std::stringstream& message)
 {
-	std::string	message;
 	char		buffer[BUFFER_SIZE];
 	ssize_t		bytesRead;
 
-	while (true)
-	{
-		bytesRead = read(clientFd, buffer, sizeof(buffer) - 1);
-		if (bytesRead > 0)
-		{
-			buffer[bytesRead] = '\0';
-			message.append(buffer);
-			if (message.find("\r\n\r\n") != std::string::npos)
-				break ;
-		}
-		else if (bytesRead == 0)
-			break ;
-		else
-		{
-			std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
-			return ("");
-		}
-	}
-	return (message);
-}
-
-//FUNCTION START MANAGES MULTIPLE CLIENT CONNECTIONS USING POLL()
-//Le server se tart or faisant une liste de fd qui seront gerers par poll()
-//La loop principale checks non stop si il y a une activite via les fds
-//Quand un nouveau client se connecte, il est ajoute a la liste the fd monitored
-//Quand un client envoie de la data, le server lit la data, la process et s'occupe de la deconnexion
-void	ConnectManager::start()
-{
-	std::vector<struct pollfd>	fds(0);
-	std::vector<unsigned short>	portlist(0);
-
-	for (size_t i = 0; i < _serverFds.size(); i++)
-	{
-		struct pollfd serverPollFd;
-		serverPollFd.fd = _serverFds[i];
-		serverPollFd.events = POLLIN;
-		serverPollFd.revents = 0;
-		portlist.push_back(0);
-		fds.push_back(serverPollFd);
-	}
-
-	while (true)
-	{
-		int pollCount = poll(fds.data(), fds.size(), -1);
-		if (pollCount < 0)
-		{
-			std::cerr << RED << "ERROR: poll() failure" << RESET << std::endl;
-			continue ;
-		}
-		for (size_t i = 0; i < _serverFds.size(); i++)
-		{
-			if (fds[i].revents & POLLIN)
-			{
-				int clientFd = acceptConnection(_serverFds[i], portlist);
-				if (clientFd >= 0)
-				{
-					struct pollfd clientPollFd;
-					clientPollFd.fd = clientFd;
-					clientPollFd.events = POLLIN;
-					clientPollFd.revents = 0;
-					fds.push_back(clientPollFd);
-				}
-			}
-		}
-		std::cout << "PORTLIST: \n";
-		for (size_t i = 0; i < portlist.size(); i++)
-			std::cout << "PORT: " << portlist[i] << "\n";
-		for (size_t i = _serverFds.size(); i < fds.size(); i++)
-		{
-			if (fds[i].revents & POLLIN)
-			{
-				for (size_t n = 0; n < (size_t)this->_serverList.getAmountOfServers(); n++)
-				{
-					if (std::find(_serverList.getServConf(n).getPort().begin(), _serverList.getServConf(n).getPort().end(), portlist[i]) != _serverList.getServConf(n).getPort().end())
-					{
-						const ServerConf&	serverConf = _serverList.getServConf(n);
-						std::cout << "CLIENT " << fds[i].fd << " ON PORT " << portlist[i] << " IS USING SERVER " << serverConf.getServerName() << "\n";
-						handleClient(fds[i].fd, serverConf);
-					}
-				}
-				portlist.erase(portlist.begin() + i);
-				fds.erase(fds.begin() + i);
-				i--;
-			}
-		}
-	}
+	ft_bzero(buffer, BUFFER_SIZE);
+	std::cout << "Reading...\n";
+	std::cout << "Read " << (bytesRead = read(clientFd, buffer, BUFFER_SIZE)) << " bytes." << std::endl;
+	if (bytesRead > 0)
+		message.write(buffer, bytesRead);
+	if (bytesRead < 0)
+		std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
+	return bytesRead;
 }
 
 //FUNCTION TO STORE REQUEST FROM CLIENT INTO HTTPREQUEST CLASS
-void	ConnectManager::handleClient(int clientFd, const ServerConf& serverConf)
+void	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serverConf, std::stringstream& message)
 {
-	std::string message = readMessage(clientFd);
-	size_t headerEnd = message.find("\r\n\r\n");
-	if (headerEnd != std::string::npos) {
-	    std::string headers = message.substr(0, headerEnd);
-	    std::string body = message.substr(headerEnd + 4);  // Skip the "\r\n\r\n"
-	}
 	std::string response;
-	//if (message.empty())
-	//{
-	//	std::cerr << RED << "Client disconnected or empty message" << RESET << "" << std::endl;
-	//	close(clientFd);
-	//}
 	try
 	{
 		HttpRequest request = HttpRequest(message);
@@ -301,18 +213,113 @@ void	ConnectManager::handleClient(int clientFd, const ServerConf& serverConf)
 		response = "HTTP/1.1 400 Bad Request\r\n\r\n" + std::string(error.what());
 		//TODO send response error back to client
 	}
-	ssize_t bytesWritten = write(clientFd, response.c_str(), response.length());
-	close(clientFd);
+	ssize_t bytesWritten = write(clientFd.fd, response.c_str(), response.length());
+	close(clientFd.fd);
 	if (bytesWritten == -1)
-	{
 		std::cerr << RED << "ERROR: write() failure" << RESET << std::endl;
-		close(clientFd);
-	}
 	else if (bytesWritten != static_cast<ssize_t>(response.length())) 
-	{
 		std::cerr << RED << "ERROR: Failure to write all datas" << RESET << std::endl;
-		close(clientFd);
+	message.clear();
+}
+
+/*
+	acceptConnection(), more like handleConnection()
+
+	J'ai move pas mal de start() ici dedans pour avoir a eviter de refaire une for loop avec un offset.
+	L'autre raison est car comme ca on peut run plusieurs serveurs en parallele.
+
+	On va creer 3 structs. clientAddress stockera les donnes du client, serverPort sera utile pour savoir sur quel
+		port le client s'est connecte. clientPfd contiendra le poll fd du client.
+	On commence par accept() la connection qu'on a recu sur le serverFd, ce qui retournera le clientPfd.
+		On va check viteuf si c'est < 0 pour savoir si on a fail. Dans le meme if, on va getsockname() pour
+			recuperer le port sur lequel le client s'est connecte. Si ca fail, on abort la connection.
+	Ensuite, on a trouver sur quel serverConf on doit renvoyer le client grace au port qu'on a recupere auparavant.
+	Une fois que cela est fait, on lance handleClient() avec le clientFd ainsi que le serverConfig correct.
+*/
+
+void	ConnectManager::acceptConnection(int serverFd, std::vector<struct pollfd>& fdList, std::map<int, ushort>& swag)
+{
+	struct sockaddr_in	clientAddress;
+	struct sockaddr_in	serverPort;
+	socklen_t clientLen = sizeof(clientAddress);
+	socklen_t portLen = sizeof(serverPort);
+	struct pollfd		clientPfd;
+
+	clientPfd.fd = accept(serverFd, (struct sockaddr*)&clientAddress, &clientLen);
+	if (clientPfd.fd == -1 || getsockname(serverFd, (struct sockaddr*)&serverPort, &portLen) == -1) {
+		std::cerr << RED << "\nERROR : Connection failure" << RESET << std::endl;
+		return ;
 	}
+	if (clientPfd.fd > 0)
+		std::cerr << GREEN << "\n┌──────────\n│ New connection from: " \
+			<< inet_ntoa(clientAddress.sin_addr) << "\n└──────────" << RESET << std::endl;
+	clientPfd.events = POLLIN;
+	clientPfd.revents = 0;
+	fdList.push_back(clientPfd);
+	swag[(fdList.end() - 1)->fd] = ntohs(serverPort.sin_port);
+}
+
+/*
+	Deso Lea j'ai un peu retouche ca hihi
+	start() va effectivement demarrer le serveur apres avoir setup tous les sockets et valeurs.
+	On va populer un vecteur de pollfd qui contiendront tous les fd des sockets actifs.
+	on rentre dans une boucle infinie qui fa bloquer sur poll() jusqu'a ce qu'il detecte de l'activite sur un socket.
+	Si poll() fail, on va retenter MAX_ATTEMPTS avant de throw() une erreur.
+	si paul() est cool avec nous, on va checker quel socket a de l'activite grace a POLLIN.
+	Au moment ou on trouve le socket actif, on va lancer acceptConnection() avec le bon fd, qui prendra la releve.
+*/
+
+void	ConnectManager::start()
+{
+	std::vector<struct pollfd>	fds(0);
+	std::vector<int>			readFds(0);
+	std::map<int, ushort>		swag;
+	int							pollResult;
+	std::stringstream			message;
+
+	for (size_t i = 0; i < _serverFds.size(); i++)
+	{
+		struct pollfd serverPollFd;
+		serverPollFd.fd = _serverFds[i];
+		serverPollFd.events = POLLIN;
+		serverPollFd.revents = 0;
+		fds.push_back(serverPollFd);
+	}
+	while ((pollResult = poll(fds.data(), fds.size(), 500)) >= 0)
+	{
+		for (size_t i = 0; i < _serverFds.size(); i++)
+			if (fds[i].revents & POLLIN)
+				acceptConnection(_serverFds[i], fds, swag);
+		for (size_t i = _serverFds.size(); i < fds.size(); i++)
+		{
+			if (fds[i].revents & POLLIN) {
+				readMessage(fds[i].fd, message);
+				if (std::find(readFds.begin(), readFds.end(), fds[i].fd) == readFds.end()) {
+					readFds.push_back(fds[i].fd);
+					std::cout << "Pushed FD " << fds[i].fd << "\n";
+				}
+			}
+			else {
+				std::cout << "No message to read...\n";
+				if (std::find(readFds.begin(), readFds.end(), fds[i].fd) != readFds.end()) {
+					for (int n = 0; n < this->_serverList.getAmountOfServers(); n++)
+					{
+						const ServerConf&	currentSConf = _serverList.getServConf(n);
+						if (std::find(currentSConf.getPort().begin(), currentSConf.getPort().end(), swag[fds[i].fd]) != currentSConf.getPort().end())
+						{
+							std::cout << "CLIENT " << fds[i].fd << " ON PORT " << swag[fds[i].fd] << " IS USING SERVER " << currentSConf.getServerName() << "\n";
+							handleClient(fds[i], currentSConf, message);
+							readFds.erase(std::find(readFds.begin(), readFds.end(), fds[i].fd));
+							fds.erase(fds.begin() + i);
+							--i;
+							break ;
+						}
+					}
+				}
+			}
+		}
+	}
+	std::cerr << RED << "ERROR: poll() failure" << RESET << std::endl;
 }
 
 //FUNCTION DESIGNED TO READ CONTENTS OF A FILE
@@ -329,10 +336,4 @@ std::string	ConnectManager::readFile(const std::string& filePath)
 	}
 	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	return (content);
-}
-
-//GETTERS
-const std::vector<int>&	ConnectManager::getServerFd() const
-{
-	return (_serverFds);
 }

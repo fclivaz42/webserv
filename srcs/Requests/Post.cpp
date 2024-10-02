@@ -1,6 +1,7 @@
 #include "Requests/Post.hpp"
 #include "Parsing/ServerConf.hpp"
 #include "Requests/Get.hpp"
+#include <string>
 
 std::string urlDecode(const std::string& str)
 {
@@ -28,22 +29,25 @@ std::string urlDecode(const std::string& str)
 
 const std::string	uploadRequest(const HttpRequest& request, const ServerConf& serverConf)
 {
-	std::string			body = request.getBody();
-	std::istringstream	bodyStream(request.getBody());
+	std::map<std::string, std::string>	headers = request.getHeaders();
+	std::string							body = request.getBody();
+	std::string							fileName;
 
 	if (DEBUG)
-		std::cout << GREEN << "POST: Image being uploaded.\n";
-	std::cout << "BODY : " << body << std::endl;
-	body = body.substr(body.find("filename="));
-	body = body.substr(0, body.find_last_of('"'));
-	body = body.erase(0, body.find_first_of('"') + 1);
-	std::string path = createPath("/" + body, serverConf, "POST");
-	std::cout << "POST: Created path: " << path << "\n";
-	std::cout << "POST: DATA: " << request.getBody() << "\n";
+		std::cout << GREEN << "POST: Image being uploaded." << std::endl;
+	fileName = body.substr(body.find("Content-Disposition"), body.find("Content-Type"));
+	fileName = fileName.substr(fileName.find("filename=\"") + 10);
+	fileName = fileName.substr(0, fileName.find_last_of("\""));
+	std::string path = createPath("/" + fileName, serverConf, "POST");
+	if (DEBUG)
+		std::cout << "POST: Created path: " << path << RESET << std::endl;
 
-	std::ofstream outFile(path.c_str(), std::ios::binary);
+	body = body.substr(body.find("\r\n\r\n") + 4);
+	body = body.substr(0, body.find(headers["boundary"]) - 4);
+	std::cout << "BODY SIZE: " << body.length() << std::endl;
+	std::ofstream outFile(path.c_str(), std::ios::out | std::ios::binary);
 	if (outFile.is_open()) {
-		outFile.write(request.getBody().c_str(), request.getBody().size());
+		outFile.write(body.c_str(), body.size());
 		outFile.close();
 	} else {
 		std::cerr << "ERROR: Failed to open file for writing" << std::endl;
@@ -119,7 +123,7 @@ const std::string	processPostRequest(const HttpRequest& request, const ServerCon
 {
 	std::map<std::string, std::string> headers(request.getHeaders());
 
-	if (headers["Content-Type"].find("multipart") != std::string::npos)
-		return (uploadRequest(request, serverConf));
-	return (formRequest(request, serverConf));
+	if (headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos)
+		return (formRequest(request, serverConf));
+	return (uploadRequest(request, serverConf));
 }

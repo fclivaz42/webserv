@@ -126,9 +126,9 @@ const std::string createPath(const std::string& path, const ServerConf& serverCo
 std::string	processGetRequest(const HttpRequest& request, const ServerConf& serverConf)
 {
 	HttpResponse	ret(serverConf);
-	std::string alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
-	std::string vide = "";
-	std::string localPath;
+	std::string		alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
+	std::string		vide = "";
+	std::string		localPath;
 
 	if (request.getBody().size() > serverConf.getMaxBodySize())
 		return (ret.generateResponse("413", vide, alive));

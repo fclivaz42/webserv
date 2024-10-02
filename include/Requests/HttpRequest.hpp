@@ -19,13 +19,14 @@ class	HttpRequest
 		std::map<std::string, std::string> headers;
 		std::string body;
 
-		void		parseRequest(const std::string& request);
-		void		specialPostParsing();
+		void			parseRequest(std::stringstream& request);
+		void			specialPostParsing();
 		std::string 	getBoundary(const std::string& contentType);
-		void 	 	parseMultiPartBody(const std::string& body, const std::string& boundary);
+		void 	 		parseMultiPartBody(const std::string& body, const std::string& boundary);
+
 	public:
 		HttpRequest();
-		HttpRequest(const std::string& request);
+		HttpRequest(std::stringstream& request);
 		/* COPY CONSTRUCTOR */
 		HttpRequest(HttpRequest const &copy);
 		/* DESTRUCTOR */

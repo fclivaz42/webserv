@@ -58,7 +58,7 @@ Servers &Servers::operator=(Servers const &rhs){
 ServerConf	Servers::getServConf(int lequel) const{
 	std::vector<ServerConf>::const_iterator it;
 	int i = 0;
-	if (lequel <= 0){
+	if (lequel < 0){
 		std::cerr << "Error: Invalid config number." << std::endl;
 	}
 	for (it = _servConf.begin(); it != _servConf.end(); it++){

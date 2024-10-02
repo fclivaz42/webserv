@@ -1,17 +1,15 @@
 #ifndef CONNECTMANAGER_HPP
 # define CONNECTMANAGER_HPP
 
-#include <iostream>
+#include <map>
 #include <sstream>
+#include <iostream>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>
-#include <utility>
 #include <vector>
-#include <sys/epoll.h>
 #include <poll.h>
 #include <cstdlib>
 #include <algorithm>
@@ -20,16 +18,19 @@
 #include "webserv.hpp"
 #include "Parsing/Servers.hpp"
 
+#define MAX_ATTEMPTS 512
+
 class ConnectManager
 {
 	private:
-		std::vector<int>										_serverFds;
-		std::vector<struct sockaddr_in>							_serverPorts;
-		std::vector<unsigned short>								_port;
-		std::vector<std::pair<std::string, unsigned short> >	_pairPortsNames;
-		const Servers&											_serverList;
+		std::vector<int>				_serverFds;
+		std::vector<struct sockaddr_in>	_serverPorts;
+		std::vector<ushort>				_port;
+		const Servers&					_serverList;
 
-		void	handleClient(int clientFd, const ServerConf& serverConf);
+		ssize_t	readMessage(int clientFd, std::stringstream& message);
+		void	handleClient(struct pollfd clientFd, const ServerConf& serverConf, std::stringstream& message);
+		void	acceptConnection(int serverFd, std::vector<struct pollfd>& fdList, std::map<int, ushort>& swag);
 		void	closErase(size_t index);
 
 	public:
@@ -38,16 +39,15 @@ class ConnectManager
 
 		//METHODS
 		void				start();
-		bool				isHttpRequest(const std::string& message);
 		bool				startSocketListen(int backlog = SOMAXCONN);
-		int					acceptConnection(int serverFd, std::vector<unsigned short>& portlist);
-		std::string			readMessage(int clientFd);
-		bool				isServerFd(int fd);
-		bool				clientDeco(int fd);
 		static std::string	readFile(const std::string& filePath);
 
-		//GETTERS
-		const std::vector<int>&	getServerFd() const;
+		class TooManyFailures : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "poll() failed too many times. Exiting.\n";
+				}
+		};
 };
 
 #endif // CONNECTMANAGER_HPP

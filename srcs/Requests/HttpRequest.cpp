@@ -1,11 +1,12 @@
 #include "Requests/HttpRequest.hpp"
 #include <algorithm>
+#include <ostream>
 #include <string>
 
 HttpRequest::HttpRequest() : method(""), path(""), version(""), body("")
 {}
 
-HttpRequest::HttpRequest(const std::string& request)
+HttpRequest::HttpRequest(std::stringstream& request)
 {
 	parseRequest(request);
 }
@@ -67,20 +68,20 @@ std::string	trim(const std::string& str)
 	return (str.substr(start, end - start + 1));
 }
 
-void	HttpRequest::parseRequest(const std::string& request)
+void	HttpRequest::parseRequest(std::stringstream& request)
 {
-	std::istringstream	iss(request);
-	std::string		line;
+	std::string			line, key, value;
+	size_t				pos;
 
 	if (DEBUG) {
-		std::stringstream	stRequest(request);
+		std::stringstream	stRequest(request.str());
 		std::string			prRequest;
 		std::cout << "\n┌────────── NEW REQUEST ──────────\n";
-		while (std::getline(stRequest, prRequest))
-			if (stRequest.peek() != EOF)
-				std::cout << "│ " << prRequest << std::endl;
+		/*while (std::getline(stRequest, prRequest))*/
+		/*	if (stRequest.peek() != EOF)*/
+		/*		std::cout << "│ " << prRequest << std::endl;*/
 	}
-	if (!std::getline(iss, line) || line.empty())
+	if (!std::getline(request, line) || line.empty())
 	{
 		std::cerr << ORANGE << "Waiting for request . . ." << RESET << std::endl;
 		return ;
@@ -92,144 +93,60 @@ void	HttpRequest::parseRequest(const std::string& request)
 		std::cout << "├────────── REQUEST METADATA ──────────\n";
 		std::cout << "│ method: " << "" << method << "" << std:: endl;
 		std::cout << "│ path: " << path << std:: endl;
-		std::cout << "│ version: " << version << "\n└────────── END REQUEST  ──────────\n\n";
+		std::cout << "│ version: " << version << "\n└────────── END REQUEST  ──────────\n";
 	}
 	//TODO throw real error response
 	if (method != "GET" && method != "POST" && method != "DELETE")
-		throw std::runtime_error("ERROR: Request not allowed");
+		throw std::runtime_error("ERROR: Request not allowed\n");
 
 	//TODO search url in location path
 	if (path.empty() || path[0] != '/')
-		throw std::runtime_error("ERROR: Invalid path");
+		throw std::runtime_error("ERROR: Invalid path\n");
 
 	if (version != "HTTP/1.1" && version != "HTTP/1.0")
-		throw std::runtime_error("ERROR: Unsupported HTTP version");
+		throw std::runtime_error("ERROR: Unsupported HTTP version\n");
 
-	while (std::getline(iss, line) && line != "\r" && !line.empty())
+	while (request.peek() != EOF)
 	{
-		std::string::size_type pos = line.find(":");
+		std::getline(request, line);
+		pos = line.find(":");
 		if (pos != std::string::npos)
 		{
-			std::string key = trim(line.substr(0, pos));
-			std::string value = trim(line.substr(pos + 1));
-			headers[key] = value;
+			key = trim(line.substr(0, pos));
+			value = trim(line.substr(pos + 1, line.length() - (pos + 1) - 1));
+			if (key != "Content-Type")
+				headers[key] = value;
+			else if (value == "application/x-www-form-urlencoded")
+				headers[key] = value;
+			else if (value.find("multipart") != std::string::npos)
+			{
+				headers["boundary"] = value.substr(value.find("boundary=") + 9);
+				headers[key] = value.substr(0, value.find(';'));
+			}
+		}
+		else if (line == "\r")
+			if (headers["Content-Type"] == "application/x-www-form-urlencoded") {
+				std::getline(request, body);
+				break;
+			}
+			else
+				continue;
+		else if (line.find(headers["boundary"]) != std::string::npos)
+		{
+			while (request.peek() != EOF)
+			{
+				std::getline(request, line);
+				body.append(line).append("\n");
+			}
+			std::cout << "BODY SIZE: " << body.length() << std::endl;
+			break ;
 		}
 		else
-			throw std::runtime_error("ERROR: Invalid headers");
+			throw std::runtime_error("ERROR: Invalid headers\n");
 	}
-
-	std::getline(iss, line);
 
 	if (version == "HTTP/1.1" && headers.find("Host") == headers.end())
-		throw std::runtime_error("ERROR: Missing host");
-
-	/*if (method == "POST" && headers.find("Content-Length") != headers.end())*/
-	/*{*/
-	/*	std::istringstream contentLenStream(headers["Content-Length"]);*/
-	/*	size_t contentLen = 0;*/
-	/*	contentLenStream >> contentLen;*/
-	/**/
-	/*	if (contentLen > 0)*/
-	/*	{*/
-	/*		body.resize(contentLen);*/
-	/*		iss.read(&body[0], contentLen);*/
-	/*		if (body.size() != contentLen)*/
-	/*			std::cerr << "ERROR body size does not match content Len" << std::endl;*/
-	/*		else*/
-	/*			std::cout << "SUCCESS: Body Read:\n" << body << std::endl;*/
-	/*		if (DEBUG)*/
-	/*		{*/
-	/*			std::cout << "\n├────────── REQUEST BODY ──────────\n";*/
-	/*			std::cout << body << "\n└────────── END BODY ──────────\n";*/
-	/*		}*/
-	/*	}*/
-	/*	specialPostParsing();*/
-	/*}*/
-	if (headers.find("Content-Length") != headers.end())
-	{
-		std::istringstream contentLenStream(headers["Content-Length"]);
-		size_t contentLength = 0;
-		contentLenStream >> contentLength;
-		body.resize(contentLength);
-		iss.read(&body[0], contentLength);
-	}
-}
-
-void		HttpRequest::specialPostParsing()
-{
-	if (headers.find("Content-Type") != headers.end())
-	{
-		std::string contentType = headers["Content-Type"];
-		if (contentType.find("multipart/form-data") != std::string::npos)
-		{
-			std::string boundary = getBoundary(contentType);
-			parseMultiPartBody(body, boundary);
-		}
-	}
-}
-
-std::string	HttpRequest::getBoundary(const std::string& contentType)
-{
-	std::string boundary = "";
-	size_t pos = contentType.find("boundary");
-	if (pos != std::string::npos)
-		boundary = "--" + contentType.substr(pos + 9);
-	return (boundary);
-}
-
-void	HttpRequest::parseMultiPartBody(const std::string& body, const std::string& boundary)
-{
-	size_t pos = 0;
-
-	std::string boundaryDelim = "--" + boundary;
-	std::string endBoundaryDelim = boundaryDelim + "--";
-	std::string delim = boundaryDelim + "\r\n";
-
-	while ((pos = body.find(delim, pos)) != std::string::npos)
-	{
-		size_t partEnd = body.find(delim, pos + delim.length());
-		if (partEnd == std::string::npos)
-		{
-			partEnd = body.find(endBoundaryDelim, pos + delim.length());
-		}
-
-		if (partEnd == std::string::npos)
-		{
-			break; // No more parts or invalid format
-		}
-
-		std::string part = body.substr(pos + delim.length(), partEnd - (pos + delim.length()));
-
-		 std::string::size_type headerEndPos = part.find("\r\n\r\n");
-		if (headerEndPos == std::string::npos) {
-			continue; // Malformed part
-		}
-
-		std::string headers = part.substr(0, headerEndPos);
-		std::string fileData = part.substr(headerEndPos + 4); // Skip past "\r\n\r\n"
-
-		std::string fileName;
-		std::string::size_type filenamePos = headers.find("filename=");
-		if (filenamePos != std::string::npos) {
-			filenamePos += 9; // Skip past "filename="
-			std::string::size_type filenameEnd = headers.find("\"", filenamePos);
-			if (filenameEnd != std::string::npos) {
-				fileName = headers.substr(filenamePos, filenameEnd - filenamePos);
-			}
-		}
-
-		// Save the file
-		if (!fileName.empty()) {
-			std::ofstream outFile(static_cast<std::string>("upload/" + fileName).c_str(), std::ios::binary);
-			if (outFile.is_open()) {
-				outFile.write(fileData.c_str(), fileData.size());
-				outFile.close();
-			} else {
-				std::cerr << "ERROR: Failed to open file for writing" << std::endl;
-			}
-		}
-
-		pos = partEnd + delim.length();	}
+		throw std::runtime_error("ERROR: Missing host\n");
 }
 
 bool	HttpRequest::isKeepAlive() const
