@@ -12,8 +12,9 @@
     <form id="deleteForm">
         <label for="filename">Select a file :</label>
         <select id="filename" name="filename">
-            <option value="fichier1.txt">test.txt</option>
-            <option value="fichier2.txt">ucannotsuppress.txt</option>
+            <option value="test1.txt">test1.txt</option>
+            <option value="test2.txt">test2.txt</option>
+            <option value="no_permission.txt">no_permission.txt</option>
         </select>
         <button id="delete_button" class="request_button" type="submit">Deleteeeeee ....</button>
     </form>
@@ -25,7 +26,8 @@
             event.preventDefault(); // Empêche le rechargement de la page
             const currentPort = window.location.port || 80;
             const filename = document.getElementById('filename').value;
-            const url = `http://localhost:${currentPort}`;
+            // Forme l'URL avec le chemin correct du fichier à supprimer
+            const url = `http://localhost:${currentPort}/delete/${filename}`;
 
             fetch(url, {
                 method: 'DELETE'
@@ -35,6 +37,8 @@
                     document.getElementById('responseMessage').textContent = `Le fichier ${filename} a été supprimé avec succès.`;
                 } else if (response.status === 404) {
                     document.getElementById('responseMessage').textContent = `Le fichier ${filename} n'a pas été trouvé.`;
+                } else if (response.status === 403) {
+                    document.getElementById('responseMessage').textContent = `Permissions insuffisantes pour supprimer le fichier ${filename}.`;
                 } else {
                     document.getElementById('responseMessage').textContent = `Erreur lors de la suppression du fichier ${filename}.`;
                 }

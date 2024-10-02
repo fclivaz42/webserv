@@ -6,8 +6,14 @@ HttpResponse::HttpResponse(const ServerConf& serverConf) : serverConf(serverConf
 
 std::string	HttpResponse::generateResponse(std::string statusCode, std::string& path, std::string &alive)
 {
-	if (statusCode[0] == '4')
+	if (statusCode == "204")
+			return ("HTTP/1.1 204 No Content\r\n" + alive + "\r\n");
+	
+	if (statusCode[0] == '4'){
 		path = loadErrorPage(statusCode);
+		std::cout << "Calling loadErrorPage for status code: " << statusCode << std::endl;
+	}
+
 	std::string content = ConnectManager::readFile(path);
 	std::string contentType = getContentType(path);
 
@@ -29,7 +35,6 @@ std::string		HttpResponse::loadErrorPage(const std::string& errorCode) const{
 	std::string	errorPath = serverConf.getErrorPage();
 
 	errorPath.replace(16, 3, errorCode);
-
 	return (errorPath);
 }
 

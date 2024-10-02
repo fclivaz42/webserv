@@ -6,6 +6,6 @@
 #include "Network/ConnectManager.hpp"
 #include "Requests/HttpRequest.hpp"
 
-std::string	processDeleteRequest(const HttpRequest& request);
+std::string	processDeleteRequest(const HttpRequest& request, const ServerConf& serverConf);
 
 #endif

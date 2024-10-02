@@ -203,7 +203,7 @@ void	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 		else if (request.getMethod() == "POST")
 			response = processPostRequest(request, serverConf);
 		else if (request.getMethod() == "DELETE")
-			response = processDeleteRequest(request);
+			response = processDeleteRequest(request, serverConf);
 
 	}
 	catch (const std::exception& error)
