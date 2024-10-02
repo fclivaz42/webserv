@@ -3,11 +3,11 @@
 #include "Requests/HttpRequest.hpp"
 #include "Requests/HttpResponse.hpp"
 
-bool hasDeletePermissions(const std::string& path) {
+bool hasDeletePermissions(const std::string& path){
     return (access(path.c_str(), W_OK) == 0);
 }
 
-std::string processDeleteRequest(const HttpRequest& request, const ServerConf& serverConf) {
+std::string processDeleteRequest(const HttpRequest& request, const ServerConf& serverConf){
     std::string delPath = request.getPath();
     std::cout << ORANGE << "Requested DELETE path: " << delPath << RESET << std::endl;
 
@@ -17,26 +17,25 @@ std::string processDeleteRequest(const HttpRequest& request, const ServerConf& s
 	std::string errorPage = serverConf.getErrorPage();
 
 	if (!fileExists(delPath)) {
-        std::cerr << "DELETE: File not found: " << delPath << std::endl;
+        std::cerr << RED << "DELETE: File not found: " << delPath << RESET << std::endl;
         return (response.generateResponse("404", errorPage, connectionHeader));
     }
-
-	if (delPath.find(serverConf.getRoot() + "/delete/") == 0){
+	else if (delPath.find(serverConf.getRoot() + "/delete/") == 0){
 		if (!hasDeletePermissions(delPath)){
-        	std::cerr << "DELETE: No permission to delete file: " << delPath << std::endl;
+        	std::cerr << RED << "DELETE: No permission to delete file: " << delPath << RESET << std::endl;
         	return (response.generateResponse("403", errorPage, connectionHeader));
     	}
 		else if (remove(delPath.c_str()) == 0){
-        	std::cout << "DELETE: File successfully deleted: " << delPath << std::endl;
+        	std::cout << GREEN << "DELETE: File successfully deleted: " << delPath << RESET << std::endl;
         	return (response.generateResponse("204", delPath, connectionHeader));
     	} 
 		else{
-        	std::cerr << "DELETE: Failed to delete file: " << delPath << std::endl;
+        	std::cerr << RED << "DELETE: Failed to delete file: " << delPath << RESET << std::endl;
         	return (response.generateResponse("500", delPath, connectionHeader));
     	}
 	}
 	else{
-		std::cerr << "DELETE: No permission to delete file: " << delPath << std::endl;
+		std::cerr << RED << "DELETE: No permission to delete file: " << delPath << RESET << std::endl;
         	return (response.generateResponse("403", errorPage, connectionHeader));
 	}
 }
