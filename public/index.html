@@ -41,15 +41,15 @@
 		}
 
 		 function sendPostRequest() {
-		    fetch(`http://localhost:${currentPort}`, {
-			method: 'POST',
-			headers: {
-			    'Content-Type': 'application/x-www-form-urlencoded',
-			},
-			body: new URLSearchParams({
-			    'body': 'This is a POST request body',
-			}),
-		    })
+		    fetch(`http://localhost:${currentPort}/cgi-bin/script.py`, {
+			method: 'POST'})
+			// headers: {
+			//     'Content-Type': 'application/x-www-form-urlencoded',
+			// },
+			// body: new URLSearchParams({
+			// //    'body': 'This is a POST request body',
+			// //}),
+		    // })})
 		    .then(response => response.text())
 		    .then(data => {
 			console.log(`POST response from port ${currentPort}:`, data);

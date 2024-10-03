@@ -1,6 +1,7 @@
 #include "Requests/Post.hpp"
 #include "Parsing/ServerConf.hpp"
 #include "Requests/Get.hpp"
+#include "CGI/CGIExec.hpp"
 #include <string>
 
 std::string urlDecode(const std::string& str)
@@ -119,10 +120,46 @@ const std::string	formRequest(const HttpRequest& request, const ServerConf& serv
 	return (response);
 }
 
+bool		isCGIRequest(const std::string& path)
+{
+	std::string cgiPath = "/cgi-bin/";
+	return (path.find(cgiPath) == 0);
+}
+
+std::string intToString(int value) {
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
+}
+
+
+std::map<std::string, std::string> createCGIEnv(const HttpRequest& request)
+{
+    std::map<std::string, std::string> env;
+    
+    env["REQUEST_METHOD"] = "POST";
+    env["CONTENT_TYPE"] = request.getHeaders().at("Content-Type");
+    env["CONTENT_LENGTH"] = intToString(request.getBody().length());
+    env["SCRIPT_NAME"] = request.getPath();
+    env["REQUEST_URI"] = request.getPath();
+	env["QUERY_STRING"] = "";
+	env["PATH_INFO"] = request.getPath();
+	env["PATH TRANSLATED"] = request.getPath();
+
+    return (env);
+}
+
 const std::string	processPostRequest(const HttpRequest& request, const ServerConf& serverConf)
 {
 	std::map<std::string, std::string> headers(request.getHeaders());
 
+	if (isCGIRequest(request.getPath()))
+	{
+		std::string cgiPath = "/cgi-bin/script.py";
+        	std::map<std::string, std::string> env = createCGIEnv(request);
+		CGIExec cgiExec(cgiPath, env);;
+		return (cgiExec.execute(request.getBody()));
+	}
 	if (headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos)
 		return (formRequest(request, serverConf));
 	return (uploadRequest(request, serverConf));
