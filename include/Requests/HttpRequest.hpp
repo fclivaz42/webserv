@@ -13,32 +13,28 @@
 class	HttpRequest
 {
 	private:
-		std::string method;
-		std::string path;
-		std::string version;
-		std::map<std::string, std::string> headers;
-		std::string body;
+		std::string							_method;
+		std::string							_path;
+		std::string							_version;
+		std::map<std::string, std::string>	_headers;
+		std::stringstream					_body;
 
-		void			parseRequest(std::stringstream& request);
 		void			specialPostParsing();
 		std::string 	getBoundary(const std::string& contentType);
 		void 	 		parseMultiPartBody(const std::string& body, const std::string& boundary);
+		HttpRequest();
 
 	public:
-		HttpRequest();
-		HttpRequest(std::stringstream& request);
-		/* COPY CONSTRUCTOR */
+		HttpRequest(std::stringstream& request, bool cont);
 		HttpRequest(HttpRequest const &copy);
-		/* DESTRUCTOR */
-		~HttpRequest();
-		/* SURCHARGED OPERATORS */
 		HttpRequest &operator=(HttpRequest const &rhs);
-		/* GETTERS */
+		~HttpRequest();
+
 		const std::map<std::string, std::string>&	getHeaders() const;
 		const std::string&							getMethod() const;
 		const std::string&							getPath() const;
 		const std::string&							getVersion() const;
-		const std::string&							getBody() const;
+		std::stringstream&							getBody();
 		bool										isKeepAlive() const;
 };
 

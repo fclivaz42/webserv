@@ -3,13 +3,28 @@
 #include <ostream>
 #include <string>
 
-HttpRequest::HttpRequest() : method(""), path(""), version(""), body("")
+/*
+	---------------------------------------------
+	Constructors, Destructors and all that shizaz
+	---------------------------------------------
+*/
+
+HttpRequest::HttpRequest() : _method(""), _path(""), _version(""), _body(std::string())
 {}
 
-HttpRequest::HttpRequest(std::stringstream& request)
+HttpRequest::HttpRequest(std::stringstream& request, bool cont)
 {
 	std::string			line, key, value;
 	size_t				pos;
+
+	if (cont)
+	{
+		_method = "POST";
+		_body << request.rdbuf();
+		request.str(std::string());
+		request.clear();
+		return ;
+	}
 
 	if (DEBUG) {
 		std::stringstream	stRequest(request.str());
@@ -27,23 +42,23 @@ HttpRequest::HttpRequest(std::stringstream& request)
 		return ;
 	}
 	std::istringstream requestLine(line);
-	requestLine >> method >> path >> version;
+	requestLine >> _method >> _path >> _version;
 
 	if (DEBUG) {
 		std::cout << "├────────── REQUEST METADATA ──────────\n";
-		std::cout << "│ method: " << "" << method << "" << std:: endl;
-		std::cout << "│ path: " << path << std:: endl;
-		std::cout << "│ version: " << version << "\n└────────── END REQUEST  ──────────\n";
+		std::cout << "│ Method: " << "" << _method << "" << std:: endl;
+		std::cout << "│ Path: " << _path << std:: endl;
+		std::cout << "│ Version: " << _version << "\n└────────── END REQUEST  ──────────\n";
 	}
 	//TODO throw real error response
-	if (method != "GET" && method != "POST" && method != "DELETE")
+	if (_method != "GET" && _method != "POST" && _method != "DELETE")
 		throw std::runtime_error("ERROR: Request not allowed\n");
 
-	//TODO search url in location path
-	if (path.empty() || path[0] != '/')
+	//TODO search url in location _path
+	if (_path.empty() || _path[0] != '/')
 		throw std::runtime_error("ERROR: Invalid path\n");
 
-	if (version != "HTTP/1.1" && version != "HTTP/1.0")
+	if (_version != "HTTP/1.1" && _version != "HTTP/1.0")
 		throw std::runtime_error("ERROR: Unsupported HTTP version\n");
 
 	while (request.peek() != EOF)
@@ -55,87 +70,94 @@ HttpRequest::HttpRequest(std::stringstream& request)
 			key = trim(line.substr(0, pos));
 			value = trim(line.substr(pos + 1, line.length() - (pos + 1) - 1));
 			if (key != "Content-Type")
-				headers[key] = value;
+				_headers[key] = value;
 			else if (value == "application/x-www-form-urlencoded")
-				headers[key] = value;
+				_headers[key] = value;
 			else if (value.find("multipart") != std::string::npos)
 			{
-				headers["boundary"] = value.substr(value.find("boundary=") + 9);
-				headers[key] = value.substr(0, value.find(';'));
+				_headers["boundary"] = value.substr(value.find("boundary=") + 9);
+				_headers[key] = value.substr(0, value.find(';'));
 			}
 		}
 		else if (line == "\r")
-			if (headers["Content-Type"] == "application/x-www-form-urlencoded") {
-				std::getline(request, body);
+			if (_headers["Content-Type"] == "application/x-www-form-urlencoded") {
+				_body << request.rdbuf();
 				break;
 			}
 			else
 				continue;
-		else if (line.find(headers["boundary"]) != std::string::npos)
+		else if (line.find(_headers["boundary"]) != std::string::npos)
 		{
-			while (request.peek() != EOF)
-			{
-				std::getline(request, line);
-				body.append(line).append("\n");
-			}
+			_body << request.rdbuf();
 			break ;
 		}
 		else
 			throw std::runtime_error("ERROR: Invalid headers\n");
 	}
 
-	if (version == "HTTP/1.1" && headers.find("Host") == headers.end())
+	if (_version == "HTTP/1.1" && _headers.find("Host") == _headers.end())
 		throw std::runtime_error("ERROR: Missing host\n");
 	request.str(std::string());
 	request.clear();
 }
 
-/* COPY CONSTRUCTOR */
-HttpRequest::HttpRequest(HttpRequest const &copy) : method(copy.method), path(copy.path), version(copy.version), headers(copy.headers), body(copy.body)
-{}
+HttpRequest::HttpRequest(HttpRequest const &copy) : _method(copy._method), _path(copy._path), _version(copy._version), _headers(copy._headers)
+{
+	_body.str(copy._body.str());
+}
 
-/* DESTRUCTOR */
 HttpRequest::~HttpRequest()
 {}
 
-/* SURCHARGED OPERATORS */
 HttpRequest &HttpRequest::operator=(HttpRequest const &rhs)
 {
 	if (this != &rhs)
 	{
-		method = rhs.method;
-		path = rhs.path;
-		version = rhs.version;
-		headers = rhs.headers;
-		body = rhs.body;
+		_method = rhs._method;
+		_path = rhs._path;
+		_version = rhs._version;
+		_headers = rhs._headers;
+		_body.str(rhs._body.str());
 	}
 	return (*this);
 }
 
+/*
+	---------------------------------------------
+			Getters because I love OOP
+	---------------------------------------------
+*/
+
 const std::string&	HttpRequest::getMethod() const
 {
-	return (method);
+	return (_method);
 }
 
 const std::string&	HttpRequest::getPath() const
 {
-	return (path);
+	return (_path);
 }
 
 const std::string&	HttpRequest::getVersion() const
 {
-	return (version);
+	return (_version);
 }
 
 const std::map<std::string, std::string>&	HttpRequest::getHeaders() const
 {
-	return (headers);
+	return (_headers);
 }
 
-const std::string&	HttpRequest::getBody() const
+std::stringstream&	HttpRequest::getBody()
 {
-	return (body);
+	return (_body);
 }
+
+/*
+	---------------------------------------------
+				Extra functions teehee
+	---------------------------------------------
+*/
 
 std::string	trim(const std::string& str)
 {
@@ -149,9 +171,9 @@ std::string	trim(const std::string& str)
 
 bool	HttpRequest::isKeepAlive() const
 {
-	std::map<std::string, std::string>::const_iterator iter = headers.find("Connection");
+	std::map<std::string, std::string>::const_iterator iter = _headers.find("Connection");
 
-	if (iter != headers.end())
+	if (iter != _headers.end())
 	{
 		std::string alive  = iter->second;
 		std::transform(alive.begin(), alive.end(), alive.begin(), ::tolower);
@@ -160,7 +182,7 @@ bool	HttpRequest::isKeepAlive() const
 		if (alive == "close")
 			return (false);
 	}
-	if (version == "HTTP/1.1")
+	if (_version == "HTTP/1.1")
 		return (true);
 	return (false);
 

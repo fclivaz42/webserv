@@ -185,20 +185,28 @@ ssize_t	ConnectManager::readMessage(int clientFd, std::stringstream& message)
 	ft_bzero(buffer, BUFFER_SIZE);
 	bytesRead = read(clientFd, buffer, BUFFER_SIZE);
 	if (bytesRead > 0)
-		message.write(buffer, bytesRead);
+		(void)message.write(buffer, bytesRead);
 	if (bytesRead < 0)
 		std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
 	return bytesRead;
 }
 
 //FUNCTION TO STORE REQUEST FROM CLIENT INTO HTTPREQUEST CLASS
-void	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serverConf, std::stringstream& message)
+bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serverConf, std::stringstream& message)
 {
 	std::string response;
+
 	try
 	{
-		HttpRequest request = HttpRequest(message);
-		if (request.getMethod() == "GET")
+		HttpRequest request = HttpRequest(message, _continue);
+		std::map<std::string, std::string>	headers = request.getHeaders();
+		if (headers["Expect"] == "100-continue") {
+			if (static_cast<size_t>(strtol(headers["Content-Length"].c_str(), NULL, 10)) <= serverConf.getMaxBodySize())
+				response = "HTTP/1.1 100 Continue\r\n\r\n";
+			else
+				response = "HTTP/1.1 417 Expectation Failed\r\n\r\n";
+		}
+		else if (request.getMethod() == "GET")
 			response = processGetRequest(request, serverConf);
 		else if (request.getMethod() == "POST")
 			response = processPostRequest(request, serverConf);
@@ -213,11 +221,13 @@ void	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 		//TODO send response error back to client
 	}
 	ssize_t bytesWritten = write(clientFd.fd, response.c_str(), response.length());
-	close(clientFd.fd);
 	if (bytesWritten == -1)
 		std::cerr << RED << "ERROR: write() failure" << RESET << std::endl;
-	else if (bytesWritten != static_cast<ssize_t>(response.length())) 
-		std::cerr << RED << "ERROR: Failure to write all datas" << RESET << std::endl;
+	else if (bytesWritten != static_cast<ssize_t>(response.length()))
+		std::cerr << RED << "ERROR: Failure to write all data" << RESET << std::endl;
+	if (response != "HTTP/1.1 100 Continue\r\n\r\n")
+		return(close(clientFd.fd));
+	return (true);
 }
 
 /*
@@ -283,6 +293,7 @@ void	ConnectManager::start()
 		serverPollFd.revents = 0;
 		fds.push_back(serverPollFd);
 	}
+	_continue = false;
 	while ((pollResult = poll(fds.data(), fds.size(), 500)) >= 0)
 	{
 		for (size_t i = 0; i < _serverFds.size(); i++)
@@ -304,12 +315,14 @@ void	ConnectManager::start()
 						if (std::find(currentSConf.getPort().begin(), currentSConf.getPort().end(), swag[fds[i].fd]) != currentSConf.getPort().end())
 						{
 							std::cout << "CLIENT " << fds[i].fd << " ON PORT " << swag[fds[i].fd] << " IS USING SERVER " << currentSConf.getServerName() << "\n";
-							handleClient(fds[i], currentSConf, message);
+							if (!(_continue = handleClient(fds[i], currentSConf, message)))
+							{
+								readFds.erase(std::find(readFds.begin(), readFds.end(), fds[i].fd));
+								fds.erase(fds.begin() + i);
+								--i;
+							}
 							message.str(std::string());
 							message.clear();
-							readFds.erase(std::find(readFds.begin(), readFds.end(), fds[i].fd));
-							fds.erase(fds.begin() + i);
-							--i;
 							break ;
 						}
 					}

@@ -5,78 +5,73 @@
 
 std::string urlDecode(const std::string& str)
 {
-    std::string result;
-    size_t length = str.length();
+	std::string	result;
+	size_t		length = str.length();
 
-    for (size_t i = 0; i < length; ++i) {
-        if (str[i] == '%') {
-            if (i + 2 < length) {
-                int value;
-                std::istringstream is(str.substr(i + 1, 2));
-                if (is >> std::hex >> value) {
-                    result += static_cast<char>(value);
-                    i += 2;
-                }
-            }
-        } else if (str[i] == '+') {
-            result += ' ';
-        } else {
-            result += str[i];
-        }
-    }
-    return result;
+	for (size_t i = 0; i < length; ++i)
+	{
+		if (str[i] == '%')
+		{
+			if (i + 2 < length)
+			{
+				int value;
+				std::istringstream is(str.substr(i + 1, 2));
+				if (is >> std::hex >> value)
+				{
+					result += static_cast<char>(value);
+					i += 2;
+				}
+			}
+		}
+		else if (str[i] == '+')
+			result += ' ';
+		else
+			result += str[i];
+	}
+	return result;
 }
 
-const std::string	uploadRequest(const HttpRequest& request, const ServerConf& serverConf)
+const std::string	uploadRequest(HttpRequest& request, const ServerConf& serverConf)
 {
 	std::map<std::string, std::string>	headers = request.getHeaders();
-	std::string							body = request.getBody();
-	std::string							fileName;
+	const std::string&					shift = request.getBody().str();
+	std::string							fileName, line, path;
+	std::string	response("HTTP/1.1 302 Found\r\nLocation: /success.html\r\nContent-Type: text/html\r\n");
 
 	if (DEBUG)
-		std::cout << GREEN << "POST: Image being uploaded." << std::endl;
-	fileName = body.substr(body.find("Content-Disposition"), body.find("Content-Type"));
-	fileName = fileName.substr(fileName.find("filename=\"") + 10);
-	fileName = fileName.substr(0, fileName.find_last_of("\""));
-	std::string path = createPath("/" + fileName, serverConf, "POST");
+		std::cout << GREEN << "POST: File being uploaded." << std::endl;
+	fileName = shift.substr(shift.find("filename=\"") + 10);
+	fileName = fileName.substr(0, fileName.find_first_of("\""));
+	path = createPath("/" + fileName, serverConf, "POST");
 	if (DEBUG)
 		std::cout << "POST: Created path: " << path << RESET << std::endl;
 
-	body = body.substr(body.find("\r\n\r\n") + 4);
-	body = body.substr(0, body.find(headers["boundary"]) - 4);
-	std::cout << "BODY SIZE: " << body.length() << std::endl;
 	std::ofstream outFile(path.c_str(), std::ios::out | std::ios::binary);
 	if (outFile.is_open()) {
-		outFile.write(body.c_str(), body.size());
+		size_t pos = shift.find("\r\n\r\n") + 4;
+		size_t pos2 = shift.find(headers["boundary"]) - pos - 4;
+		outFile.write(shift.c_str() + pos, pos2);
 		outFile.close();
 	} else {
 		std::cerr << "ERROR: Failed to open file for writing" << std::endl;
 	}
 
-	std::string response;
-
 	HttpResponse res(serverConf);
-
-	// Generate redirection header
-	response += "HTTP/1.1 302 Found\r\n";
-	response += "Location: /success.html\r\n";
-	response += "Content-Type: text/html\r\n";
-
 	// Construct Connection header
 	std::string connectionHeader = request.isKeepAlive() ? "keep-alive" : "close";
 	response += "Connection: " + connectionHeader + "\r\n";
 
 	response += "\r\n"; // End of headers
-//
 	// Optionally, add content here if needed, e.g., an HTML message indicating the redirect
 	response += "<html><body><p>Redirecting to <a href=\"/success.html\">success.html</a></p></body></html>";
 
 	return response;
 }
-const std::string	formRequest(const HttpRequest& request, const ServerConf& serverConf)
+
+const std::string	formRequest(HttpRequest& request, const ServerConf& serverConf)
 {
 	std::map<std::string, std::string> formData;
-	std::istringstream bodyStream(request.getBody());
+	std::stringstream& bodyStream(request.getBody());
 	std::string keyValue, username, email, message, alive;
 
 	if (DEBUG)
@@ -119,7 +114,7 @@ const std::string	formRequest(const HttpRequest& request, const ServerConf& serv
 	return (response);
 }
 
-const std::string	processPostRequest(const HttpRequest& request, const ServerConf& serverConf)
+const std::string	processPostRequest(HttpRequest& request, const ServerConf& serverConf)
 {
 	std::map<std::string, std::string> headers(request.getHeaders());
 

@@ -10,7 +10,7 @@
 #include "Requests/HttpRequest.hpp"
 #include "Requests/HttpResponse.hpp"
 
-const std::string	processPostRequest(const HttpRequest& request, const ServerConf& serverConf);
+const std::string	processPostRequest(HttpRequest& request, const ServerConf& serverConf);
 const std::string	createPath(const std::string& path, const ServerConf& serverConf, const std::string& method);
 
 #endif

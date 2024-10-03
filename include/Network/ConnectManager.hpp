@@ -27,9 +27,10 @@ class ConnectManager
 		std::vector<struct sockaddr_in>	_serverPorts;
 		std::vector<ushort>				_port;
 		const Servers&					_serverList;
+		bool							_continue;
 
 		ssize_t	readMessage(int clientFd, std::stringstream& message);
-		void	handleClient(struct pollfd clientFd, const ServerConf& serverConf, std::stringstream& message);
+		bool	handleClient(struct pollfd clientFd, const ServerConf& serverConf, std::stringstream& message);
 		void	acceptConnection(int serverFd, std::vector<struct pollfd>& fdList, std::map<int, ushort>& swag);
 		void	closErase(size_t index);
 
