@@ -12,14 +12,17 @@
     <form id="deleteForm">
         <label for="filename">Select a file :</label>
         <select id="filename" name="filename">
-            <option value="test1.txt">test1.txt</option>
-            <option value="test2.txt">test2.txt</option>
+            <option value="no_exist.txt">no_exist.txt</option>
+            <option value="delete_me.txt">delete_me.txt</option>
             <option value="no_permission.txt">no_permission.txt</option>
         </select>
         <button id="delete_button" class="request_button" type="submit">Deleteeeeee ....</button>
     </form>
 
+<div    id="responseContainer"> 
     <p id="responseMessage"></p>
+    <img id="responseImage" src="" alt="Response Image" style="display: none; max-width: 300px;">
+</div>
 
     <script>
         document.getElementById('deleteForm').addEventListener('submit', function(event) {
@@ -27,23 +30,31 @@
             const currentPort = window.location.port || 80;
             const filename = document.getElementById('filename').value;
             const url = `http://localhost:${currentPort}/delete/${filename}`;
+            const responseMessageElement = document.getElementById('responseMessage');
+            const responseImageElement = document.getElementById('responseImage');
 
             fetch(url, {
                 method: 'DELETE'
             })
             .then(response => {
                 if (response.ok) {
-                    document.getElementById('responseMessage').textContent = `Le fichier ${filename} a été supprimé avec succès.`;
+                    responseMessageElement.textContent = `Le fichier ${filename} a été supprimé avec succès.`;
                 } else if (response.status === 404) {
-                    document.getElementById('responseMessage').textContent = `Le fichier ${filename} n'a pas été trouvé.`;
+                    responseMessageElement.textContent = `Le fichier ${filename} n'a pas été trouvé.`;
+                    responseImageElement.src = "./upload/404.jpg";
                 } else if (response.status === 403) {
-                    document.getElementById('responseMessage').textContent = `Permissions insuffisantes pour supprimer le fichier ${filename}.`;
+                    responseMessageElement.textContent = `Permissions insuffisantes pour supprimer le fichier ${filename}.`;
+                    responseImageElement.src = "./upload/403.jpg";
                 } else {
-                    document.getElementById('responseMessage').textContent = `Erreur lors de la suppression du fichier ${filename}.`;
+                    responseMessageElement.textContent = `Erreur lors de la suppression du fichier ${filename}.`;
+                    responseImageElement.src = "./upload/500.jpg";
                 }
+                responseImageElement.style.display = "block";
             })
             .catch(error => {
-                document.getElementById('responseMessage').textContent = `Erreur réseau : ${error}`;
+                responseMessageElement.textContent = `Erreur réseau : ${error}`;
+                responseImageElement.src = "./upload/500.jpg";
+                responseImageElement.style.display = "block";
             });
         });
     </script>
