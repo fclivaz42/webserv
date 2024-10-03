@@ -198,6 +198,8 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 
 	try
 	{
+		if (message.tellp() > serverConf.getMaxBodySize())
+			;
 		HttpRequest request = HttpRequest(message, _continue);
 		std::map<std::string, std::string>	headers = request.getHeaders();
 		if (headers["Expect"] == "100-continue") {
@@ -217,7 +219,7 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 	catch (const std::exception& error)
 	{
 		std::cerr << "Request parsing failed " << error.what() << std::endl;
-		response = "HTTP/1.1 400 Bad Request\r\n\r\n" + std::string(error.what());
+		response = "HTTP/1.1 405 Method Not Allowed\r\n\r\n" + std::string(error.what());
 		//TODO send response error back to client
 	}
 	ssize_t bytesWritten = write(clientFd.fd, response.c_str(), response.length());
@@ -294,7 +296,7 @@ void	ConnectManager::start()
 		fds.push_back(serverPollFd);
 	}
 	_continue = false;
-	while ((pollResult = poll(fds.data(), fds.size(), 500)) >= 0)
+	while ((pollResult = poll(fds.data(), fds.size(), 10)) >= 0)
 	{
 		for (size_t i = 0; i < _serverFds.size(); i++)
 			if (fds[i].revents & POLLIN)

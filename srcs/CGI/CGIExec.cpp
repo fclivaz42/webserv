@@ -15,9 +15,7 @@ CGIExec::~CGIExec()
 void	CGIExec::setupEnvVars()
 {
 	for (std::map<std::string, std::string>::const_iterator iter = _env.begin(); iter != _env.end(); iter++)
-	{
 		setenv(iter->first.c_str(), iter->second.c_str(), 1);
-	}
 }
 
 std::string	CGIExec::runCGIProcess(const std::string& input)

@@ -153,7 +153,7 @@ const std::string	processPostRequest(HttpRequest& request, const ServerConf& ser
 		std::string cgiPath = "/cgi-bin/script.py";
         	std::map<std::string, std::string> env = createCGIEnv(request);
 		CGIExec cgiExec(cgiPath, env);;
-		return (cgiExec.execute(request.getBody()));
+		return (cgiExec.execute(request.getBody().str()));
 	}
 	if (headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos)
 		return (formRequest(request, serverConf));
