@@ -8,10 +8,10 @@ bool hasDeletePermissions(const std::string& path){
 }
 
 std::string processDeleteRequest(const HttpRequest& request, const ServerConf& serverConf){
-    std::string delPath = request.getPath();
+    std::cout << "PATH BEFORE: " << request.getPath() << std::endl;
+	std::string delPath = createPath(request.getPath(), serverConf, "DELETE");
     std::cout << ORANGE << "Requested DELETE path: " << delPath << RESET << std::endl;
-
-    delPath = updatePath(delPath);
+	
     HttpResponse response(serverConf);
 	std::string connectionHeader = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
 	std::string errorPage = serverConf.getErrorPage();
@@ -35,7 +35,7 @@ std::string processDeleteRequest(const HttpRequest& request, const ServerConf& s
     	}
 	}
 	else{
-		std::cerr << RED << "DELETE: No permission to delete file: " << delPath << RESET << std::endl;
+	std::cerr << RED << "DELETE: No permission to delete file: " << delPath << RESET << std::endl;
         	return (response.generateResponse("403", errorPage, connectionHeader));
 	}
 }
