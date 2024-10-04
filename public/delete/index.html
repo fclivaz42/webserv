@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete a file :)</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+    <h1>Delete some shitty files</h1>
+
+    <form id="deleteForm">
+        <label for="filename">Select a file :</label>
+        <select id="filename" name="filename">
+            <option value="no_exist.txt">no_exist.txt</option>
+            <option value="delete_me.txt">delete_me.txt</option>
+            <option value="no_permission.txt">no_permission.txt</option>
+        </select>
+        <button id="delete_button" class="request_button" type="submit">Deleteeeeee ....</button>
+    </form>
+
+<div    id="responseContainer"> 
+    <p id="responseMessage"></p>
+    <img id="responseImage" src="" alt="Response Image" style="display: none; max-width: 300px;">
+</div>
+
+    <script>
+        document.getElementById('deleteForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const currentPort = window.location.port || 80;
+            const filename = document.getElementById('filename').value;
+            const url = `http://localhost:${currentPort}/delete/${filename}`;
+            const responseMessageElement = document.getElementById('responseMessage');
+            const responseImageElement = document.getElementById('responseImage');
+
+            fetch(url, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    responseMessageElement.textContent = `Le fichier ${filename} a été supprimé avec succès.`;
+                } else if (response.status === 404) {
+                    responseMessageElement.textContent = `Le fichier ${filename} n'a pas été trouvé.`;
+                    responseImageElement.src = "./upload/404.jpg";
+                } else if (response.status === 403) {
+                    responseMessageElement.textContent = `Permissions insuffisantes pour supprimer le fichier ${filename}.`;
+                    responseImageElement.src = "./upload/403.jpg";
+                } else {
+                    responseMessageElement.textContent = `Erreur lors de la suppression du fichier ${filename}.`;
+                    responseImageElement.src = "./upload/500.jpg";
+                }
+                responseImageElement.style.display = "block";
+            })
+            .catch(error => {
+                responseMessageElement.textContent = `Erreur réseau : ${error}`;
+                responseImageElement.src = "./upload/500.jpg";
+                responseImageElement.style.display = "block";
+            });
+        });
+    </script>
+</body>
+</html>
