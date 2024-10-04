@@ -56,6 +56,11 @@ Location::Location(const std::string &path, const std::string& locationString) :
 				line = line.substr(pos);
 			}
 		}
+		else if (!line.find("return_url")) {
+			line.erase(0, line.find_first_not_of("return_url"));
+			ptrim(line);
+			this->_returnURL = line;
+		}
 		else if (!line.find("fastcgiPass")){
 			line.erase(0, line.find_first_not_of("fastcgiPass"));
 			ptrim(line);

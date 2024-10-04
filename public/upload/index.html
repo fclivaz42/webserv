@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+	<nav>
+		<a class="request_button" href="/formulaire.html">Get in Touch !</a>
+		<a class="black request_button" href="/index.html">Welcome Page</a>
+		<a class="request_button" href="/upload.html">Upload a picture</a>
+	</nav>
+
+	<h1>Upload an Image</h1>
+	<form id="uploadForm" enctype="multipart/form-data">
+	    <input type="file" name="image" />
+	    <button type="submit">Upload</button>
+	</form>
+
+	<script>
+		document.getElementById('uploadForm').addEventListener('submit', function(event) {
+		event.preventDefault();
+
+		const formData = new FormData(event.target);
+
+		fetch('/success', {
+		method: 'POST',
+		body: formData
+		})
+			.then(response => response.json())
+			.then(data => console.log('Success:', data))
+			.catch(error => console.error('Error:', error));
+		});
+	</script>
+
+</body>
+</html>
