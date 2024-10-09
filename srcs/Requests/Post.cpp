@@ -43,7 +43,7 @@ const std::string	uploadRequest(HttpRequest& request, const ServerConf& serverCo
 		std::cout << GREEN << "POST: File being uploaded." << std::endl;
 	fileName = shift.substr(shift.find("filename=\"") + 10);
 	fileName = fileName.substr(0, fileName.find_first_of("\""));
-	path = createPath("/" + fileName, serverConf, "POST");
+	path = createPath("/" + fileName, serverConf, "POST", "Accept-Uploads");
 	if (DEBUG)
 		std::cout << "POST: Created path: " << path << RESET << std::endl;
 
@@ -94,7 +94,7 @@ const std::string	formRequest(HttpRequest& request, const ServerConf& serverConf
 	alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
 
 	HttpResponse		res(serverConf);
-	std::string			path(createPath(request.getPath() + ".html", serverConf, "POST")), line, response;
+	std::string			path(createPath(request.getPath() + ".html", serverConf, "POST", "Accept-Uploads")), line, response;
 	std::stringstream	genRes(res.generateResponse("200", path, alive));
 	std::size_t			pos;
 

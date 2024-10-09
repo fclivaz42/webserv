@@ -198,7 +198,7 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 
 	try
 	{
-		if (message.tellp() > serverConf.getMaxBodySize())
+		if (static_cast<size_t>(message.tellp()) > serverConf.getMaxBodySize())
 			;
 		HttpRequest request = HttpRequest(message, _continue);
 		std::map<std::string, std::string>	headers = request.getHeaders();

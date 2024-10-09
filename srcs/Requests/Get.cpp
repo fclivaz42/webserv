@@ -2,6 +2,8 @@
 #include "Requests/HttpRequest.hpp"
 #include "Requests/HttpResponse.hpp"
 #include "Parsing/Location.hpp"
+#include <stdexcept>
+#include <string>
 
 bool		hasExtension(const std::string& path, const std::string& extension)
 {
@@ -89,36 +91,58 @@ bool	checkRedir(const std::string& path, const ServerConf& serverConf)
 	return (false);
 }
 
-const std::string createPath(const std::string& path, const ServerConf& serverConf, const std::string& method)
+const std::string	createPath(const std::string& path, const ServerConf& serverConf, const std::string& method, const std::string& attrib)
 {
 	std::map<std::string, Location>	locationMap = serverConf.getLocation();
-	std::string						returnPath;
+	std::string						returnPath, locReq;
 	struct stat						s;
-	bool							getFlag = false;
+	Location						loc;
+	bool							allowedMethod = false;
+	size_t							pos;
 
-	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++) {
-		const	Location& loc = iter->second;
-		const	std::vector<std::string>& methods = loc.getAllowMethods();
-		for (std::vector<std::string>::const_iterator it = methods.begin(); it != methods.end(); it++) {
-			std::string cmp = *it;
-			if (!cmp.compare(method)) {
-				getFlag = true;
-				break;
-			}
+	pos = path.find_last_of('/');
+	if (pos == 0)
+		locReq = "/";
+	else if (path.find(".") != std::string::npos)
+		locReq = path.substr(0, pos);
+	else if (path[path.length() - 1] == '/')
+		locReq = path.substr(0, path.length() - 1);
+	else
+		locReq = path;
+
+	std::cout << "LOCREQ " << locReq << std::endl;
+
+	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
+		if (!locReq.compare(iter->second.getPath()))
+			loc = iter->second;
+
+	if (loc.getRoot().empty())
+		for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
+			if (iter->second.isDefault())
+				loc = iter->second;
+		
+	std::cout << "FOUND LOCATION " << loc.getPath() << std::endl;
+
+	const	std::vector<std::string>& methods = loc.getAllowMethods();
+	for (std::vector<std::string>::const_iterator it = methods.begin(); it != methods.end(); it++) {
+		if (!it->compare(method)) {
+			allowedMethod = true;
+			std::cout << "METHOD " << method << " IS ALLOWED ON LOCATION " << loc.getPath() << std::endl;
+			break;
 		}
-		if (getFlag) {
-			if (loc.getRoot().empty())
-				returnPath = serverConf.getRoot() + path;
-			else
-				returnPath = loc.getRoot() + path;
-			if (stat(returnPath.c_str(), &s) == 0)
-			{
-				if (s.st_mode & S_IFDIR)
-					returnPath += loc.getIndex();
-				break;
-			}
-		}
-		getFlag = false;
+	}
+
+	if (!allowedMethod)
+		throw std::runtime_error("CANT TOUCH THIS\r\n\r\n");
+	else {
+		if (loc.getRoot()[0] == '/')
+			returnPath = serverConf.getRoot() + loc.getRoot() + path.substr(locReq.length());
+		else
+			returnPath = serverConf.getRoot() + "/" + loc.getRoot() + path.substr(locReq.length());
+		std::cout << "RETURN PATH IS " << returnPath << std::endl;
+		if (stat(returnPath.c_str(), &s) == 0)
+			if (s.st_mode & S_IFDIR)
+				returnPath += loc.getIndex();
 	}
 	return returnPath;
 }
@@ -143,7 +167,7 @@ std::string	processGetRequest(const HttpRequest& request, const ServerConf& serv
 	if (DEBUG)
 		std::cout << GREEN << "GET: PATH IS: " << path << RESET << std::endl;
 
-	localPath = createPath(path, serverConf, "GET");
+	localPath = createPath(path, serverConf, "GET", "SWAg");
 
 	if (DEBUG)
 		std::cout << GREEN << "GET: Created Local Path: " << localPath << RESET << std::endl;

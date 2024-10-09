@@ -16,6 +16,7 @@ class Location {
 		std::string					_fastcgiIndex;
 		bool						_autoIndex;
 		bool						_upload;
+		bool						_default;
 
 	public:
 		/* CONSTRUCTORS */
@@ -33,25 +34,26 @@ class Location {
 		Location					&operator=(Location const &rhs);
 
 		/* GETTERS */
-		std::vector<std::string>	getAllowMethods(void) const;
-		std::string					getPath(void) const;
-		std::string					getIndex(void) const;
-		std::string					getRoot(void) const;
-		std::string					getReturnURL(void) const;
-		std::string					getUploadStore(void) const;
-		std::string					getFastcgiPass(void) const;
-		std::string					getFastcgiIndex(void) const;
-		bool						getAutoIndex(void) const;
-		bool						getUpload(void) const;
+		const std::vector<std::string>&	getAllowMethods(void) const;
+		const std::string&				getPath(void) const;
+		const std::string&				getIndex(void) const;
+		const std::string&				getRoot(void) const;
+		const std::string&				getReturnURL(void) const;
+		const std::string&				getUploadStore(void) const;
+		const std::string&				getFastcgiPass(void) const;
+		const std::string&				getFastcgiIndex(void) const;
+		bool							hasAutoIndex(void) const;
+		bool							acceptsUploads(void) const;
+		bool							isDefault(void) const;
 
 		/* MEMBER FUNCTIONS */
-		void     					checkAttribut(void) const;
+		void	 					checkAttribut(void) const;
 		void						print(void) const;
 
 		/* EXCEPTIONS */
 		class InvalidLocationException : public std::exception{
-        public:
-            virtual char const		*what(void) const throw() {
+		public:
+			virtual char const		*what(void) const throw() {
 				return ("Invalid <Location> configuration format.\n");
 			}
 		};

@@ -9,7 +9,7 @@ bool hasDeletePermissions(const std::string& path){
 
 std::string processDeleteRequest(const HttpRequest& request, const ServerConf& serverConf){
     std::cout << "PATH BEFORE: " << request.getPath() << std::endl;
-	std::string delPath = createPath(request.getPath(), serverConf, "DELETE");
+	std::string delPath = createPath(request.getPath(), serverConf, "DELETE", "OMG SWAG");
     std::cout << ORANGE << "Requested DELETE path: " << delPath << RESET << std::endl;
 	
     HttpResponse response(serverConf);

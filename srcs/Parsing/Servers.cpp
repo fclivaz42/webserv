@@ -50,12 +50,13 @@ Servers::~Servers(){}
 
 /* ------------------- SURCHARGED OPERATOR ----------------------*/
 Servers &Servers::operator=(Servers const &rhs){
-	this->_servConf = rhs._servConf;
+	if (this != &rhs)
+		this->_servConf = rhs._servConf;
 	return (*this);
 }
 
 /* ------------------- GETTER ----------------------*/
-ServerConf	Servers::getServConf(int lequel) const{
+const ServerConf&	Servers::getServConf(int lequel) const{
 	std::vector<ServerConf>::const_iterator it;
 	int i = 0;
 	if (lequel < 0){
@@ -79,10 +80,10 @@ int	Servers::getAmountOfServers(void) const
 
 /* ------------------- MEMBERS FUNCTIONS ----------------------*/
 void	Servers::printConfigs() const {
-    std::vector<ServerConf>::const_iterator it = _servConf.begin();
-    for (; it != _servConf.end(); ++it) {
-        it->print();
-    }
+	std::vector<ServerConf>::const_iterator it = _servConf.begin();
+	for (; it != _servConf.end(); ++it) {
+		it->print();
+	}
 }
 
 bool	Servers::isConfigured() const {

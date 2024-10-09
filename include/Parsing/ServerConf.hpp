@@ -10,12 +10,12 @@ class Location;
 
 class ServerConf{
 	private:
-		std::string 					_serverName;
+		std::string						_serverName;
 		std::vector<unsigned short>		_port;
-		std::string 					_root;
-		std::string 					_index;
+		std::string						_root;
+		std::string						_index;
 		std::size_t						_maxBodySize;
-		std::string 					_errorPage;
+		std::string						_errorPage;
 		std::string						_ipAddr;
 		std::map<std::string, Location> _location;
 
@@ -34,18 +34,18 @@ class ServerConf{
 		ServerConf	&operator=(ServerConf const &rhs);
 
 		/* GETTERS */
-		std::string 					getServerName(void) const;
-		std::vector<unsigned short>		getPort(void) const;
-		std::string 					getRoot(void) const;
-		std::string						getIndex(void) const;
-		std::size_t						getMaxBodySize(void) const;
-		std::string						getErrorPage(void) const;
-		std::string						getIpAddr(void)	const;
-		std::map<std::string, Location>	getLocation(void) const;
+		size_t									getMaxBodySize(void) const;
+		const std::vector<unsigned short>&		getPort(void) const;
+		const std::string&						getServerName(void) const;
+		const std::string&						getRoot(void) const;
+		const std::string&						getIndex(void) const;
+		const std::string&						getErrorPage(void) const;
+		const std::string&						getIpAddr(void)	const;
+		const std::map<std::string, Location>&	getLocation(void) const;
 
 		/* MEMBERS FUNCTIONS */
-		void							print(void) const;
-		void							checkAttribut(void) const;
+		void									print(void) const;
+		void									checkAttribut(void) const;
 
 		/* EXCEPTIONS */
 		class InvalidServerConfException : public std::exception{
@@ -88,6 +88,18 @@ class ServerConf{
 			public:
 				virtual char const	*what(void) const throw() {
 					return "Unexpected End Of File.\n";
+				}
+		};
+		class NoDefaultException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "No default location specified.\n";
+				}
+		};
+		class MoreThanOneDefaultException : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "More than one default location specified.\n";
 				}
 		};
 };
