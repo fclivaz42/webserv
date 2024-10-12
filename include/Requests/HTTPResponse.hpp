@@ -7,11 +7,11 @@
 #include <sstream>
 #include <iostream>
 
-class HttpResponse
+class HTTPResponse
 {
 	public:
-		HttpResponse(const ServerConf& serverConf);
-		std::string	generateResponse(std::string statusCode, std::string& path, std::string &alive);
+		HTTPResponse(const ServerConf& serverConf);
+		std::string	generateResponse(const std::string& statusCode, std::string& path, const std::string &alive);
 		std::string	loadErrorPage(const std::string& errorCode) const;
 
 	private:

@@ -2,7 +2,7 @@
 
 #include "Network/ConnectManager.hpp"
 #include "Parsing/ServerConf.hpp"
-#include "Requests/HttpRequest.hpp"
+#include "Requests/HTTPRequest.hpp"
 #include "Requests/Get.hpp"
 #include "Requests/Post.hpp"
 #include "Requests/Delete.hpp"
@@ -170,13 +170,11 @@ bool	ConnectManager::startSocketListen(int backlog)
 	return (true);
 }
 
-//FONCTION READ MESSAGE
-//Fonction responsable pour lire la data envoyee par le client via la socket connexion
-// Je set un buffer pour contenir les datas et une taille max pour definir le nombre de data lu en une fois
-// avec read() je lis le contenue de mon buffer
-// Je checke si read etait successful
-// si oui je convertis en string et je return.
-// Si le client s'est deco, je ne return rien
+/*
+	readMessage va etre appele par start() tant revents de clientFd est sur POLLIN.
+	Il va write ce qu'il a lu dans la stringstream message.
+ */
+
 ssize_t	ConnectManager::readMessage(int clientFd, std::stringstream& message)
 {
 	char		buffer[BUFFER_SIZE];
@@ -199,14 +197,14 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 	try
 	{
 		if (static_cast<size_t>(message.tellp()) > serverConf.getMaxBodySize())
-			;
-		HttpRequest request = HttpRequest(message, _continue);
+		{};
+		HTTPRequest request = HTTPRequest(message, _continue);
 		std::map<std::string, std::string>	headers = request.getHeaders();
 		if (headers["Expect"] == "100-continue") {
 			if (static_cast<size_t>(strtol(headers["Content-Length"].c_str(), NULL, 10)) <= serverConf.getMaxBodySize())
-				response = "HTTP/1.1 100 Continue\r\n\r\n";
+				response = "HTTP/1.1 100 Continue\r\nConnection: keep-alive\r\nContent-Length: 0\r\n\r\n";
 			else
-				response = "HTTP/1.1 417 Expectation Failed\r\n\r\n";
+				response = "HTTP/1.1 417 Expectation Failed\r\nConnection: close\r\nContent-Length: 0\r\n\r\n";
 		}
 		else if (request.getMethod() == "GET")
 			response = processGetRequest(request, serverConf);
@@ -216,11 +214,8 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 			response = processDeleteRequest(request, serverConf);
 
 	}
-	catch (const std::exception& error)
-	{
-		std::cerr << "Request parsing failed " << error.what() << std::endl;
-		response = "HTTP/1.1 405 Method Not Allowed\r\n\r\n" + std::string(error.what());
-		//TODO send response error back to client
+	catch (const std::exception& error) {
+		response = error.what();
 	}
 	ssize_t bytesWritten = write(clientFd.fd, response.c_str(), response.length());
 	if (bytesWritten == -1)

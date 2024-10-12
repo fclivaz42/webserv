@@ -1,4 +1,4 @@
-#include "Requests/HttpRequest.hpp"
+#include "Requests/HTTPRequest.hpp"
 #include <algorithm>
 #include <ostream>
 #include <string>
@@ -9,10 +9,10 @@
 	---------------------------------------------
 */
 
-HttpRequest::HttpRequest() : _method(""), _path(""), _version(""), _body(std::string())
+HTTPRequest::HTTPRequest() : _method(""), _path(""), _version(""), _body(std::string())
 {}
 
-HttpRequest::HttpRequest(std::stringstream& request, bool cont)
+HTTPRequest::HTTPRequest(std::stringstream& request, bool cont)
 {
 	std::string			line, key, value;
 	size_t				pos;
@@ -36,11 +36,13 @@ HttpRequest::HttpRequest(std::stringstream& request, bool cont)
 		stRequest.str(std::string());
 		stRequest.clear();
 	}
+
 	if (!std::getline(request, line) || line.empty())
 	{
 		std::cerr << ORANGE << "Waiting for request . . ." << RESET << std::endl;
 		return ;
 	}
+
 	std::istringstream requestLine(line);
 	requestLine >> _method >> _path >> _version;
 
@@ -52,14 +54,14 @@ HttpRequest::HttpRequest(std::stringstream& request, bool cont)
 	}
 	//TODO throw real error response
 	if (_method != "GET" && _method != "POST" && _method != "DELETE")
-		throw std::runtime_error("ERROR: Request not allowed\n");
+		throw HTTPRequest::RequestNotAllowed("GET, POST, DELETE");
 
 	//TODO search url in location _path
 	if (_path.empty() || _path[0] != '/')
-		throw std::runtime_error("ERROR: Invalid path\n");
+		throw HTTPRequest::UnsupportedHTTPVersion();
 
 	if (_version != "HTTP/1.1" && _version != "HTTP/1.0")
-		throw std::runtime_error("ERROR: Unsupported HTTP version\n");
+		throw HTTPRequest::UnsupportedHTTPVersion();
 
 	while (request.peek() != EOF)
 	{
@@ -92,24 +94,27 @@ HttpRequest::HttpRequest(std::stringstream& request, bool cont)
 			break ;
 		}
 		else
-			throw std::runtime_error("ERROR: Invalid headers\n");
+			throw HTTPRequest::InvalidHeaders();
 	}
 
-	if (_version == "HTTP/1.1" && _headers.find("Host") == _headers.end())
-		throw std::runtime_error("ERROR: Missing host\n");
+	if (_version == "HTTP/1.1" && (_headers.find("Host") == _headers.end()))
+		throw HTTPRequest::MissingHost();
 	request.str(std::string());
 	request.clear();
 }
 
-HttpRequest::HttpRequest(HttpRequest const &copy) : _method(copy._method), _path(copy._path), _version(copy._version), _headers(copy._headers)
+HTTPRequest::HTTPRequest(HTTPRequest const &copy) :	_method(copy._method),
+													_path(copy._path),
+													_version(copy._version),
+													_headers(copy._headers)
 {
 	_body.str(copy._body.str());
 }
 
-HttpRequest::~HttpRequest()
+HTTPRequest::~HTTPRequest()
 {}
 
-HttpRequest &HttpRequest::operator=(HttpRequest const &rhs)
+HTTPRequest &HTTPRequest::operator=(HTTPRequest const &rhs)
 {
 	if (this != &rhs)
 	{
@@ -128,29 +133,42 @@ HttpRequest &HttpRequest::operator=(HttpRequest const &rhs)
 	---------------------------------------------
 */
 
-const std::string&	HttpRequest::getMethod() const
+const std::string&	HTTPRequest::getMethod() const
 {
 	return (_method);
 }
 
-const std::string&	HttpRequest::getPath() const
+const std::string&	HTTPRequest::getPath() const
 {
 	return (_path);
 }
 
-const std::string&	HttpRequest::getVersion() const
+const std::string&	HTTPRequest::getVersion() const
 {
 	return (_version);
 }
 
-const std::map<std::string, std::string>&	HttpRequest::getHeaders() const
+const std::map<std::string, std::string>&	HTTPRequest::getHeaders() const
 {
 	return (_headers);
 }
 
-std::stringstream&	HttpRequest::getBody()
+std::stringstream&	HTTPRequest::getBody()
 {
 	return (_body);
+}
+
+const std::string	HTTPRequest::isKeepAlive() const
+{
+	std::map<std::string, std::string>::const_iterator iter = _headers.find("Connection");
+
+	if (iter != _headers.end())
+	{
+		std::string alive  = iter->second;
+		std::transform(alive.begin(), alive.end(), alive.begin(), ::tolower);
+		return ("Connection: " + alive + "\r\n");
+	}
+	return (_version == "HTTP/1.1") ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
 }
 
 /*
@@ -167,23 +185,4 @@ std::string	trim(const std::string& str)
 		return ("");
 	size_t end = str.find_last_not_of(" \t");
 	return (str.substr(start, end - start + 1));
-}
-
-bool	HttpRequest::isKeepAlive() const
-{
-	std::map<std::string, std::string>::const_iterator iter = _headers.find("Connection");
-
-	if (iter != _headers.end())
-	{
-		std::string alive  = iter->second;
-		std::transform(alive.begin(), alive.end(), alive.begin(), ::tolower);
-		if (alive == "keep-alive")
-			return (true);
-		if (alive == "close")
-			return (false);
-	}
-	if (_version == "HTTP/1.1")
-		return (true);
-	return (false);
-
 }

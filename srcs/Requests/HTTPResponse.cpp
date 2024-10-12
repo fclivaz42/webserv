@@ -1,11 +1,12 @@
-#include "Requests/HttpResponse.hpp"
+#include "Requests/HTTPResponse.hpp"
 #include "Requests/Get.hpp"
 
-HttpResponse::HttpResponse(const ServerConf& serverConf) : serverConf(serverConf)
+HTTPResponse::HTTPResponse(const ServerConf& serverConf) : serverConf(serverConf)
 {}
 
-std::string	HttpResponse::generateResponse(std::string statusCode, std::string& path, std::string &alive)
+std::string	HTTPResponse::generateResponse(const std::string& statusCode, std::string& path, const std::string &alive)
 {
+	std::cout << "IS CONNECTION ALIVE........? " << alive << std::endl;
 	if (statusCode == "204")
 			return ("HTTP/1.1 204 No Content\r\n" + alive + "\r\n");
 	
@@ -31,14 +32,14 @@ std::string	HttpResponse::generateResponse(std::string statusCode, std::string& 
 		return ("HTTP/1.1 500 Internal Server Error\r\n\r\n");
 }
 
-std::string		HttpResponse::loadErrorPage(const std::string& errorCode) const{
+std::string		HTTPResponse::loadErrorPage(const std::string& errorCode) const{
 	std::string	errorPath = serverConf.getErrorPage();
 
 	errorPath.replace(16, 3, errorCode);
 	return (errorPath);
 }
 
-std::string		HttpResponse::getContentType(const std::string& path)
+std::string		HTTPResponse::getContentType(const std::string& path)
 {
 	if (hasExtension(path, ".css"))
 		return ("text/css");
@@ -55,7 +56,7 @@ std::string		HttpResponse::getContentType(const std::string& path)
 	return ("application/octet-stream");
 }
 
-std::string		HttpResponse::readFileContent(const std::string& path) const
+std::string		HTTPResponse::readFileContent(const std::string& path) const
 {
 	std::ifstream file(path.c_str(), std::ios::in | std::ios::binary);
 	if (!file)

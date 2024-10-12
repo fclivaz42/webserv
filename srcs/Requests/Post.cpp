@@ -32,7 +32,7 @@ std::string urlDecode(const std::string& str)
 	return result;
 }
 
-const std::string	uploadRequest(HttpRequest& request, const ServerConf& serverConf)
+const std::string	uploadRequest(HTTPRequest& request, const ServerConf& serverConf)
 {
 	std::map<std::string, std::string>	headers = request.getHeaders();
 	const std::string&					shift = request.getBody().str();
@@ -57,23 +57,21 @@ const std::string	uploadRequest(HttpRequest& request, const ServerConf& serverCo
 		std::cerr << "ERROR: Failed to open file for writing" << std::endl;
 	}
 
-	HttpResponse res(serverConf);
+	HTTPResponse res(serverConf);
 	// Construct Connection header
-	std::string connectionHeader = request.isKeepAlive() ? "keep-alive" : "close";
-	response += "Connection: " + connectionHeader + "\r\n";
+	response += "Connection: " + request.isKeepAlive() + "\r\n\r\n";
 
-	response += "\r\n"; // End of headers
 	// Optionally, add content here if needed, e.g., an HTML message indicating the redirect
 	response += "<html><body><p>Redirecting to <a href=\"/success.html\">success.html</a></p></body></html>";
 
 	return response;
 }
 
-const std::string	formRequest(HttpRequest& request, const ServerConf& serverConf)
+const std::string	formRequest(HTTPRequest& request, const ServerConf& serverConf)
 {
 	std::map<std::string, std::string> formData;
 	std::stringstream& bodyStream(request.getBody());
-	std::string keyValue, username, email, message, alive;
+	std::string keyValue, username, email, message;
 
 	if (DEBUG)
 		std::cout << GREEN << "POST: Form received.\n";
@@ -91,11 +89,10 @@ const std::string	formRequest(HttpRequest& request, const ServerConf& serverConf
 	username = formData["name"];
 	email = formData["email"];
 	message = formData["message"];
-	alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
 
-	HttpResponse		res(serverConf);
+	HTTPResponse		res(serverConf);
 	std::string			path(createPath(request.getPath() + ".html", serverConf, "POST", "Accept-Uploads")), line, response;
-	std::stringstream	genRes(res.generateResponse("200", path, alive));
+	std::stringstream	genRes(res.generateResponse("200", path, request.isKeepAlive()));
 	std::size_t			pos;
 
 	while (std::getline(genRes, line))
@@ -128,7 +125,7 @@ std::string intToString(int value) {
 }
 
 
-std::map<std::string, std::string> createCGIEnv(HttpRequest& request)
+std::map<std::string, std::string> createCGIEnv(HTTPRequest& request)
 {
     std::map<std::string, std::string> env;
 
@@ -144,7 +141,7 @@ std::map<std::string, std::string> createCGIEnv(HttpRequest& request)
     return (env);
 }
 
-const std::string	processPostRequest(HttpRequest& request, const ServerConf& serverConf)
+const std::string	processPostRequest(HTTPRequest& request, const ServerConf& serverConf)
 {
 	std::map<std::string, std::string> headers(request.getHeaders());
 

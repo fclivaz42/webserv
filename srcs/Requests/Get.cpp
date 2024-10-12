@@ -1,6 +1,6 @@
 #include "Requests/Get.hpp"
-#include "Requests/HttpRequest.hpp"
-#include "Requests/HttpResponse.hpp"
+#include "Requests/HTTPRequest.hpp"
+#include "Requests/HTTPResponse.hpp"
 #include "Parsing/Location.hpp"
 #include <stdexcept>
 #include <string>
@@ -94,7 +94,7 @@ bool	checkRedir(const std::string& path, const ServerConf& serverConf)
 const std::string	createPath(const std::string& path, const ServerConf& serverConf, const std::string& method, const std::string& attrib)
 {
 	std::map<std::string, Location>	locationMap = serverConf.getLocation();
-	std::string						returnPath, locReq;
+	std::string						returnPath, locReq, allowedMethods;
 	struct stat						s;
 	Location						loc;
 	bool							allowedMethod = false;
@@ -125,15 +125,13 @@ const std::string	createPath(const std::string& path, const ServerConf& serverCo
 
 	const	std::vector<std::string>& methods = loc.getAllowMethods();
 	for (std::vector<std::string>::const_iterator it = methods.begin(); it != methods.end(); it++) {
-		if (!it->compare(method)) {
-			allowedMethod = true;
-			std::cout << "METHOD " << method << " IS ALLOWED ON LOCATION " << loc.getPath() << std::endl;
+		allowedMethods += *it + (it + 1 != methods.end() ? ", " : "");
+		if ((allowedMethod = (it->compare(method) ? false : true)))
 			break;
-		}
 	}
 
 	if (!allowedMethod)
-		throw std::runtime_error("CANT TOUCH THIS\r\n\r\n");
+		throw HTTPRequest::RequestNotAllowed(allowedMethods);
 	else {
 		if (loc.getRoot()[0] == '/')
 			returnPath = serverConf.getRoot() + loc.getRoot() + path.substr(locReq.length());
@@ -147,22 +145,21 @@ const std::string	createPath(const std::string& path, const ServerConf& serverCo
 	return returnPath;
 }
 
-std::string	processGetRequest(const HttpRequest& request, const ServerConf& serverConf)
+std::string	processGetRequest(const HTTPRequest& request, const ServerConf& serverConf)
 {
-	HttpResponse	ret(serverConf);
+	HTTPResponse	ret(serverConf);
 	std::map<std::string, std::string>	headers = request.getHeaders();
-	std::string		alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
 	std::string		vide = "";
 	std::string		localPath;
 
 	if (static_cast<size_t>(strtol(headers["Content-Length"].c_str(), NULL, 10)) > serverConf.getMaxBodySize())
-		return (ret.generateResponse("413", vide, alive));
+		return (ret.generateResponse("413", vide, request.isKeepAlive()));
 	//TODO send http error response instead
 	
 	std::string path = request.getPath();
 
 	if (checkRedir(path, serverConf))
-		return (ret.generateResponse("302", path, alive));
+		return (ret.generateResponse("302", path, request.isKeepAlive()));
 
 	if (DEBUG)
 		std::cout << GREEN << "GET: PATH IS: " << path << RESET << std::endl;
@@ -176,13 +173,13 @@ std::string	processGetRequest(const HttpRequest& request, const ServerConf& serv
 	{
 		localPath = serverConf.getErrorPage();
 		std::cerr << RED << "GET: ERROR: File not found: " << localPath << RESET << std::endl;
-		return (ret.generateResponse("404", localPath, alive));
+		return (ret.generateResponse("404", localPath, request.isKeepAlive()));
 	}
 	if (!hasAccess(localPath))
 	{
 		localPath = serverConf.getErrorPage();
 		std::cerr << RED << "GET: ERROR: Access denied to file: " << localPath << RESET << std::endl;
-		return (ret.generateResponse("403", localPath, alive));
+		return (ret.generateResponse("403", localPath, request.isKeepAlive()));
 	}
-	return (ret.generateResponse("200", localPath , alive));
+	return (ret.generateResponse("200", localPath , request.isKeepAlive()));
 }

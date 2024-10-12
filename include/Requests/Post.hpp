@@ -7,10 +7,10 @@
 #include "Parsing/ServerConf.hpp"
 #include "Parsing/Location.hpp"
 #include "Network/ConnectManager.hpp"
-#include "Requests/HttpRequest.hpp"
-#include "Requests/HttpResponse.hpp"
+#include "Requests/HTTPRequest.hpp"
+#include "Requests/HTTPResponse.hpp"
 
-const std::string	processPostRequest(HttpRequest& request, const ServerConf& serverConf);
+const std::string	processPostRequest(HTTPRequest& request, const ServerConf& serverConf);
 const std::string	createPath(const std::string& path, const ServerConf& serverConf, const std::string& method);
 
 #endif
