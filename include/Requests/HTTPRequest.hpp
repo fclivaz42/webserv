@@ -18,6 +18,7 @@ class	HTTPRequest
 		std::string							_version;
 		std::map<std::string, std::string>	_headers;
 		std::stringstream					_body;
+		size_t								_bodySize;
 
 		void			specialPostParsing();
 		std::string 	getBoundary(const std::string& contentType);
@@ -36,6 +37,7 @@ class	HTTPRequest
 		const std::string&							getVersion() const;
 		std::stringstream&							getBody();
 		const std::string							isKeepAlive() const;
+		size_t										getContentLength() const;
 
 		/* EXCEPTIONS */
 		class RequestNotAllowed : public std::exception{
@@ -66,6 +68,24 @@ class	HTTPRequest
 			public:
 				virtual char const	*what(void) const throw() {
 					return "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+				}
+		};
+		class ContentTooLarge : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "HTTP/1.1 413 Content Too Large\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+				}
+		};
+		class ISE : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
+				}
+		};
+		class ExpectationFailed : public std::exception{
+			public:
+				virtual char const	*what(void) const throw() {
+					return "HTTP/1.1 417 Expectation Failed\r\nConnection: close\r\nContent-Length: 0\r\n\r\n";
 				}
 		};
 };

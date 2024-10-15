@@ -4,9 +4,11 @@
 HTTPResponse::HTTPResponse(const ServerConf& serverConf) : serverConf(serverConf)
 {}
 
+// TODO: SWITCH CASE THIS AND FIX THE LOADERRORPAGE FUNCTION
+// USE ERRORPATH INSTEAD AND THEN APPEND THE STATUSCODE + .html TO THE ERRORPATH
+
 std::string	HTTPResponse::generateResponse(const std::string& statusCode, std::string& path, const std::string &alive)
 {
-	std::cout << "IS CONNECTION ALIVE........? " << alive << std::endl;
 	if (statusCode == "204")
 			return ("HTTP/1.1 204 No Content\r\n" + alive + "\r\n");
 	
@@ -27,7 +29,7 @@ std::string	HTTPResponse::generateResponse(const std::string& statusCode, std::s
 	else if (statusCode == "404")
 			return ("HTTP/1.1 404 Not Found\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + content);
 	else if (statusCode == "413")
-		return ("HTTP/1.1 413 Payload Too Large\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + content);
+			return ("HTTP/1.1 413 Payload Too Large\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + content);
 	else
 		return ("HTTP/1.1 500 Internal Server Error\r\n\r\n");
 }

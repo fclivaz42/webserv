@@ -196,33 +196,37 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 
 	try
 	{
-		if (static_cast<size_t>(message.tellp()) > serverConf.getMaxBodySize())
-		{};
 		HTTPRequest request = HTTPRequest(message, _continue);
 		std::map<std::string, std::string>	headers = request.getHeaders();
+
 		if (headers["Expect"] == "100-continue") {
-			if (static_cast<size_t>(strtol(headers["Content-Length"].c_str(), NULL, 10)) <= serverConf.getMaxBodySize())
+			if (request.getContentLength() <= serverConf.getMaxBodySize())
 				response = "HTTP/1.1 100 Continue\r\nConnection: keep-alive\r\nContent-Length: 0\r\n\r\n";
 			else
-				response = "HTTP/1.1 417 Expectation Failed\r\nConnection: close\r\nContent-Length: 0\r\n\r\n";
+				throw HTTPRequest::ExpectationFailed();
 		}
+		else if (request.getContentLength() > serverConf.getMaxBodySize())
+				throw HTTPRequest::ContentTooLarge();
 		else if (request.getMethod() == "GET")
 			response = processGetRequest(request, serverConf);
 		else if (request.getMethod() == "POST")
 			response = processPostRequest(request, serverConf);
 		else if (request.getMethod() == "DELETE")
 			response = processDeleteRequest(request, serverConf);
-
 	}
 	catch (const std::exception& error) {
 		response = error.what();
 	}
 	ssize_t bytesWritten = write(clientFd.fd, response.c_str(), response.length());
-	if (bytesWritten == -1)
+	if (bytesWritten == -1) {
 		std::cerr << RED << "ERROR: write() failure" << RESET << std::endl;
-	else if (bytesWritten != static_cast<ssize_t>(response.length()))
-		std::cerr << RED << "ERROR: Failure to write all data" << RESET << std::endl;
-	if (response != "HTTP/1.1 100 Continue\r\n\r\n")
+		return(close(clientFd.fd));
+	}
+	else if (bytesWritten != static_cast<ssize_t>(response.length())) {
+		std::cerr << RED << "ERROR: Failure to write entire response" << RESET << std::endl;
+		return(close(clientFd.fd));
+	}
+	if (response != "HTTP/1.1 100 Continue\r\nConnection: keep-alive\r\nContent-Length: 0\r\n\r\n")
 		return(close(clientFd.fd));
 	return (true);
 }

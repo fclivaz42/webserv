@@ -2,7 +2,6 @@
 #include "Requests/HTTPRequest.hpp"
 #include "Requests/HTTPResponse.hpp"
 #include "Parsing/Location.hpp"
-#include <stdexcept>
 #include <string>
 
 bool		hasExtension(const std::string& path, const std::string& extension)
@@ -53,9 +52,9 @@ bool		fileExists(const std::string& localPath)
 	return isOpen;
 }
 
-bool		hasAccess(std::string localPath)
+bool		hasAccess(const std::string& localPath)
 {
-	struct stat	fileInfo;;
+	struct stat	fileInfo;
 
 	if (stat(localPath.c_str(), &fileInfo) != 0)
 	{

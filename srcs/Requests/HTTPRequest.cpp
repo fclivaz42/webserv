@@ -1,5 +1,6 @@
 #include "Requests/HTTPRequest.hpp"
 #include <algorithm>
+#include <cstdlib>
 #include <ostream>
 #include <string>
 
@@ -99,6 +100,16 @@ HTTPRequest::HTTPRequest(std::stringstream& request, bool cont)
 
 	if (_version == "HTTP/1.1" && (_headers.find("Host") == _headers.end()))
 		throw HTTPRequest::MissingHost();
+	if (_headers.find("Content-Length") == _headers.end())
+		throw HTTPRequest::InvalidHeaders();
+
+	char	*ptr;
+	long	testsize = strtol(_headers["Content-Length"].c_str(), &ptr, 10);
+
+	if (testsize < 0 || ptr[0] != 0)
+		throw HTTPRequest::InvalidHeaders();
+
+	_bodySize = strtoul(_headers["Content-Length"].c_str(), NULL, 10);
 	request.str(std::string());
 	request.clear();
 }
@@ -156,6 +167,11 @@ const std::map<std::string, std::string>&	HTTPRequest::getHeaders() const
 std::stringstream&	HTTPRequest::getBody()
 {
 	return (_body);
+}
+
+size_t	HTTPRequest::getContentLength() const
+{
+	return (_bodySize);
 }
 
 const std::string	HTTPRequest::isKeepAlive() const
