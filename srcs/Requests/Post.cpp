@@ -1,8 +1,5 @@
 #include "Requests/Post.hpp"
-#include "Parsing/ServerConf.hpp"
-#include "Requests/Get.hpp"
-#include "CGI/CGIExec.hpp"
-#include <string>
+#include "Requests/HTTPRequest.hpp"
 
 std::string urlDecode(const std::string& str)
 {
@@ -43,7 +40,7 @@ const std::string	uploadRequest(HTTPRequest& request, const ServerConf& serverCo
 		std::cout << GREEN << "POST: File being uploaded." << std::endl;
 	fileName = shift.substr(shift.find("filename=\"") + 10);
 	fileName = fileName.substr(0, fileName.find_first_of("\""));
-	path = createPath("/" + fileName, serverConf, "POST", "Accept-Uploads");
+	path = HTTPRequest::createPath("/" + fileName, serverConf, "POST", "Accept-Uploads");
 	if (DEBUG)
 		std::cout << "POST: Created path: " << path << RESET << std::endl;
 
@@ -57,7 +54,6 @@ const std::string	uploadRequest(HTTPRequest& request, const ServerConf& serverCo
 		std::cerr << "ERROR: Failed to open file for writing" << std::endl;
 	}
 
-	HTTPResponse res(serverConf);
 	// Construct Connection header
 	response += "Connection: " + request.isKeepAlive() + "\r\n\r\n";
 
@@ -90,9 +86,8 @@ const std::string	formRequest(HTTPRequest& request, const ServerConf& serverConf
 	email = formData["email"];
 	message = formData["message"];
 
-	HTTPResponse		res(serverConf);
-	std::string			path(createPath(request.getPath() + ".html", serverConf, "POST", "Accept-Uploads")), line, response;
-	std::stringstream	genRes(res.generateResponse("200", path, request.isKeepAlive()));
+	std::string			path(HTTPRequest::createPath(request.getPath() + ".html", serverConf, "POST", "Accept-Uploads")), line, response;
+	std::stringstream	genRes(HTTPResponse::generateResponse(200, path, request.isKeepAlive(), serverConf));
 	std::size_t			pos;
 
 	while (std::getline(genRes, line))
@@ -154,5 +149,7 @@ const std::string	processPostRequest(HTTPRequest& request, const ServerConf& ser
 	}
 	if (headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos)
 		return (formRequest(request, serverConf));
-	return (uploadRequest(request, serverConf));
+	else if (headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+		return (uploadRequest(request, serverConf));
+	return HTTPResponse::generateResponse(415, "", request.isKeepAlive(), serverConf);
 }

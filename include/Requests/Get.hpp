@@ -2,16 +2,12 @@
 # define GET_HPP
 
 #include <string>
-#include "Network/ConnectManager.hpp"
+#include "Parsing/ServerConf.hpp"
 #include "Requests/HTTPRequest.hpp"
-#include <sys/stat.h>
-#include <unistd.h>
+#include "Requests/HTTPResponse.hpp"
 
-std::string			processGetRequest(const HTTPRequest& request, const ServerConf& serverConf);
-std::string			getMimeType(const std::string& path);
-bool				hasExtension(const std::string& path, const std::string& extension);
-std::string			updatePath(const std::string &path);
-const std::string	createPath(const std::string& path, const ServerConf& serverConf, const std::string& method, const std::string& attrib);
 bool				fileExists(const std::string& localPath);
+std::string			updatePath(const std::string &path);
+std::string			processGetRequest(const HTTPRequest& request, const ServerConf& serverConf);
 
 #endif

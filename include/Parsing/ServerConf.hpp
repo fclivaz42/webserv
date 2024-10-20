@@ -15,7 +15,7 @@ class ServerConf{
 		std::string						_root;
 		std::string						_index;
 		std::size_t						_maxBodySize;
-		std::string						_errorPage;
+		std::string						_errorPath;
 		std::string						_ipAddr;
 		std::map<std::string, Location> _location;
 
@@ -39,7 +39,7 @@ class ServerConf{
 		const std::string&						getServerName(void) const;
 		const std::string&						getRoot(void) const;
 		const std::string&						getIndex(void) const;
-		const std::string&						getErrorPage(void) const;
+		const std::string&						getErrorPath(void) const;
 		const std::string&						getIpAddr(void)	const;
 		const std::map<std::string, Location>&	getLocation(void) const;
 

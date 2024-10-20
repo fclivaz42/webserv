@@ -1,22 +1,26 @@
 #ifndef CONNECTMANAGER_HPP
 # define CONNECTMANAGER_HPP
 
-#include <map>
-#include <sstream>
-#include <iostream>
-#include <sys/types.h>
+#include <poll.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <cstring>
-#include <vector>
-#include <poll.h>
-#include <cstdlib>
-#include <algorithm>
-#include <fstream>
+#include <map>
 #include <string>
+#include <vector>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
 #include "webserv.hpp"
 #include "Parsing/Servers.hpp"
+#include "Requests/Get.hpp"
+#include "Requests/Post.hpp"
+#include "Requests/Delete.hpp"
+#include "Requests/HTTPRequest.hpp"
+#include "Requests/HTTPResponse.hpp"
+#include "webserv.hpp"
 
 #define MAX_ATTEMPTS 512
 

@@ -1,17 +1,6 @@
 // Pas de header pour eviter les conflicts :)
 
 #include "Network/ConnectManager.hpp"
-#include "Parsing/ServerConf.hpp"
-#include "Requests/HTTPRequest.hpp"
-#include "Requests/Get.hpp"
-#include "Requests/Post.hpp"
-#include "Requests/Delete.hpp"
-#include "webserv.hpp"
-#include <algorithm>
-#include <fstream>
-#include <netinet/in.h>
-#include <string>
-#include <sys/poll.h>
 
 /*
 	c tipar pour le construiseur d'une manager de connect
@@ -196,17 +185,17 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 
 	try
 	{
-		HTTPRequest request = HTTPRequest(message, _continue);
+		HTTPRequest request(message, serverConf, _continue);
 		std::map<std::string, std::string>	headers = request.getHeaders();
 
 		if (headers["Expect"] == "100-continue") {
 			if (request.getContentLength() <= serverConf.getMaxBodySize())
 				response = "HTTP/1.1 100 Continue\r\nConnection: keep-alive\r\nContent-Length: 0\r\n\r\n";
 			else
-				throw HTTPRequest::ExpectationFailed();
+				HTTPResponse::generateResponse(417, serverConf.getErrorPath(), request.isKeepAlive(), serverConf);
 		}
 		else if (request.getContentLength() > serverConf.getMaxBodySize())
-				throw HTTPRequest::ContentTooLarge();
+				HTTPResponse::generateResponse(413, serverConf.getErrorPath(), request.isKeepAlive(), serverConf);
 		else if (request.getMethod() == "GET")
 			response = processGetRequest(request, serverConf);
 		else if (request.getMethod() == "POST")
@@ -332,20 +321,4 @@ void	ConnectManager::start()
 		}
 	}
 	std::cerr << RED << "ERROR: poll() failure" << RESET << std::endl;
-}
-
-//FUNCTION DESIGNED TO READ CONTENTS OF A FILE
-//J'ouvre mon file avec ifstrem
-//je convertis en string Cstyle
-//Si ouverture du fichier okay je lis le content avec content()
-std::string	ConnectManager::readFile(const std::string& filePath)
-{
-	std::ifstream file(filePath.c_str(), std::ios::in | std::ios::binary);
-	if (!file.is_open())
-	{
-		std::cerr << "ERROR: Could not open file " << filePath << std::endl;
-		return ("");
-	}
-	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-	return (content);
 }

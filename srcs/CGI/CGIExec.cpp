@@ -1,10 +1,10 @@
 #include "CGI/CGIExec.hpp"
 #include "Requests/Get.hpp"
+#include <cstring>
 #include <iostream>
 #include <cstdlib>
 #include <unistd.h>
 #include <sys/wait.h>
-
 
 CGIExec::CGIExec(const std::string& cgiPath, const std::map<std::string, std::string>& env)
 	: _cgiPath(cgiPath), _env(env) {}

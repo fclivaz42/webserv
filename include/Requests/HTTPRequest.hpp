@@ -1,14 +1,17 @@
 #ifndef HTTPREQUEST_HPP
 # define HTTPREQUEST_HPP
 
-#include "webserv.hpp"
-#include <string>
+#include <unistd.h>
+#include <sys/stat.h>
 #include <map>
-#include <cstdio>
+#include <string>
 #include <sstream>
 #include <iostream>
 #include <algorithm>
-#include <fstream>
+#include "Parsing/Location.hpp"
+#include "Parsing/ServerConf.hpp"
+#include "Requests/HTTPResponse.hpp"
+#include "webserv.hpp"
 
 class	HTTPRequest
 {
@@ -20,16 +23,15 @@ class	HTTPRequest
 		std::stringstream					_body;
 		size_t								_bodySize;
 
-		void			specialPostParsing();
-		std::string 	getBoundary(const std::string& contentType);
-		void 	 		parseMultiPartBody(const std::string& body, const std::string& boundary);
 		HTTPRequest();
 
 	public:
-		HTTPRequest(std::stringstream& request, bool cont);
+		HTTPRequest(std::stringstream& request, const ServerConf& sConf, bool cont);
 		HTTPRequest(HTTPRequest const &copy);
 		HTTPRequest &operator=(HTTPRequest const &rhs);
 		~HTTPRequest();
+
+		static const std::string	createPath(const std::string& path, const ServerConf& serverConf, const std::string& method, const std::string& attrib);
 
 		const std::map<std::string, std::string>&	getHeaders() const;
 		const std::string&							getMethod() const;
@@ -39,55 +41,6 @@ class	HTTPRequest
 		const std::string							isKeepAlive() const;
 		size_t										getContentLength() const;
 
-		/* EXCEPTIONS */
-		class RequestNotAllowed : public std::exception{
-			private:
-				std::string	_str;
-			public:
-				RequestNotAllowed(const std::string& str) {
-					this->_str = "HTTP/1.1 405 Method Not Allowed\r\nAllow: " + str + "\r\nConnection: close\r\nContent-Length: 0\r\n\r\n";
-				}
-				~RequestNotAllowed() throw () {}
-				virtual char const	*what(void) const throw() {
-					return _str.c_str();
-				}
-		};
-		class UnsupportedHTTPVersion : public std::exception{
-			public:
-				virtual char const	*what(void) const throw() {
-					return "HTTP/1.1 505 HTTP Version Not Supported\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
-				}
-		};
-		class InvalidHeaders : public std::exception{
-			public:
-				virtual char const	*what(void) const throw() {
-					return "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
-				}
-		};
-		class MissingHost : public std::exception{
-			public:
-				virtual char const	*what(void) const throw() {
-					return "HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
-				}
-		};
-		class ContentTooLarge : public std::exception{
-			public:
-				virtual char const	*what(void) const throw() {
-					return "HTTP/1.1 413 Content Too Large\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
-				}
-		};
-		class ISE : public std::exception{
-			public:
-				virtual char const	*what(void) const throw() {
-					return "HTTP/1.1 500 Internal Server Error\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
-				}
-		};
-		class ExpectationFailed : public std::exception{
-			public:
-				virtual char const	*what(void) const throw() {
-					return "HTTP/1.1 417 Expectation Failed\r\nConnection: close\r\nContent-Length: 0\r\n\r\n";
-				}
-		};
 };
 
 std::string	trim(const std::string& str);

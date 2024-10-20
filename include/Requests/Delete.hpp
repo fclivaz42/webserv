@@ -2,7 +2,6 @@
 # define DELETE_HPP
 
 #include <string>
-#include <map>
 #include "Network/ConnectManager.hpp"
 #include "Requests/HTTPRequest.hpp"
 

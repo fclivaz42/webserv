@@ -4,9 +4,9 @@
 #include <map>
 #include <string>
 #include <sys/stat.h>
-#include "Parsing/ServerConf.hpp"
+#include "CGI/CGIExec.hpp"
 #include "Parsing/Location.hpp"
-#include "Network/ConnectManager.hpp"
+#include "Parsing/ServerConf.hpp"
 #include "Requests/HTTPRequest.hpp"
 #include "Requests/HTTPResponse.hpp"
 

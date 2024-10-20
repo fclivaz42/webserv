@@ -1,8 +1,4 @@
 #include "Requests/HTTPRequest.hpp"
-#include <algorithm>
-#include <cstdlib>
-#include <ostream>
-#include <string>
 
 /*
 	---------------------------------------------
@@ -10,10 +6,10 @@
 	---------------------------------------------
 */
 
-HTTPRequest::HTTPRequest() : _method(""), _path(""), _version(""), _body(std::string())
+HTTPRequest::HTTPRequest() : _method(""), _path(""), _version(""), _body(std::string()), _bodySize(0)
 {}
 
-HTTPRequest::HTTPRequest(std::stringstream& request, bool cont)
+HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bool cont) :_method(""), _path(""), _version(""), _body(std::string()), _bodySize(0)
 {
 	std::string			line, key, value;
 	size_t				pos;
@@ -53,16 +49,15 @@ HTTPRequest::HTTPRequest(std::stringstream& request, bool cont)
 		std::cout << "│ Path: " << _path << std:: endl;
 		std::cout << "│ Version: " << _version << "\n└────────── END REQUEST  ──────────\n";
 	}
-	//TODO throw real error response
 	if (_method != "GET" && _method != "POST" && _method != "DELETE")
-		throw HTTPRequest::RequestNotAllowed("GET, POST, DELETE");
+		HTTPResponse::generateResponse(405, "GET, POST, DELETE", this->isKeepAlive(), sConf);
 
-	//TODO search url in location _path
+	//TODO: search url in location _path
 	if (_path.empty() || _path[0] != '/')
-		throw HTTPRequest::UnsupportedHTTPVersion();
+		HTTPResponse::generateResponse(400, "", this->isKeepAlive(), sConf);
 
 	if (_version != "HTTP/1.1" && _version != "HTTP/1.0")
-		throw HTTPRequest::UnsupportedHTTPVersion();
+		HTTPResponse::generateResponse(505, "", this->isKeepAlive(), sConf);
 
 	while (request.peek() != EOF)
 	{
@@ -95,21 +90,27 @@ HTTPRequest::HTTPRequest(std::stringstream& request, bool cont)
 			break ;
 		}
 		else
-			throw HTTPRequest::InvalidHeaders();
+			HTTPResponse::generateResponse(400, "", this->isKeepAlive(), sConf);
 	}
 
 	if (_version == "HTTP/1.1" && (_headers.find("Host") == _headers.end()))
-		throw HTTPRequest::MissingHost();
-	if (_headers.find("Content-Length") == _headers.end())
-		throw HTTPRequest::InvalidHeaders();
+		HTTPResponse::generateResponse(400, "", this->isKeepAlive(), sConf);
 
-	char	*ptr;
-	long	testsize = strtol(_headers["Content-Length"].c_str(), &ptr, 10);
+	if (_method == "POST")
+	{
+		if (_headers.find("Content-Length") == _headers.end())
+			HTTPResponse::generateResponse(411, "", this->isKeepAlive(), sConf);
+		if (_headers.find("Content-Type") == _headers.end())
+			HTTPResponse::generateResponse(415, "", this->isKeepAlive(), sConf);
 
-	if (testsize < 0 || ptr[0] != 0)
-		throw HTTPRequest::InvalidHeaders();
+		char	*ptr;
+		long	testsize = strtol(_headers["Content-Length"].c_str(), &ptr, 10);
 
-	_bodySize = strtoul(_headers["Content-Length"].c_str(), NULL, 10);
+		if (testsize < 0 || ptr[0] != 0)
+			HTTPResponse::generateResponse(400, "", this->isKeepAlive(), sConf);
+
+		_bodySize = strtoul(_headers["Content-Length"].c_str(), NULL, 10);
+	}
 	request.str(std::string());
 	request.clear();
 }
@@ -117,7 +118,8 @@ HTTPRequest::HTTPRequest(std::stringstream& request, bool cont)
 HTTPRequest::HTTPRequest(HTTPRequest const &copy) :	_method(copy._method),
 													_path(copy._path),
 													_version(copy._version),
-													_headers(copy._headers)
+													_headers(copy._headers),
+													_bodySize(copy._bodySize)
 {
 	_body.str(copy._body.str());
 }
@@ -134,15 +136,74 @@ HTTPRequest &HTTPRequest::operator=(HTTPRequest const &rhs)
 		_version = rhs._version;
 		_headers = rhs._headers;
 		_body.str(rhs._body.str());
+		_bodySize= rhs._bodySize;
 	}
 	return (*this);
 }
 
+const std::string	HTTPRequest::createPath(const std::string& path, const ServerConf& sConf, const std::string& method, const std::string& attrib)
+{
+	std::map<std::string, Location>	locationMap = sConf.getLocation();
+	std::string						returnPath, locReq, allowedMethods;
+	struct stat						s;
+	Location						loc;
+	bool							allowedMethod = false;
+	size_t							pos;
+
+	pos = path.find_last_of('/');
+	if (pos == 0)
+		locReq = "/";
+	else if (path.find(".") != std::string::npos)
+		locReq = path.substr(0, pos);
+	else if (path[path.length() - 1] == '/')
+		locReq = path.substr(0, path.length() - 1);
+	else
+		locReq = path;
+
+	std::cout << "LOCREQ " << locReq << std::endl;
+
+	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
+		if (!locReq.compare(iter->second.getPath()))
+			loc = iter->second;
+
+	if (loc.getRoot().empty())
+		for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
+			if (iter->second.isDefault())
+				loc = iter->second;
+
+	std::cout << "FOUND LOCATION " << loc.getPath() << std::endl;
+
+	const	std::vector<std::string>& methods = loc.getAllowMethods();
+	for (std::vector<std::string>::const_iterator it = methods.begin(); it != methods.end(); it++) {
+		allowedMethods += *it + (it + 1 != methods.end() ? ", " : "");
+		if ((allowedMethod = (it->compare(method) ? false : true)))
+			break;
+	}
+
+	if (!allowedMethod)
+		HTTPResponse::generateResponse(405, allowedMethods, "IS_ALIv", sConf);
+	else {
+		if (loc.getRoot()[0] == '/')
+			returnPath = sConf.getRoot() + loc.getRoot() + path.substr(locReq.length());
+		else
+			returnPath = sConf.getRoot() + "/" + loc.getRoot() + path.substr(locReq.length());
+		std::cout << "RETURN PATH IS " << returnPath << std::endl;
+		if (stat(returnPath.c_str(), &s) == 0)
+			if (s.st_mode & S_IFDIR)
+				returnPath += loc.getIndex();
+	}
+	return returnPath;
+}
 /*
 	---------------------------------------------
 			Getters because I love OOP
 	---------------------------------------------
 */
+
+const std::map<std::string, std::string>&	HTTPRequest::getHeaders() const
+{
+	return (_headers);
+}
 
 const std::string&	HTTPRequest::getMethod() const
 {
@@ -159,19 +220,9 @@ const std::string&	HTTPRequest::getVersion() const
 	return (_version);
 }
 
-const std::map<std::string, std::string>&	HTTPRequest::getHeaders() const
-{
-	return (_headers);
-}
-
 std::stringstream&	HTTPRequest::getBody()
 {
 	return (_body);
-}
-
-size_t	HTTPRequest::getContentLength() const
-{
-	return (_bodySize);
 }
 
 const std::string	HTTPRequest::isKeepAlive() const
@@ -185,6 +236,11 @@ const std::string	HTTPRequest::isKeepAlive() const
 		return ("Connection: " + alive + "\r\n");
 	}
 	return (_version == "HTTP/1.1") ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
+}
+
+size_t	HTTPRequest::getContentLength() const
+{
+	return (_bodySize);
 }
 
 /*

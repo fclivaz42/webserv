@@ -33,10 +33,10 @@ ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAd
 			ptrim(line);
 			this->_index = line;
 		}
-		else if (!line.find("error_page")) {
-			line.erase(0, line.find_first_not_of("error_page"));
+		else if (!line.find("error_path")) {
+			line.erase(0, line.find_first_not_of("error_path"));
 			ptrim(line);
-			this->_errorPage = line;
+			this->_errorPath = line;
 		}
 		else if (!line.find("listen")) {
 			line.erase(0, line.find_first_not_of("listen"));
@@ -92,7 +92,7 @@ ServerConf  &ServerConf::operator=(ServerConf const &rhs){
 		this->_root = rhs._root;
 		this->_index = rhs._index;
 		this->_maxBodySize = rhs._maxBodySize;
-		this->_errorPage = rhs._errorPage;
+		this->_errorPath = rhs._errorPath;
 		this->_ipAddr = rhs._ipAddr;
 		this->_location = rhs._location;
 	}
@@ -120,8 +120,8 @@ size_t	ServerConf::getMaxBodySize(void) const{
 	return (this->_maxBodySize);
 }
 
-const std::string&	ServerConf::getErrorPage(void) const{
-	return (this->_errorPage);
+const std::string&	ServerConf::getErrorPath(void) const{
+	return (this->_errorPath);
 }
 const std::map<std::string, Location>&	ServerConf::getLocation(void) const{
 	return (this->_location);
@@ -134,7 +134,7 @@ const std::string&	ServerConf::getIpAddr(void) const{
 /* ------------------- MEMBERS FUNCTIONS ----------------------*/
 void	 ServerConf::checkAttribut(void) const
 {
-	if (_serverName.empty() || _port.empty() || _errorPage.empty() || _maxBodySize == 0 || _location.empty())
+	if (_serverName.empty() || _port.empty() || _errorPath.empty() || _maxBodySize == 0 || _location.empty())
 		throw MissingArgsException();
 
 	for (std::map<std::string, Location>::const_iterator iter = _location.begin(); iter != _location.end(); iter++) {
@@ -165,7 +165,7 @@ void	ServerConf::print(void) const {
 		std::cout << BGREEN << "│ " << YELLOW << "Root: " << RESET << this->_root << std::endl;
 		std::cout << BGREEN << "│ " << YELLOW << "Index: " << RESET << this->_index << std::endl;
 		std::cout << BGREEN << "│ " << YELLOW << "MaxBodySize: " << RESET << this->_maxBodySize << std::endl;
-		std::cout << BGREEN << "│ " << YELLOW << "Error Page: " << RESET << this->_errorPage << std::endl;
+		std::cout << BGREEN << "│ " << YELLOW << "Error Path: " << RESET << this->_errorPath << std::endl;
 		std::cout << BGREEN << "│ " << YELLOW << "IP Address: " << RESET << this->_ipAddr;
 		std::map<std::string, Location>::const_iterator it2 = _location.begin();
 		for (; it2 != _location.end(); ++it2) {
