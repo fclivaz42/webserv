@@ -150,21 +150,19 @@ const std::string	HTTPRequest::createPath(const std::string& path, const ServerC
 	bool							allowedMethod = false;
 	size_t							pos;
 
-	pos = path.find_last_of('/');
-	if (pos == 0)
-		locReq = "/";
-	else if (path.find(".") != std::string::npos)
-		locReq = path.substr(0, pos);
-	else if (path[path.length() - 1] == '/')
-		locReq = path.substr(0, path.length() - 1);
-	else
-		locReq = path;
+	std::cout << "LOCREQ " << path << std::endl;
 
-	std::cout << "LOCREQ " << locReq << std::endl;
-
-	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
-		if (!locReq.compare(iter->second.getPath()))
+	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++) {
+		locReq = iter->second.getPath();
+		pos = -1;
+		while (!(locReq.c_str()[++pos] == 0 || path.c_str()[pos] == 0))
+			if (locReq.c_str()[pos] != path.c_str()[pos])
+				break;
+		if (locReq.c_str()[pos] == 0 && (path.c_str()[pos] == 0 || path.c_str()[pos] == '/')) {
 			loc = iter->second;
+			break;
+		}
+	}
 
 	if (loc.getRoot().empty())
 		for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
@@ -172,6 +170,7 @@ const std::string	HTTPRequest::createPath(const std::string& path, const ServerC
 				loc = iter->second;
 
 	std::cout << "FOUND LOCATION " << loc.getPath() << std::endl;
+	locReq = loc.getPath();
 
 	const	std::vector<std::string>& methods = loc.getAllowMethods();
 	for (std::vector<std::string>::const_iterator it = methods.begin(); it != methods.end(); it++) {
@@ -181,7 +180,8 @@ const std::string	HTTPRequest::createPath(const std::string& path, const ServerC
 	}
 
 	if (!allowedMethod)
-		HTTPResponse::generateResponse(405, allowedMethods, "IS_ALIv", sConf);
+		HTTPResponse::generateResponse(405, allowedMethods, "", sConf);
+
 	else {
 		if (loc.getRoot()[0] == '/')
 			returnPath = sConf.getRoot() + loc.getRoot() + path.substr(locReq.length());
