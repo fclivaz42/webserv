@@ -6,7 +6,7 @@
 /*   By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 22:01:40 by fclivaz           #+#    #+#             */
-/*   Updated: 2024/10/21 00:45:02 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/10/21 20:34:44 by fclivaz          ###   LAUSANNE.ch       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 #include "Parsing/ServerConf.hpp"
 #include "webserv.hpp"
+#include <unistd.h>
 #include <sstream>
 #include <string>
 
@@ -55,7 +56,13 @@ class HTTPResponse
 			public:
 				virtual const char	*what() const throw() {
 					return("HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n");
-		}
+				}
+		};
+		class LightNotFound : public std::exception {
+			public:
+				virtual const char	*what() const throw() {
+					return("HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n");
+				}
 		};
 };
 

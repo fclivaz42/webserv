@@ -31,7 +31,7 @@ class	HTTPRequest
 		HTTPRequest &operator=(HTTPRequest const &rhs);
 		~HTTPRequest();
 
-		static const std::string	createPath(const std::string& path, const ServerConf& serverConf, const std::string& method, const std::string& attrib);
+		static const std::string	createPath(const std::string& path, const ServerConf& serverConf, const std::string& method, bool attrib);
 
 		const std::map<std::string, std::string>&	getHeaders() const;
 		const std::string&							getMethod() const;

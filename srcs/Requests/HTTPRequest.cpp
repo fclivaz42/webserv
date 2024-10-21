@@ -52,7 +52,6 @@ HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bo
 	if (_method != "GET" && _method != "POST" && _method != "DELETE")
 		HTTPResponse::generateResponse(405, "GET, POST, DELETE", this->isKeepAlive(), sConf);
 
-	//TODO: search url in location _path
 	if (_path.empty() || _path[0] != '/')
 		HTTPResponse::generateResponse(400, "", this->isKeepAlive(), sConf);
 
@@ -102,15 +101,13 @@ HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bo
 			HTTPResponse::generateResponse(411, "", this->isKeepAlive(), sConf);
 		if (_headers.find("Content-Type") == _headers.end())
 			HTTPResponse::generateResponse(415, "", this->isKeepAlive(), sConf);
-
+	}
 		char	*ptr;
 		long	testsize = strtol(_headers["Content-Length"].c_str(), &ptr, 10);
-
 		if (testsize < 0 || ptr[0] != 0)
-			HTTPResponse::generateResponse(400, "", this->isKeepAlive(), sConf);
+			HTTPResponse::generateResponse(418, "", this->isKeepAlive(), sConf);
 
 		_bodySize = strtoul(_headers["Content-Length"].c_str(), NULL, 10);
-	}
 	request.str(std::string());
 	request.clear();
 }
@@ -141,7 +138,7 @@ HTTPRequest &HTTPRequest::operator=(HTTPRequest const &rhs)
 	return (*this);
 }
 
-const std::string	HTTPRequest::createPath(const std::string& path, const ServerConf& sConf, const std::string& method, const std::string& attrib)
+const std::string	HTTPRequest::createPath(const std::string& path, const ServerConf& sConf, const std::string& method, bool attrib)
 {
 	std::map<std::string, Location>	locationMap = sConf.getLocation();
 	std::string						returnPath, locReq, allowedMethods;
@@ -150,8 +147,6 @@ const std::string	HTTPRequest::createPath(const std::string& path, const ServerC
 	bool							allowedMethod = false;
 	size_t							pos;
 
-	std::cout << "LOCREQ " << path << std::endl;
-
 	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++) {
 		locReq = iter->second.getPath();
 		pos = -1;
@@ -159,17 +154,30 @@ const std::string	HTTPRequest::createPath(const std::string& path, const ServerC
 			if (locReq.c_str()[pos] != path.c_str()[pos])
 				break;
 		if (locReq.c_str()[pos] == 0 && (path.c_str()[pos] == 0 || path.c_str()[pos] == '/')) {
-			loc = iter->second;
-			break;
+			if (attrib) {
+				if (iter->second.acceptsUploads()) {
+					loc = iter->second;
+					break;
+				}
+				else
+					continue;
+			}
+			else {
+				loc = iter->second;
+				break;
+			}
 		}
 	}
 
-	if (loc.getRoot().empty())
-		for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
-			if (iter->second.isDefault())
-				loc = iter->second;
+	if (loc.getRoot().empty()) {
+		if (attrib)
+			HTTPResponse::generateResponse(405, allowedMethods, "", sConf);
+		else
+			for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
+				if (iter->second.isDefault())
+					loc = iter->second;
+	}
 
-	std::cout << "FOUND LOCATION " << loc.getPath() << std::endl;
 	locReq = loc.getPath();
 
 	const	std::vector<std::string>& methods = loc.getAllowMethods();
@@ -187,7 +195,8 @@ const std::string	HTTPRequest::createPath(const std::string& path, const ServerC
 			returnPath = sConf.getRoot() + loc.getRoot() + path.substr(locReq.length());
 		else
 			returnPath = sConf.getRoot() + "/" + loc.getRoot() + path.substr(locReq.length());
-		std::cout << "RETURN PATH IS " << returnPath << std::endl;
+		if (DEBUG)
+			std::cout << "RETURN PATH IS " << returnPath << std::endl;
 		if (stat(returnPath.c_str(), &s) == 0)
 			if (s.st_mode & S_IFDIR)
 				returnPath += loc.getIndex();

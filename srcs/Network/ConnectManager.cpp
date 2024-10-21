@@ -1,6 +1,7 @@
 // Pas de header pour eviter les conflicts :)
 
 #include "Network/ConnectManager.hpp"
+#include "Requests/HTTPResponse.hpp"
 
 /*
 	c tipar pour le construiseur d'une manager de connect
@@ -190,7 +191,7 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 
 		if (headers["Expect"] == "100-continue") {
 			if (request.getContentLength() <= serverConf.getMaxBodySize())
-				response = "HTTP/1.1 100 Continue\r\nConnection: keep-alive\r\nContent-Length: 0\r\n\r\n";
+				response = HTTPResponse::generateResponse(100, "", request.isKeepAlive(), serverConf);
 			else
 				HTTPResponse::generateResponse(417, serverConf.getErrorPath(), request.isKeepAlive(), serverConf);
 		}

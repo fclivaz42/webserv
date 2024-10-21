@@ -6,7 +6,7 @@
 /*   By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 22:01:35 by fclivaz           #+#    #+#             */
-/*   Updated: 2024/10/21 00:19:27 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/10/21 19:54:27 by fclivaz          ###   LAUSANNE.ch       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,25 +26,39 @@ std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::s
 		content = HTTPResponse::readFile(errorPage);
 		std::cout << RED << "Error " << statusCode << " occured. " << RESET << "Sending page " << errorPage << std::endl;
 	}
-	else {
+	else if (statusCode >= 200 && statusCode != 204){
 		contentType = HTTPResponse::getContentType(path);
 		content = HTTPResponse::readFile(path);
 	}
 
 	switch (statusCode / 100)
 	{
+		case 1:
+			switch (statusCode) {
+				case 100:
+					return("HTTP/1.1 100 Continue\r\n" + alive + "Content-Length: 0\r\n\r\n");
+				default:
+					throw HTTPResponse::ISE(contentType, alive, content);
+			}
+			break ;
 		case 2:
 			switch (statusCode) {
 				case 200:
 					return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + content);
 				case 204:
 					return ("HTTP/1.1 204 No Content\r\n" + alive + "\r\n");
+				default:
+					throw HTTPResponse::ISE(contentType, alive, content);
 			}
+			break ;
 		case 3:
 			switch (statusCode) {
 				case 302:
 					return ("HTTP/1.1 302 Found\r\nLocation: " + path + "\r\nConnection: close\r\n\r\n");
+				default:
+					throw HTTPResponse::ISE(contentType, alive, content);
 			}
+			break ;
 		case 4:
 			switch (statusCode)
 			{
@@ -71,6 +85,7 @@ std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::s
 				default:
 					throw HTTPResponse::ISE(contentType, alive, content);
 			}
+			break ;
 		case 5:
 			switch (statusCode)
 			{
@@ -79,10 +94,12 @@ std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::s
 				default:
 					throw HTTPResponse::ISE(contentType, alive, content);
 			}
+			break ;
 		default:
 			throw HTTPResponse::ISE(contentType, alive, content);
 
 	}
+	return("HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n");
 }
 
 bool	HTTPResponse::hasExtension(const std::string& path, const std::string& extension)
@@ -111,6 +128,10 @@ std::string	HTTPResponse::getContentType(const std::string& path)
 std::string	HTTPResponse::readFile(const std::string& filePath)
 {
 	std::ifstream	file(filePath.c_str(), std::ios::in | std::ios::binary);
+	if (access(filePath.c_str(), F_OK) != 0) {
+		std::cout << ORANGE << "WARNING: Could not open " << RESET << filePath << "\n";
+		throw HTTPResponse::LightNotFound();
+	}
 	if (!file.is_open())
 		throw HTTPResponse::LightISE();
 	std::stringstream	feur;

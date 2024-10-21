@@ -11,6 +11,5 @@
 #include "Requests/HTTPResponse.hpp"
 
 const std::string	processPostRequest(HTTPRequest& request, const ServerConf& serverConf);
-const std::string	createPath(const std::string& path, const ServerConf& serverConf, const std::string& method);
 
 #endif

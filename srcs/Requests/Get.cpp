@@ -55,9 +55,7 @@ bool	checkRedir(const std::string& path, const ServerConf& serverConf)
 		const	Location& loc = iter->second;
 		std::string ret = loc.getReturnURL();
 		if (!ret.empty() && ret == path)
-		{
 			return (true);
-		}
 	}
 	return (false);
 }
@@ -69,7 +67,6 @@ std::string	processGetRequest(const HTTPRequest& request, const ServerConf& serv
 
 	if (static_cast<size_t>(strtol(headers["Content-Length"].c_str(), NULL, 10)) > serverConf.getMaxBodySize())
 		HTTPResponse::generateResponse(413, "", request.isKeepAlive(), serverConf);
-	//TODO send http error response instead
 	
 	std::string path = request.getPath();
 
@@ -79,7 +76,7 @@ std::string	processGetRequest(const HTTPRequest& request, const ServerConf& serv
 	if (DEBUG)
 		std::cout << GREEN << "GET: PATH IS: " << path << RESET << std::endl;
 
-	localPath = HTTPRequest::createPath(path, serverConf, "GET", "SWAg");
+	localPath = HTTPRequest::createPath(path, serverConf, "GET", false);
 
 	if (DEBUG)
 		std::cout << GREEN << "GET: Created Local Path: " << localPath << RESET << std::endl;

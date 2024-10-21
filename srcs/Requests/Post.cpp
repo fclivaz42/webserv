@@ -1,5 +1,6 @@
 #include "Requests/Post.hpp"
 #include "Requests/HTTPRequest.hpp"
+#include "Requests/HTTPResponse.hpp"
 
 std::string urlDecode(const std::string& str)
 {
@@ -34,13 +35,12 @@ const std::string	uploadRequest(HTTPRequest& request, const ServerConf& serverCo
 	std::map<std::string, std::string>	headers = request.getHeaders();
 	const std::string&					shift = request.getBody().str();
 	std::string							fileName, line, path;
-	std::string	response("HTTP/1.1 302 Found\r\nLocation: /success.html\r\nContent-Type: text/html\r\n");
 
 	if (DEBUG)
 		std::cout << GREEN << "POST: File being uploaded." << std::endl;
 	fileName = shift.substr(shift.find("filename=\"") + 10);
 	fileName = fileName.substr(0, fileName.find_first_of("\""));
-	path = HTTPRequest::createPath("/" + fileName, serverConf, "POST", "Accept-Uploads");
+	path = HTTPRequest::createPath(request.getPath() + fileName, serverConf, "POST", true);
 	if (DEBUG)
 		std::cout << "POST: Created path: " << path << RESET << std::endl;
 
@@ -50,18 +50,14 @@ const std::string	uploadRequest(HTTPRequest& request, const ServerConf& serverCo
 		size_t pos2 = shift.find(headers["boundary"]) - pos - 4;
 		outFile.write(shift.c_str() + pos, pos2);
 		outFile.close();
-	} else {
-		std::cerr << "ERROR: Failed to open file for writing" << std::endl;
 	}
-
-	// Construct Connection header
-	response += "Connection: " + request.isKeepAlive() + "\r\n\r\n";
-
-	// Optionally, add content here if needed, e.g., an HTML message indicating the redirect
-	response += "<html><body><p>Redirecting to <a href=\"/success.html\">success.html</a></p></body></html>";
-
-	return response;
+	else
+		HTTPResponse::generateResponse(500, "", request.isKeepAlive(), serverConf);
+	// TODO: de-hardcode ce truc plis
+	return HTTPResponse::generateResponse(302, "success.html", request.isKeepAlive(), serverConf);
 }
+
+// TODO: faire le truc pour la db, check db_path du serverconf teehee
 
 const std::string	formRequest(HTTPRequest& request, const ServerConf& serverConf)
 {
@@ -86,7 +82,7 @@ const std::string	formRequest(HTTPRequest& request, const ServerConf& serverConf
 	email = formData["email"];
 	message = formData["message"];
 
-	std::string			path(HTTPRequest::createPath(request.getPath() + ".html", serverConf, "POST", "Accept-Uploads")), line, response;
+	std::string			path(HTTPRequest::createPath(request.getPath(), serverConf, "POST", false)), line, response;
 	std::stringstream	genRes(HTTPResponse::generateResponse(200, path, request.isKeepAlive(), serverConf));
 	std::size_t			pos;
 
@@ -149,7 +145,7 @@ const std::string	processPostRequest(HTTPRequest& request, const ServerConf& ser
 	}
 	if (headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos)
 		return (formRequest(request, serverConf));
-	else if (headers["Content-Type"].find("multipart/form-data") != std::string::npos)
+	else if (headers["Content-Type"].find("multipart") != std::string::npos)
 		return (uploadRequest(request, serverConf));
 	return HTTPResponse::generateResponse(415, "", request.isKeepAlive(), serverConf);
 }
