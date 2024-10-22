@@ -3,8 +3,6 @@
 #include "Requests/HTTPRequest.hpp"
 #include "Requests/HTTPResponse.hpp"
 
-// TODO:: database delete
-
 std::string processDeleteRequest(const HTTPRequest& request, const ServerConf& serverConf)
 {
 	std::cout << "PATH BEFORE: " << request.getPath() << std::endl;

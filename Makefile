@@ -1,6 +1,6 @@
 # Pas de header pour eviter les conflicts :)
 
-export MAKEFLAGS += --silent
+# export MAKEFLAGS += --silent
 
 NAME	= webserv
 

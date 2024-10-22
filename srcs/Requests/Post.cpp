@@ -2,7 +2,7 @@
 #include "Requests/HTTPRequest.hpp"
 #include "Requests/HTTPResponse.hpp"
 
-std::string urlDecode(const std::string& str)
+static std::string urlDecode(const std::string& str)
 {
 	std::string	result;
 	size_t		length = str.length();
@@ -30,7 +30,7 @@ std::string urlDecode(const std::string& str)
 	return result;
 }
 
-const std::string	uploadRequest(HTTPRequest& request, const ServerConf& serverConf)
+static const std::string	uploadRequest(HTTPRequest& request, const ServerConf& serverConf)
 {
 	std::map<std::string, std::string>	headers = request.getHeaders();
 	const std::string&					shift = request.getBody().str();
@@ -53,13 +53,10 @@ const std::string	uploadRequest(HTTPRequest& request, const ServerConf& serverCo
 	}
 	else
 		HTTPResponse::generateResponse(500, "", request.isKeepAlive(), serverConf);
-	// TODO: de-hardcode ce truc plis
-	return HTTPResponse::generateResponse(302, "success.html", request.isKeepAlive(), serverConf);
+	return HTTPResponse::generateResponse(201, path, request.isKeepAlive(), serverConf);
 }
 
-// TODO: faire le truc pour la db, check db_path du serverconf teehee
-
-const std::string	formRequest(HTTPRequest& request, const ServerConf& serverConf)
+static const std::string	formRequest(HTTPRequest& request, const ServerConf& serverConf)
 {
 	std::map<std::string, std::string> formData;
 	std::stringstream& bodyStream(request.getBody());
@@ -103,20 +100,20 @@ const std::string	formRequest(HTTPRequest& request, const ServerConf& serverConf
 	return (response);
 }
 
-bool		isCGIRequest(const std::string& path)
+static bool		isCGIRequest(const std::string& path)
 {
 	std::string cgiPath = "/cgi-bin/";
 	return (path.find(cgiPath) == 0);
 }
 
-std::string intToString(int value) {
+static std::string intToString(int value) {
     std::ostringstream oss;
     oss << value;
     return oss.str();
 }
 
 
-std::map<std::string, std::string> createCGIEnv(HTTPRequest& request)
+static std::map<std::string, std::string> createCGIEnv(HTTPRequest& request)
 {
     std::map<std::string, std::string> env;
 

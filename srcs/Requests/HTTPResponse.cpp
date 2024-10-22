@@ -6,7 +6,7 @@
 /*   By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 22:01:35 by fclivaz           #+#    #+#             */
-/*   Updated: 2024/10/21 19:54:27 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/10/22 22:00:37 by fclivaz          ###   LAUSANNE.ch       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,9 @@ std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::s
 	if (statusCode >= 400) {
 		errorStream << sConf.getErrorPath() << statusCode << ".html";
 		errorPage = errorStream.str();
+		std::cout << RED << "Error " << statusCode << " occured. " << RESET << "Sending page " << errorPage << std::endl;
 		contentType = HTTPResponse::getContentType(errorPage);
 		content = HTTPResponse::readFile(errorPage);
-		std::cout << RED << "Error " << statusCode << " occured. " << RESET << "Sending page " << errorPage << std::endl;
 	}
 	else if (statusCode >= 200 && statusCode != 204){
 		contentType = HTTPResponse::getContentType(path);
@@ -45,6 +45,8 @@ std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::s
 			switch (statusCode) {
 				case 200:
 					return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + content);
+				case 201:
+					return ("HTTP/1.1 201 Created\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + content);
 				case 204:
 					return ("HTTP/1.1 204 No Content\r\n" + alive + "\r\n");
 				default:
@@ -54,7 +56,7 @@ std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::s
 		case 3:
 			switch (statusCode) {
 				case 302:
-					return ("HTTP/1.1 302 Found\r\nLocation: " + path + "\r\nConnection: close\r\n\r\n");
+					return ("HTTP/1.1 302 Found\r\nLocation: " + path + "\r\n" + alive + "\r\n");
 				default:
 					throw HTTPResponse::ISE(contentType, alive, content);
 			}
@@ -127,13 +129,16 @@ std::string	HTTPResponse::getContentType(const std::string& path)
 
 std::string	HTTPResponse::readFile(const std::string& filePath)
 {
-	std::ifstream	file(filePath.c_str(), std::ios::in | std::ios::binary);
 	if (access(filePath.c_str(), F_OK) != 0) {
-		std::cout << ORANGE << "WARNING: Could not open " << RESET << filePath << "\n";
-		throw HTTPResponse::LightNotFound();
+		std::cout << ORANGE << "WARNING: Could not find " << RESET << filePath << "\n";
+		return "";
 	}
-	if (!file.is_open())
-		throw HTTPResponse::LightISE();
+
+	std::ifstream	file(filePath.c_str(), std::ios::in | std::ios::binary);
+	if (!file.is_open()) {
+		std::cout << ORANGE << "WARNING: Could not open " << RESET << filePath << "\n";
+		return "";
+	}
 	std::stringstream	feur;
 	feur << file.rdbuf();
 	return (feur.str());
