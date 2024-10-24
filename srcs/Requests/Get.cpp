@@ -80,7 +80,6 @@ std::string	processGetRequest(const HTTPRequest& request, const ServerConf& serv
 
 	if (DEBUG)
 		std::cout << GREEN << "GET: Created Local Path: " << localPath << RESET << std::endl;
-
 	if (!fileExists(localPath))
 	{
 		std::cerr << RED << "GET: ERROR: File not found: " << localPath << RESET << std::endl;

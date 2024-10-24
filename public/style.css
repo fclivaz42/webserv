@@ -115,7 +115,7 @@ nav a
 	background-color: red;
 }
 
-form
+#deleteForm, .contact-form
 {
 	margin: 50px;
 	font-family: 'courier new', monospace;

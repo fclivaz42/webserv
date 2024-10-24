@@ -1,3 +1,15 @@
+// ************************************************************************** //
+//                                                                            //
+//                                                        :::      ::::::::   //
+//   Post.cpp                                           :+:      :+:    :+:   //
+//                                                    +:+ +:+         +:+     //
+//   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
+//                                                +#+#+#+#+#+   +#+           //
+//   Created: 2024/10/24 13:58:01 by lmedrano          #+#    #+#             //
+//   Updated: 2024/10/24 15:24:03 by lmedrano         ###   ########.fr       //
+//                                                                            //
+// ************************************************************************** //
+
 #include "Requests/Post.hpp"
 #include "Requests/HTTPRequest.hpp"
 #include "Requests/HTTPResponse.hpp"
@@ -100,46 +112,46 @@ static const std::string	formRequest(HTTPRequest& request, const ServerConf& ser
 	return (response);
 }
 
-static bool		isCGIRequest(const std::string& path)
-{
-	std::string cgiPath = "/cgi-bin/";
-	return (path.find(cgiPath) == 0);
-}
+//static std::string intToString(int value) {
+  //  std::ostringstream oss;
+    //oss << value;
+    //return oss.str();
+//}
 
-static std::string intToString(int value) {
-    std::ostringstream oss;
-    oss << value;
-    return oss.str();
-}
+//static std::map<std::string, std::string> createCGIEnv(HTTPRequest& request)
+//{
+  //  std::map<std::string, std::string> env;
 
+    //env["REQUEST_METHOD"] = "GET";
+    //env["CONTENT_TYPE"] = request.getHeaders().at("Content-Type");
+    //env["CONTENT_LENGTH"] = intToString(request.getBody().tellp());
+    //env["SCRIPT_NAME"] = request.getPath();
+    //env["REQUEST_URI"] = request.getPath();
+//	env["QUERY_STRING"] = "";
+//	env["PATH_INFO"] = request.getPath();
+//	env["PATH TRANSLATED"] = request.getPath();
 
-static std::map<std::string, std::string> createCGIEnv(HTTPRequest& request)
-{
-    std::map<std::string, std::string> env;
+  //  return (env);
+//}
 
-    env["REQUEST_METHOD"] = "POST";
-    env["CONTENT_TYPE"] = request.getHeaders().at("Content-Type");
-    env["CONTENT_LENGTH"] = intToString(request.getBody().tellp());
-    env["SCRIPT_NAME"] = request.getPath();
-    env["REQUEST_URI"] = request.getPath();
-	env["QUERY_STRING"] = "";
-	env["PATH_INFO"] = request.getPath();
-	env["PATH TRANSLATED"] = request.getPath();
-
-    return (env);
-}
+//static bool		isCGIRequest(const std::string& path)
+//{
+//	std::string cgiPath = "/calculator.html";
+//	return (path.find(cgiPath) == 0);
+//}
 
 const std::string	processPostRequest(HTTPRequest& request, const ServerConf& serverConf)
 {
 	std::map<std::string, std::string> headers(request.getHeaders());
 
-	if (isCGIRequest(request.getPath()))
-	{
-		std::string cgiPath = "/cgi-bin/script.py";
-        	std::map<std::string, std::string> env = createCGIEnv(request);
-		CGIExec cgiExec(cgiPath, env);;
-		return (cgiExec.execute(request.getBody().str()));
-	}
+//	if (isCGIRequest(request.getPath()))
+//	{
+//		std::string cgiPath = request.getPath();
+//		std::cout << "cgi path is : " << cgiPath << std::endl;
+  //      	std::map<std::string, std::string> env = createCGIEnv(request);
+//		CGIExec cgiExec(cgiPath, env);;
+//		return (cgiExec.execute(request.getBody().str()));
+//	}
 	if (headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos)
 		return (formRequest(request, serverConf));
 	else if (headers["Content-Type"].find("multipart") != std::string::npos)
