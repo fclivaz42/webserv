@@ -112,33 +112,33 @@ static const std::string	formRequest(HTTPRequest& request, const ServerConf& ser
 	return (response);
 }
 
-//static std::string intToString(int value) {
-  //  std::ostringstream oss;
-    //oss << value;
-    //return oss.str();
-//}
+static std::string intToString(int value) {
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
+}
 
-//static std::map<std::string, std::string> createCGIEnv(HTTPRequest& request)
-//{
-  //  std::map<std::string, std::string> env;
+static std::map<std::string, std::string> createCGIEnv(HTTPRequest& request)
+{
+    std::map<std::string, std::string> env;
 
-    //env["REQUEST_METHOD"] = "GET";
-    //env["CONTENT_TYPE"] = request.getHeaders().at("Content-Type");
-    //env["CONTENT_LENGTH"] = intToString(request.getBody().tellp());
-    //env["SCRIPT_NAME"] = request.getPath();
-    //env["REQUEST_URI"] = request.getPath();
-//	env["QUERY_STRING"] = "";
-//	env["PATH_INFO"] = request.getPath();
-//	env["PATH TRANSLATED"] = request.getPath();
+    env["REQUEST_METHOD"] = "GET";
+    env["CONTENT_TYPE"] = request.getHeaders().at("Content-Type");
+    env["CONTENT_LENGTH"] = intToString(request.getBody().tellp());
+    env["SCRIPT_NAME"] = request.getPath();
+    env["REQUEST_URI"] = request.getPath();
+	env["QUERY_STRING"] = "";
+	env["PATH_INFO"] = request.getPath();
+	env["PATH TRANSLATED"] = request.getPath();
 
-  //  return (env);
-//}
+    return (env);
+}
 
-//static bool		isCGIRequest(const std::string& path)
-//{
-//	std::string cgiPath = "/calculator.html";
-//	return (path.find(cgiPath) == 0);
-//}
+static bool		isCGIRequest(const std::string& path)
+{
+		std::string cgiPath = "/calculator.html";
+	return (path.find(cgiPath) == 0);
+}
 
 const std::string	processPostRequest(HTTPRequest& request, const ServerConf& serverConf)
 {
