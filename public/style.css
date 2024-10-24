@@ -169,6 +169,16 @@ form input
 	margin-bottom: 50px;
 }
 
+.requests.selfie {
+	flex-direction:column;
+	padding: 50px;
+}
+
+.selfie-img {
+	width: 50%;
+	margin: 20px 0px;
+}
+
 #responseContainer {
     display: flex;          
     flex-direction: column;
@@ -188,3 +198,41 @@ form input
 
 }
 
+#heartContainer {
+	position: relative;
+	margin-top: 20px;
+}
+
+.heart {
+	font-size: 2rem;
+	color: red;
+	position: absolute;	
+	animation: fly 2s ease-out forwards;
+	pointer-events: none;
+}
+
+@keyframes fly {
+	0% {
+		opacity: 1;
+		transform: translate(0,0) scale(1);
+	}
+	20% {
+		opacity: 1;
+		transform: translate(30px, -50px) scale(1.2) rotate(15deg);
+	}
+	40% {
+		opacity: 1;
+		transform: translate(-30px, -100px) scale(1.1) rotate(-10deg);
+	}
+	60% {
+		opacity: 1;
+		transform: translate(20px, -150px) scale(1.4) rotate(5deg);
+	}
+	80% {
+		transform: translate(-20px, -200px) scale(1.2) rotate(-5deg);
+	}
+	100% {
+		opacity: 0;
+		transform: translate(0px, -200px) scale (0.8) rotate(0deg);
+	}
+}
