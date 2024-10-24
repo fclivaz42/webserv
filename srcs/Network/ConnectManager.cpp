@@ -183,11 +183,12 @@ ssize_t	ConnectManager::readMessage(int clientFd, std::stringstream& message)
 bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serverConf, std::stringstream& message)
 {
 	std::string response;
-
+	
 	try
 	{
 		HTTPRequest request(message, serverConf, _continue);
 		std::map<std::string, std::string>	headers = request.getHeaders();
+		std::cout << "REQUEST : " << request.getPath() << std::endl;
 
 		if (headers["Expect"] == "100-continue") {
 			if (request.getContentLength() <= serverConf.getMaxBodySize())
@@ -197,8 +198,9 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 		}
 		else if (request.getContentLength() > serverConf.getMaxBodySize())
 				HTTPResponse::generateResponse(413, serverConf.getErrorPath(), request.isKeepAlive(), serverConf);
-		else if (request.getMethod() == "GET")
+		else if (request.getMethod() == "GET"){
 			response = processGetRequest(request, serverConf);
+		}
 		else if (request.getMethod() == "POST")
 			response = processPostRequest(request, serverConf);
 		else if (request.getMethod() == "DELETE")

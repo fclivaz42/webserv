@@ -144,14 +144,15 @@ const std::string	processPostRequest(HTTPRequest& request, const ServerConf& ser
 {
 	std::map<std::string, std::string> headers(request.getHeaders());
 
-//	if (isCGIRequest(request.getPath()))
-//	{
-//		std::string cgiPath = request.getPath();
-//		std::cout << "cgi path is : " << cgiPath << std::endl;
-  //      	std::map<std::string, std::string> env = createCGIEnv(request);
-//		CGIExec cgiExec(cgiPath, env);;
-//		return (cgiExec.execute(request.getBody().str()));
-//	}
+	std::cout << "BLABLA " << std::endl;
+	std::cout << "REQUEST: " << request.getPath() << std::endl;
+	if (isCGIRequest(request.getPath()))
+	{
+		std::string cgiPath = "/cgi-bin/script.py";
+        	std::map<std::string, std::string> env = createCGIEnv(request);
+		CGIExec cgiExec(cgiPath, env);;
+		return (cgiExec.execute(request.getBody().str()));
+	}
 	if (headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos)
 		return (formRequest(request, serverConf));
 	else if (headers["Content-Type"].find("multipart") != std::string::npos)

@@ -18,6 +18,8 @@ class	HTTPRequest
 	private:
 		std::string							_method;
 		std::string							_path;
+		std::string							_query;
+		std::string							_fileName;
 		std::string							_version;
 		std::map<std::string, std::string>	_headers;
 		std::stringstream					_body;
@@ -38,6 +40,10 @@ class	HTTPRequest
 		const std::string&							getPath() const;
 		const std::string&							getVersion() const;
 		std::stringstream&							getBody();
+		const std::string&							getQuery() const;
+		const std::string&							getFileName() const;
+		void										setQuery(std::string query);
+		void										setFileName(std::string name);
 		const std::string							isKeepAlive() const;
 		size_t										getContentLength() const;
 

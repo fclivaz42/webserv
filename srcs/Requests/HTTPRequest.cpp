@@ -9,7 +9,7 @@
 HTTPRequest::HTTPRequest() : _method(""), _path(""), _version(""), _body(std::string()), _bodySize(0)
 {}
 
-HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bool cont) :_method(""), _path(""), _version(""), _body(std::string()), _bodySize(0)
+HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bool cont) :_method(""), _path(""), _query(""), _fileName(""), _version(""), _body(std::string()), _bodySize(0)
 {
 	std::string			line, key, value;
 	size_t				pos;
@@ -91,7 +91,18 @@ HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bo
 		else
 			HTTPResponse::generateResponse(400, "", this->isKeepAlive(), sConf);
 	}
-
+	if (_headers.find("Referer") != _headers.end()) {
+    	size_t pos = _headers.find("Referer")->second.find("?");
+    	if (pos != std::string::npos) {
+       		std::string name = _headers.find("Referer")->second;
+        	std::string _query = name.substr(pos + 1);
+			size_t lastPos = name.find_last_of("/", pos);
+			if (lastPos != std::string::npos)
+            	_fileName = name.substr(lastPos + 1, pos - lastPos - 1);
+        	std::cout << "QUERY: " << _query << std::endl;
+			std::cout << "FILE: " << _fileName << std::endl;
+    	}
+	}
 	if (_version == "HTTP/1.1" && (_headers.find("Host") == _headers.end()))
 		HTTPResponse::generateResponse(400, "", this->isKeepAlive(), sConf);
 
@@ -232,6 +243,30 @@ const std::string&	HTTPRequest::getVersion() const
 std::stringstream&	HTTPRequest::getBody()
 {
 	return (_body);
+}
+
+const std::string&	HTTPRequest::getQuery() const
+{
+	return (_query);
+}
+
+const std::string&	HTTPRequest::getFileName() const
+{
+	return (_fileName);
+}
+
+/*
+	---------------------------------------------
+			Setters because I love OOP
+	---------------------------------------------
+*/
+
+void	HTTPRequest::setQuery(std::string query){
+	this->_query = query;
+}
+
+void	HTTPRequest::setFileName(std::string name){
+	this->_fileName = name;
 }
 
 const std::string	HTTPRequest::isKeepAlive() const
