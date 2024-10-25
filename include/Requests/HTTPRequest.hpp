@@ -34,6 +34,7 @@ class	HTTPRequest
 		~HTTPRequest();
 
 		static const std::string	createPath(const std::string& path, const ServerConf& serverConf, const std::string& method, bool attrib);
+		//const std::string			cgiPath(std::string basePath, std::string &method, bool attrib, std::string locReq, Location loc);
 
 		const std::map<std::string, std::string>&	getHeaders() const;
 		const std::string&							getMethod() const;

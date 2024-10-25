@@ -17,6 +17,7 @@ class ServerConf{
 		std::size_t						_maxBodySize;
 		std::string						_errorPath;
 		std::string						_ipAddr;
+		int								_flag;
 		std::map<std::string, Location> _location;
 
 	public:
@@ -42,6 +43,7 @@ class ServerConf{
 		const std::string&						getErrorPath(void) const;
 		const std::string&						getIpAddr(void)	const;
 		const std::map<std::string, Location>&	getLocation(void) const;
+		void	setFlag(int nb);
 
 		/* MEMBERS FUNCTIONS */
 		void									print(void) const;

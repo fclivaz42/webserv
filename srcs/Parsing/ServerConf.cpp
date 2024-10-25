@@ -6,7 +6,7 @@
 
 ServerConf::ServerConf() : _ipAddr("127.0.0.1") {}
 
-ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAddr("127.0.0.1") {
+ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAddr("127.0.0.1"), _flag(0) {
 	std::stringstream	configStream(configString);
 	std::string			line, locationString, locationPath;
 	std::size_t			maxBodySize;
@@ -131,6 +131,9 @@ const std::string&	ServerConf::getIpAddr(void) const{
 	return (this->_ipAddr);
 }
 
+void	ServerConf::setFlag(int nb){
+	_flag = nb;
+}
 /* ------------------- MEMBERS FUNCTIONS ----------------------*/
 void	 ServerConf::checkAttribut(void) const
 {

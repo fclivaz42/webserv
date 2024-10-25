@@ -149,6 +149,28 @@ HTTPRequest &HTTPRequest::operator=(HTTPRequest const &rhs)
 	return (*this);
 }
 
+static std::string intToString(int value) {
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
+}
+
+static std::map<std::string, std::string> createCGIEnv(HTTPRequest& request)
+{
+    std::map<std::string, std::string> env;
+
+    env["REQUEST_METHOD"] = "GET";
+    env["CONTENT_TYPE"] = request.getHeaders().at("Content-Type");
+    env["CONTENT_LENGTH"] = intToString(request.getBody().tellp());
+    env["SCRIPT_NAME"] = request.getPath();
+    env["REQUEST_URI"] = request.getPath();
+	env["QUERY_STRING"] = "";
+	env["PATH_INFO"] = request.getPath();
+	env["PATH TRANSLATED"] = request.getPath();
+
+    return (env);
+}
+
 const std::string	HTTPRequest::createPath(const std::string& path, const ServerConf& sConf, const std::string& method, bool attrib)
 {
 	std::map<std::string, Location>	locationMap = sConf.getLocation();
@@ -157,10 +179,29 @@ const std::string	HTTPRequest::createPath(const std::string& path, const ServerC
 	Location						loc;
 	bool							allowedMethod = false;
 	size_t							pos;
+	std::string 					basePath = path;
+	
+	size_t queryPos = path.find('?');
+	if (queryPos != std::string::npos) {
+    	basePath = path.substr(0, queryPos);
+	}
 
-	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++) {
+for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++) {
 		locReq = iter->second.getPath();
 		pos = -1;
+		if (!basePath.empty()){
+			size_t result = basePath.rfind(iter->second.getFastcgiIndex());
+			if (!iter->second.getFastcgiIndex().empty() && result != std::string::npos){
+				locReq = iter->second.getPath();
+				loc = iter->second;
+				if (loc.getRoot()[0] == '/')
+					returnPath = sConf.getRoot() + loc.getRoot() + basePath;
+				else
+					returnPath = sConf.getRoot() + "/" + loc.getRoot() + basePath;
+				
+				break;
+			}
+		}
 		while (!(locReq.c_str()[++pos] == 0 || path.c_str()[pos] == 0))
 			if (locReq.c_str()[pos] != path.c_str()[pos])
 				break;
@@ -179,7 +220,8 @@ const std::string	HTTPRequest::createPath(const std::string& path, const ServerC
 			}
 		}
 	}
-
+	if (!returnPath.empty())
+		return (returnPath);
 	if (loc.getRoot().empty()) {
 		if (attrib)
 			HTTPResponse::generateResponse(405, allowedMethods, "", sConf);
