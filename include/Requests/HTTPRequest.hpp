@@ -24,8 +24,7 @@ class	HTTPRequest
 		std::map<std::string, std::string>	_headers;
 		std::stringstream					_body;
 		size_t								_bodySize;
-
-		HTTPRequest();
+		const ServerConf&					_sConf;
 
 	public:
 		HTTPRequest(std::stringstream& request, const ServerConf& sConf, bool cont);
@@ -33,7 +32,9 @@ class	HTTPRequest
 		HTTPRequest &operator=(HTTPRequest const &rhs);
 		~HTTPRequest();
 
-		static const std::string	createPath(const std::string& path, const ServerConf& serverConf, const std::string& method, bool attrib);
+		const std::string	createPath(const std::string& path,
+										const std::string& method,
+										bool attrib) const;
 
 		const std::map<std::string, std::string>&	getHeaders() const;
 		const std::string&							getMethod() const;
@@ -42,6 +43,7 @@ class	HTTPRequest
 		std::stringstream&							getBody();
 		const std::string&							getQuery() const;
 		const std::string&							getFileName() const;
+		const ServerConf&							getSConf() const;
 		void										setQuery(std::string query);
 		void										setFileName(std::string name);
 		const std::string							isKeepAlive() const;
@@ -50,5 +52,7 @@ class	HTTPRequest
 };
 
 std::string	trim(const std::string& str);
+
+#define PRINTABLES "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-=!@#$%^&*()_+[]\\;',.{}|:\"<>?/ \f\r\n\t\v"
 
 #endif

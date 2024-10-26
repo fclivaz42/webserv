@@ -11,44 +11,30 @@ std::string	updatePath(const std::string &path)
 	return (path);
 }
 
-bool	fileExists(const std::string& localPath)
-{
-	bool isOpen;
-	std::ifstream file(localPath.c_str());
-
-	if (file.good())
-		isOpen = true;
-	else
-		isOpen = false;
-	file.close();
-	return isOpen;
-}
-
-bool	hasAccess(const std::string& localPath)
+void	fileCheck(const std::string& localPath, const HTTPRequest& request)
 {
 	struct stat	fileInfo;
 
 	if (stat(localPath.c_str(), &fileInfo) != 0)
 	{
-		std::cerr << RED << "GET: ERROR: file does not exist." << RESET << std::endl;
-		return (false);
+		std::cerr << RED << "GET: ERROR: File not found: " << localPath << RESET << std::endl;
+		HTTPResponse::generateResponse(404, "", request.isKeepAlive(), request);
 	}
 	else if (access(localPath.c_str(), R_OK) != 0)
 	{
-		std::cerr << RED << "GET: ERROR: No access to file." << RESET << std::endl;
-		return (false);
+		std::cerr << RED << "GET: ERROR: Access denied to file: " << localPath << RESET << std::endl;
+		HTTPResponse::generateResponse(403, "", request.isKeepAlive(), request);
 	}
-	else if (!S_ISREG(fileInfo.st_mode))
+	else if (!(S_ISREG(fileInfo.st_mode) || S_ISDIR(fileInfo.st_mode)))
 	{
 		std::cerr << RED << "GET: ERROR: Not a regular file." << RESET << std::endl;
-		return (false);
+		HTTPResponse::generateResponse(500, "", request.isKeepAlive(), request);
 	}
-	return (true);
 }
 
-bool	checkRedir(const std::string& path, const ServerConf& serverConf)
+bool	checkRedir(const std::string& path, const ServerConf& sConf)
 {
-	std::map<std::string, Location> locationMap = serverConf.getLocation();
+	std::map<std::string, Location> locationMap = sConf.getLocation();
 
 	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
 	{
@@ -60,35 +46,28 @@ bool	checkRedir(const std::string& path, const ServerConf& serverConf)
 	return (false);
 }
 
-std::string	processGetRequest(const HTTPRequest& request, const ServerConf& serverConf)
+std::string	processGetRequest(const HTTPRequest& request)
 {
 	std::map<std::string, std::string>	headers = request.getHeaders();
 	std::string		localPath;
 
-	if (static_cast<size_t>(strtol(headers["Content-Length"].c_str(), NULL, 10)) > serverConf.getMaxBodySize())
-		HTTPResponse::generateResponse(413, "", request.isKeepAlive(), serverConf);
+	if (static_cast<size_t>(strtol(headers["Content-Length"].c_str(), NULL, 10)) > request.getSConf().getMaxBodySize())
+		HTTPResponse::generateResponse(413, "", request.isKeepAlive(), request);
 	
 	std::string path = request.getPath();
 
-	if (checkRedir(path, serverConf))
-		return (HTTPResponse::generateResponse(302, path, request.isKeepAlive(), serverConf));
+	if (checkRedir(path, request.getSConf()))
+		return (HTTPResponse::generateResponse(302, path, request.isKeepAlive(), request));
 
 	if (DEBUG)
 		std::cout << GREEN << "GET: PATH IS: " << path << RESET << std::endl;
 
-	localPath = HTTPRequest::createPath(path, serverConf, "GET", false);
+	localPath = request.createPath(path, "GET", false);
 
 	if (DEBUG)
 		std::cout << GREEN << "GET: Created Local Path: " << localPath << RESET << std::endl;
-	if (!fileExists(localPath))
-	{
-		std::cerr << RED << "GET: ERROR: File not found: " << localPath << RESET << std::endl;
-		HTTPResponse::generateResponse(404, "", request.isKeepAlive(), serverConf);
-	}
-	if (!hasAccess(localPath))
-	{
-		std::cerr << RED << "GET: ERROR: Access denied to file: " << localPath << RESET << std::endl;
-		HTTPResponse::generateResponse(403, "", request.isKeepAlive(), serverConf);
-	}
-	return (HTTPResponse::generateResponse(200, localPath , request.isKeepAlive(), serverConf));
+
+	fileCheck(localPath, request);
+
+	return (HTTPResponse::generateResponse(200, localPath, request.isKeepAlive(), request));
 }

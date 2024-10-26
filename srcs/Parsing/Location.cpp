@@ -2,10 +2,10 @@
 #include "webserv.hpp"
 
 /* ------------------- CONSTRUCTOR ----------------------*/
-Location::Location() : _root(""), _autoIndex(false), _upload(false), _default(false)
+Location::Location() : _index(""), _root(""), _autoIndex(false), _upload(false), _default(false)
 {}
 
-Location::Location(const std::string &path, const std::string& locationString) : _path(path), _autoIndex(false), _upload(false), _default(false)
+Location::Location(const std::string &path, const std::string& locationString) : _path(path), _index(""), _autoIndex(false), _upload(false), _default(false)
 {
 
 	std::stringstream	locationStream(locationString);
@@ -53,7 +53,7 @@ Location::Location(const std::string &path, const std::string& locationString) :
 			line.erase(0, line.find_first_not_of("auto_index"));
 			ptrim(line);
 			if (line.compare("1") || line.compare("yes") || line.compare("true"))
-				this->_upload = true;
+				this->_autoIndex = true;
 			else {
 				std::cerr << "Error: " << RED << " Invalid auto_index config." << std::endl << RESET;
 				throw InvalidLocationException();

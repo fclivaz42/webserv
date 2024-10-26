@@ -192,19 +192,18 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 
 		if (headers["Expect"] == "100-continue") {
 			if (request.getContentLength() <= serverConf.getMaxBodySize())
-				response = HTTPResponse::generateResponse(100, "", request.isKeepAlive(), serverConf);
+				response = HTTPResponse::generateResponse(100, "", request.isKeepAlive(), request);
 			else
-				HTTPResponse::generateResponse(417, serverConf.getErrorPath(), request.isKeepAlive(), serverConf);
+				HTTPResponse::generateResponse(417, serverConf.getErrorPath(), request.isKeepAlive(), request);
 		}
 		else if (request.getContentLength() > serverConf.getMaxBodySize())
-				HTTPResponse::generateResponse(413, serverConf.getErrorPath(), request.isKeepAlive(), serverConf);
-		else if (request.getMethod() == "GET"){
-			response = processGetRequest(request, serverConf);
-		}
+				HTTPResponse::generateResponse(413, serverConf.getErrorPath(), request.isKeepAlive(), request);
+		else if (request.getMethod() == "GET")
+			response = processGetRequest(request);
 		else if (request.getMethod() == "POST")
-			response = processPostRequest(request, serverConf);
+			response = processPostRequest(request);
 		else if (request.getMethod() == "DELETE")
-			response = processDeleteRequest(request, serverConf);
+			response = processDeleteRequest(request);
 	}
 	catch (const std::exception& error) {
 		response = error.what();

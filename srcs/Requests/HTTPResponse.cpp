@@ -6,29 +6,55 @@
 /*   By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 22:01:35 by fclivaz           #+#    #+#             */
-/*   Updated: 2024/10/22 22:00:37 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/10/26 22:54:38 by fclivaz          ###   LAUSANNE.ch       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Requests/HTTPResponse.hpp"
+#include "Requests/HTTPRequest.hpp"
 
-std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::string& path, const std::string& alive, const ServerConf& sConf)
+std::string	HTTPResponse::listDirectory(const std::string& path, const std::string& refPath)
 {
+	std::string		html = HEADERS;
+	struct dirent	*dent;
+	DIR				*lst = opendir(path.c_str());
+
+	if (lst == NULL)
+		return "\t<h1>Error opening requested path.</h1>\n</body>";
+	html.replace(html.find("++PATH++"), 8, refPath);
+	html += "\t<h1>Index of " + refPath + (*refPath.end() - 1 == '/' ? "" : "/") + "</h1>\n<hr width='100%' size='2' color='black'>\n";
+	while ((dent = readdir(lst)) != NULL)
+		html += "\t<li><a href='" + refPath + (*refPath.end() - 1 == '/' ? "" : "/") + static_cast<std::string>(dent->d_name) + "'>" +
+			static_cast<std::string>(dent->d_name) + "</a></li>\n";
+	html += "<hr width='100%' size='2' color='black'>\n\t<p>webserv</p>\n</body>\n</html>";
+	return html;
+}
+
+std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::string& path, const std::string& alive, const HTTPRequest& request)
+{
+	struct stat			s;
 	std::string			contentType;
 	std::string			content;
 	std::string			errorPage;
 	std::stringstream	errorStream;
 
 	if (statusCode >= 400) {
-		errorStream << sConf.getErrorPath() << statusCode << ".html";
+		errorStream << request.getSConf().getErrorPath() << statusCode << ".html";
 		errorPage = errorStream.str();
 		std::cout << RED << "Error " << statusCode << " occured. " << RESET << "Sending page " << errorPage << std::endl;
 		contentType = HTTPResponse::getContentType(errorPage);
 		content = HTTPResponse::readFile(errorPage);
 	}
-	else if (statusCode >= 200 && statusCode != 204){
-		contentType = HTTPResponse::getContentType(path);
-		content = HTTPResponse::readFile(path);
+	else if (statusCode >= 200 && statusCode != 204) {
+		stat(path.c_str(), &s);
+		if (s.st_mode & S_IFDIR) {
+			contentType = "text/html";
+			content = HTTPResponse::listDirectory(path, request.getPath());
+		}
+		else {
+			contentType = HTTPResponse::getContentType(path);
+			content = HTTPResponse::readFile(path);
+		}
 	}
 
 	switch (statusCode / 100)

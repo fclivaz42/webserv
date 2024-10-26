@@ -1,12 +1,12 @@
 // ************************************************************************** //
 //                                                                            //
 //                                                        :::      ::::::::   //
-//   Post.cpp                                           :+:      :+:    :+:   //
+/*   Post.cpp                                           :+:      :+:    :+:   */
 //                                                    +:+ +:+         +:+     //
 //   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/10/24 13:58:01 by lmedrano          #+#    #+#             //
-//   Updated: 2024/10/24 15:24:03 by lmedrano         ###   ########.fr       //
+/*   Updated: 2024/10/27 00:09:49 by fclivaz          ###   LAUSANNE.ch       */
 //                                                                            //
 // ************************************************************************** //
 
@@ -14,7 +14,7 @@
 #include "Requests/HTTPRequest.hpp"
 #include "Requests/HTTPResponse.hpp"
 
-static std::string urlDecode(const std::string& str)
+const std::string urlDecode(const std::string& str)
 {
 	std::string	result;
 	size_t		length = str.length();
@@ -42,7 +42,7 @@ static std::string urlDecode(const std::string& str)
 	return result;
 }
 
-static const std::string	uploadRequest(HTTPRequest& request, const ServerConf& serverConf)
+static const std::string	uploadRequest(HTTPRequest& request)
 {
 	std::map<std::string, std::string>	headers = request.getHeaders();
 	const std::string&					shift = request.getBody().str();
@@ -50,25 +50,40 @@ static const std::string	uploadRequest(HTTPRequest& request, const ServerConf& s
 
 	if (DEBUG)
 		std::cout << GREEN << "POST: File being uploaded." << std::endl;
+	if (shift.find("filename=\"") == std::string::npos) {
+		std::cout << "FILENAME WAS NOT FOUND!! HERE'S WHAT WE GOT:\n";
+		std::string tej;
+		std::stringstream& bodyStream(request.getBody());
+		while (tej != "\r") {
+			std::getline(bodyStream, tej);
+			std::cout << tej << "\n";
+		}
+	}
 	fileName = shift.substr(shift.find("filename=\"") + 10);
 	fileName = fileName.substr(0, fileName.find_first_of("\""));
-	path = HTTPRequest::createPath(request.getPath() + fileName, serverConf, "POST", true);
+	path = request.createPath(request.getPath() + fileName, "POST", true);
 	if (DEBUG)
 		std::cout << "POST: Created path: " << path << RESET << std::endl;
 
 	std::ofstream outFile(path.c_str(), std::ios::out | std::ios::binary);
 	if (outFile.is_open()) {
 		size_t pos = shift.find("\r\n\r\n") + 4;
-		size_t pos2 = shift.find(headers["boundary"]) - pos - 4;
-		outFile.write(shift.c_str() + pos, pos2);
-		outFile.close();
+		if (shift.find(headers["boundary"]) != std::string::npos) {
+			size_t pos2 = shift.find(headers["boundary"]) - pos - 4;
+			outFile.write(shift.c_str() + pos, pos2);
+			outFile.close();
+		}
+		else {
+			outFile.write(shift.c_str() + pos, shift.length() - pos);
+			outFile.close();
+		}
 	}
 	else
-		HTTPResponse::generateResponse(500, "", request.isKeepAlive(), serverConf);
-	return HTTPResponse::generateResponse(201, path, request.isKeepAlive(), serverConf);
+		HTTPResponse::generateResponse(500, "", request.isKeepAlive(), request);
+	return HTTPResponse::generateResponse(201, path, request.isKeepAlive(), request);
 }
 
-static const std::string	formRequest(HTTPRequest& request, const ServerConf& serverConf)
+static const std::string	formRequest(HTTPRequest& request)
 {
 	std::map<std::string, std::string> formData;
 	std::stringstream& bodyStream(request.getBody());
@@ -91,8 +106,8 @@ static const std::string	formRequest(HTTPRequest& request, const ServerConf& ser
 	email = formData["email"];
 	message = formData["message"];
 
-	std::string			path(HTTPRequest::createPath(request.getPath(), serverConf, "POST", false)), line, response;
-	std::stringstream	genRes(HTTPResponse::generateResponse(200, path, request.isKeepAlive(), serverConf));
+	std::string			path(request.createPath(request.getPath(), "POST", false)), line, response;
+	std::stringstream	genRes(HTTPResponse::generateResponse(200, path, request.isKeepAlive(), request));
 	std::size_t			pos;
 
 	while (std::getline(genRes, line))
@@ -140,7 +155,7 @@ static bool		isCGIRequest(const std::string& path)
 	return (path.find(cgiPath) == 0);
 }
 
-const std::string	processPostRequest(HTTPRequest& request, const ServerConf& serverConf)
+const std::string	processPostRequest(HTTPRequest& request)
 {
 	std::map<std::string, std::string> headers(request.getHeaders());
 
@@ -154,8 +169,8 @@ const std::string	processPostRequest(HTTPRequest& request, const ServerConf& ser
 		return (cgiExec.execute(request.getBody().str()));
 	}
 	if (headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos)
-		return (formRequest(request, serverConf));
+		return (formRequest(request));
 	else if (headers["Content-Type"].find("multipart") != std::string::npos)
-		return (uploadRequest(request, serverConf));
-	return HTTPResponse::generateResponse(415, "", request.isKeepAlive(), serverConf);
+		return (uploadRequest(request));
+	return HTTPResponse::generateResponse(415, "", request.isKeepAlive(), request);
 }

@@ -1,4 +1,5 @@
 #include "Requests/HTTPRequest.hpp"
+#include "Requests/Post.hpp"
 
 /*
 	---------------------------------------------
@@ -6,10 +7,7 @@
 	---------------------------------------------
 */
 
-HTTPRequest::HTTPRequest() : _method(""), _path(""), _version(""), _body(std::string()), _bodySize(0)
-{}
-
-HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bool cont) :_method(""), _path(""), _query(""), _fileName(""), _version(""), _body(std::string()), _bodySize(0)
+HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bool cont) :_method(""), _path(""), _query(""), _fileName(""), _version(""), _body(std::string()), _bodySize(0), _sConf(sConf)
 {
 	std::string			line, key, value;
 	size_t				pos;
@@ -27,7 +25,7 @@ HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bo
 		std::stringstream	stRequest(request.str());
 		std::string			prRequest;
 		std::cout << "\n┌────────── NEW REQUEST ──────────\n";
-		while (std::getline(stRequest, prRequest) && prRequest.find("Content-Disposition") == std::string::npos)
+		while (std::getline(stRequest, prRequest) && prRequest.find_first_not_of(PRINTABLES) == std::string::npos)
 			if (stRequest.peek() != EOF)
 				std::cout << "│ " << prRequest << std::endl;
 		stRequest.str(std::string());
@@ -43,6 +41,8 @@ HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bo
 	std::istringstream requestLine(line);
 	requestLine >> _method >> _path >> _version;
 
+	_path = urlDecode(_path);
+
 	if (DEBUG) {
 		std::cout << "├────────── REQUEST METADATA ──────────\n";
 		std::cout << "│ Method: " << "" << _method << "" << std:: endl;
@@ -50,13 +50,13 @@ HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bo
 		std::cout << "│ Version: " << _version << "\n└────────── END REQUEST  ──────────\n";
 	}
 	if (_method != "GET" && _method != "POST" && _method != "DELETE")
-		HTTPResponse::generateResponse(405, "GET, POST, DELETE", this->isKeepAlive(), sConf);
+		HTTPResponse::generateResponse(405, "GET, POST, DELETE", this->isKeepAlive(), *this);
 
 	if (_path.empty() || _path[0] != '/')
-		HTTPResponse::generateResponse(400, "", this->isKeepAlive(), sConf);
+		HTTPResponse::generateResponse(400, "", this->isKeepAlive(), *this);
 
 	if (_version != "HTTP/1.1" && _version != "HTTP/1.0")
-		HTTPResponse::generateResponse(505, "", this->isKeepAlive(), sConf);
+		HTTPResponse::generateResponse(505, "", this->isKeepAlive(), *this);
 
 	while (request.peek() != EOF)
 	{
@@ -89,7 +89,7 @@ HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bo
 			break ;
 		}
 		else
-			HTTPResponse::generateResponse(400, "", this->isKeepAlive(), sConf);
+			HTTPResponse::generateResponse(400, "", this->isKeepAlive(), *this);
 	}
 	if (_headers.find("Referer") != _headers.end()) {
     	size_t pos = _headers.find("Referer")->second.find("?");
@@ -104,19 +104,19 @@ HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bo
     	}
 	}
 	if (_version == "HTTP/1.1" && (_headers.find("Host") == _headers.end()))
-		HTTPResponse::generateResponse(400, "", this->isKeepAlive(), sConf);
+		HTTPResponse::generateResponse(400, "", this->isKeepAlive(), *this);
 
 	if (_method == "POST")
 	{
 		if (_headers.find("Content-Length") == _headers.end())
-			HTTPResponse::generateResponse(411, "", this->isKeepAlive(), sConf);
+			HTTPResponse::generateResponse(411, "", this->isKeepAlive(), *this);
 		if (_headers.find("Content-Type") == _headers.end())
-			HTTPResponse::generateResponse(415, "", this->isKeepAlive(), sConf);
+			HTTPResponse::generateResponse(415, "", this->isKeepAlive(), *this);
 	}
 		char	*ptr;
 		long	testsize = strtol(_headers["Content-Length"].c_str(), &ptr, 10);
 		if (testsize < 0 || ptr[0] != 0)
-			HTTPResponse::generateResponse(418, "", this->isKeepAlive(), sConf);
+			HTTPResponse::generateResponse(418, "", this->isKeepAlive(), *this);
 
 		_bodySize = strtoul(_headers["Content-Length"].c_str(), NULL, 10);
 	request.str(std::string());
@@ -127,7 +127,8 @@ HTTPRequest::HTTPRequest(HTTPRequest const &copy) :	_method(copy._method),
 													_path(copy._path),
 													_version(copy._version),
 													_headers(copy._headers),
-													_bodySize(copy._bodySize)
+													_bodySize(copy._bodySize),
+													_sConf(copy._sConf)
 {
 	_body.str(copy._body.str());
 }
@@ -144,14 +145,14 @@ HTTPRequest &HTTPRequest::operator=(HTTPRequest const &rhs)
 		_version = rhs._version;
 		_headers = rhs._headers;
 		_body.str(rhs._body.str());
-		_bodySize= rhs._bodySize;
+		_bodySize = rhs._bodySize;
 	}
 	return (*this);
 }
 
-const std::string	HTTPRequest::createPath(const std::string& path, const ServerConf& sConf, const std::string& method, bool attrib)
+const std::string	HTTPRequest::createPath(const std::string& path, const std::string& method, bool attrib) const
 {
-	std::map<std::string, Location>	locationMap = sConf.getLocation();
+	std::map<std::string, Location>	locationMap = this->_sConf.getLocation();
 	std::string						returnPath, locReq, allowedMethods;
 	struct stat						s;
 	Location						loc;
@@ -182,7 +183,7 @@ const std::string	HTTPRequest::createPath(const std::string& path, const ServerC
 
 	if (loc.getRoot().empty()) {
 		if (attrib)
-			HTTPResponse::generateResponse(405, allowedMethods, "", sConf);
+			HTTPResponse::generateResponse(405, allowedMethods, "", *this);
 		else
 			for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
 				if (iter->second.isDefault())
@@ -199,18 +200,24 @@ const std::string	HTTPRequest::createPath(const std::string& path, const ServerC
 	}
 
 	if (!allowedMethod)
-		HTTPResponse::generateResponse(405, allowedMethods, "", sConf);
+		HTTPResponse::generateResponse(405, allowedMethods, "", *this);
 
 	else {
 		if (loc.getRoot()[0] == '/')
-			returnPath = sConf.getRoot() + loc.getRoot() + path.substr(locReq.length());
+			returnPath = this->_sConf.getRoot() + loc.getRoot() + path.substr(locReq.length());
 		else
-			returnPath = sConf.getRoot() + "/" + loc.getRoot() + path.substr(locReq.length());
+			returnPath = this->_sConf.getRoot() + "/" + loc.getRoot() + path.substr(locReq.length());
 		if (DEBUG)
 			std::cout << "RETURN PATH IS " << returnPath << std::endl;
 		if (stat(returnPath.c_str(), &s) == 0)
-			if (s.st_mode & S_IFDIR)
-				returnPath += loc.getIndex();
+			if (s.st_mode & S_IFDIR) {
+				if (loc.getIndex().size() > 0)
+					returnPath += loc.getIndex();
+				else if (loc.hasAutoIndex())
+					;
+				else
+					HTTPResponse::generateResponse(403, "", this->isKeepAlive(), *this);
+			}
 	}
 	return returnPath;
 }
@@ -253,6 +260,12 @@ const std::string&	HTTPRequest::getQuery() const
 const std::string&	HTTPRequest::getFileName() const
 {
 	return (_fileName);
+}
+
+
+const ServerConf&	HTTPRequest::getSConf() const
+{
+	return (_sConf);
 }
 
 /*
