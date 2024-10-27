@@ -54,10 +54,7 @@ std::string	processGetRequest(const HTTPRequest& request)
 	if (static_cast<size_t>(strtol(headers["Content-Length"].c_str(), NULL, 10)) > request.getSConf().getMaxBodySize())
 		HTTPResponse::generateResponse(413, "", request.isKeepAlive(), request);
 	
-	std::string path = request.getPath();
-
-	if (checkRedir(path, request.getSConf()))
-		return (HTTPResponse::generateResponse(302, path, request.isKeepAlive(), request));
+	const std::string& path = request.getPath();
 
 	if (DEBUG)
 		std::cout << GREEN << "GET: PATH IS: " << path << RESET << std::endl;

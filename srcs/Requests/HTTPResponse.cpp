@@ -6,7 +6,7 @@
 /*   By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 22:01:35 by fclivaz           #+#    #+#             */
-/*   Updated: 2024/10/26 22:54:38 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/10/27 20:39:02 by fclivaz          ###   LAUSANNE.ch       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::s
 		contentType = HTTPResponse::getContentType(errorPage);
 		content = HTTPResponse::readFile(errorPage);
 	}
-	else if (statusCode >= 200 && statusCode != 204) {
+	else if (statusCode >= 200 && statusCode != 204 && statusCode < 300) {
 		stat(path.c_str(), &s);
 		if (s.st_mode & S_IFDIR) {
 			contentType = "text/html";
@@ -82,7 +82,7 @@ std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::s
 		case 3:
 			switch (statusCode) {
 				case 302:
-					return ("HTTP/1.1 302 Found\r\nLocation: " + path + "\r\n" + alive + "\r\n");
+					throw HTTPResponse::ErrorCode("302 Found", "text/html\r\nLocation: " + path, alive, "");
 				default:
 					throw HTTPResponse::ISE(contentType, alive, content);
 			}

@@ -2,6 +2,7 @@
 
 #include "Network/ConnectManager.hpp"
 #include "Requests/HTTPResponse.hpp"
+#include <string>
 
 /*
 	c tipar pour le construiseur d'une manager de connect
@@ -19,8 +20,8 @@
 
 ConnectManager::ConnectManager(const Servers& ServerList) : _serverFds(0), _serverPorts(0), _port(0), _serverList(ServerList)
 {
-	struct	sockaddr_in						servAddrin;
-	std::vector<ushort>				vecPort;
+	struct	sockaddr_in	servAddrin;
+	std::vector<ushort>	vecPort;
 
 	for (int i = 0; i < ServerList.getAmountOfServers(); i++) {
 		vecPort = ServerList.getServConf(i).getPort();
@@ -165,22 +166,22 @@ bool	ConnectManager::startSocketListen(int backlog)
 	Il va write ce qu'il a lu dans la stringstream message.
  */
 
-ssize_t	ConnectManager::readMessage(int clientFd, std::stringstream& message)
+ssize_t	ConnectManager::readMessage(int clientFd, std::string *message)
 {
 	char		buffer[BUFFER_SIZE];
 	ssize_t		bytesRead;
 
 	ft_bzero(buffer, BUFFER_SIZE);
 	bytesRead = read(clientFd, buffer, BUFFER_SIZE);
-	if (bytesRead > 0)
-		(void)message.write(buffer, bytesRead);
+	if (bytesRead > 0) {}
+		message->append(buffer, bytesRead);
 	if (bytesRead < 0)
 		std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
 	return bytesRead;
 }
 
 //FUNCTION TO STORE REQUEST FROM CLIENT INTO HTTPREQUEST CLASS
-bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serverConf, std::stringstream& message)
+bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serverConf, std::string& message)
 {
 	std::string response;
 	
@@ -237,7 +238,7 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 	Une fois que cela est fait, on lance handleClient() avec le clientFd ainsi que le serverConfig correct.
 */
 
-void	ConnectManager::acceptConnection(int serverFd, std::vector<struct pollfd>& fdList, std::map<int, ushort>& swag)
+void	ConnectManager::acceptConnection(int serverFd, std::vector<struct pollfd>& fdList, std::map<int, ushort>& fdMap)
 {
 	struct sockaddr_in	clientAddress;
 	struct sockaddr_in	serverPort;
@@ -256,7 +257,7 @@ void	ConnectManager::acceptConnection(int serverFd, std::vector<struct pollfd>& 
 	clientPfd.events = POLLIN;
 	clientPfd.revents = 0;
 	fdList.push_back(clientPfd);
-	swag[(fdList.end() - 1)->fd] = ntohs(serverPort.sin_port);
+	fdMap[(fdList.end() - 1)->fd] = ntohs(serverPort.sin_port);
 }
 
 /*
@@ -273,9 +274,9 @@ void	ConnectManager::start()
 {
 	std::vector<struct pollfd>	fds(0);
 	std::vector<int>			readFds(0);
-	std::map<int, ushort>		swag;
+	std::map<int, ushort>		fdMap;
 	int							pollResult;
-	std::stringstream			message;
+	std::string					message;
 
 	for (size_t i = 0; i < _serverFds.size(); i++)
 	{
@@ -290,11 +291,11 @@ void	ConnectManager::start()
 	{
 		for (size_t i = 0; i < _serverFds.size(); i++)
 			if (fds[i].revents & POLLIN)
-				acceptConnection(_serverFds[i], fds, swag);
+				acceptConnection(_serverFds[i], fds, fdMap);
 		for (size_t i = _serverFds.size(); i < fds.size(); i++)
 		{
 			if (fds[i].revents & POLLIN) {
-				readMessage(fds[i].fd, message);
+				readMessage(fds[i].fd, &message);
 				if (std::find(readFds.begin(), readFds.end(), fds[i].fd) == readFds.end()) {
 					readFds.push_back(fds[i].fd);
 				}
@@ -304,16 +305,15 @@ void	ConnectManager::start()
 					for (int n = 0; n < this->_serverList.getAmountOfServers(); n++)
 					{
 						const ServerConf&	currentSConf = _serverList.getServConf(n);
-						if (std::find(currentSConf.getPort().begin(), currentSConf.getPort().end(), swag[fds[i].fd]) != currentSConf.getPort().end())
+						if (std::find(currentSConf.getPort().begin(), currentSConf.getPort().end(), fdMap[fds[i].fd]) != currentSConf.getPort().end())
 						{
-							std::cout << "CLIENT " << fds[i].fd << " ON PORT " << swag[fds[i].fd] << " IS USING SERVER " << currentSConf.getServerName() << "\n";
+							std::cout << "CLIENT " << fds[i].fd << " ON PORT " << fdMap[fds[i].fd] << " IS USING SERVER " << currentSConf.getServerName() << "\n";
 							if (!(_continue = handleClient(fds[i], currentSConf, message)))
 							{
 								readFds.erase(std::find(readFds.begin(), readFds.end(), fds[i].fd));
 								fds.erase(fds.begin() + i);
 								--i;
 							}
-							message.str(std::string());
 							message.clear();
 							break ;
 						}

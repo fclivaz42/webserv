@@ -22,12 +22,12 @@ class	HTTPRequest
 		std::string							_fileName;
 		std::string							_version;
 		std::map<std::string, std::string>	_headers;
-		std::stringstream					_body;
+		std::string							_body;
 		size_t								_bodySize;
 		const ServerConf&					_sConf;
 
 	public:
-		HTTPRequest(std::stringstream& request, const ServerConf& sConf, bool cont);
+		HTTPRequest(std::string& request, const ServerConf& sConf, bool cont);
 		HTTPRequest(HTTPRequest const &copy);
 		HTTPRequest &operator=(HTTPRequest const &rhs);
 		~HTTPRequest();
@@ -35,12 +35,14 @@ class	HTTPRequest
 		const std::string	createPath(const std::string& path,
 										const std::string& method,
 										bool attrib) const;
+		void 				checkRedir(const std::string& path,
+										const std::string& method) const;
 
 		const std::map<std::string, std::string>&	getHeaders() const;
 		const std::string&							getMethod() const;
 		const std::string&							getPath() const;
 		const std::string&							getVersion() const;
-		std::stringstream&							getBody();
+		const std::string&							getBody();
 		const std::string&							getQuery() const;
 		const std::string&							getFileName() const;
 		const ServerConf&							getSConf() const;

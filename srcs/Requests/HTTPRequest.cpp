@@ -7,38 +7,30 @@
 	---------------------------------------------
 */
 
-HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bool cont) :_method(""), _path(""), _query(""), _fileName(""), _version(""), _body(std::string()), _bodySize(0), _sConf(sConf)
+HTTPRequest::HTTPRequest(std::string& request, const ServerConf& sConf, bool cont) :_method(""), _path(""), _query(""), _fileName(""), _version(""), _body(""), _bodySize(0), _sConf(sConf)
 {
-	std::string			line, key, value;
-	size_t				pos;
+	std::string	line, key, value;
+	size_t		pos, delim, tmp;
 
 	if (cont)
 	{
 		_method = "POST";
-		_body << request.rdbuf();
-		request.str(std::string());
+		_body = request;
 		request.clear();
 		return ;
 	}
 
 	if (DEBUG) {
-		std::stringstream	stRequest(request.str());
+		std::stringstream	stRequest(request.substr(0, request.find_first_not_of(PRINTABLES) - 1));
 		std::string			prRequest;
 		std::cout << "\n┌────────── NEW REQUEST ──────────\n";
-		while (std::getline(stRequest, prRequest) && prRequest.find_first_not_of(PRINTABLES) == std::string::npos)
+		while (std::getline(stRequest, prRequest))
 			if (stRequest.peek() != EOF)
 				std::cout << "│ " << prRequest << std::endl;
-		stRequest.str(std::string());
-		stRequest.clear();
 	}
 
-	if (!std::getline(request, line) || line.empty())
-	{
-		std::cerr << ORANGE << "Waiting for request . . ." << RESET << std::endl;
-		return ;
-	}
-
-	std::istringstream requestLine(line);
+	delim = request.find("\r\n") + 2;
+	std::istringstream requestLine(request.substr(0, delim - 2));
 	requestLine >> _method >> _path >> _version;
 
 	_path = urlDecode(_path);
@@ -58,9 +50,13 @@ HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bo
 	if (_version != "HTTP/1.1" && _version != "HTTP/1.0")
 		HTTPResponse::generateResponse(505, "", this->isKeepAlive(), *this);
 
-	while (request.peek() != EOF)
+	while (delim < request.length())
 	{
-		std::getline(request, line);
+		tmp = request.find("\r\n", delim) + 2;
+		if (delim >= request.length() || tmp >= request.length())
+			break;
+		line = request.substr(delim, tmp - delim - 1);
+		delim = tmp;
 		pos = line.find(":");
 		if (pos != std::string::npos)
 		{
@@ -78,14 +74,14 @@ HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bo
 		}
 		else if (line == "\r")
 			if (_headers["Content-Type"] == "application/x-www-form-urlencoded") {
-				_body << request.rdbuf();
+				_body = request.substr(delim);
 				break;
 			}
 			else
 				continue;
 		else if (line.find(_headers["boundary"]) != std::string::npos)
 		{
-			_body << request.rdbuf();
+			_body = request.substr(delim);
 			break ;
 		}
 		else
@@ -119,7 +115,6 @@ HTTPRequest::HTTPRequest(std::stringstream& request, const ServerConf& sConf, bo
 			HTTPResponse::generateResponse(418, "", this->isKeepAlive(), *this);
 
 		_bodySize = strtoul(_headers["Content-Length"].c_str(), NULL, 10);
-	request.str(std::string());
 	request.clear();
 }
 
@@ -127,11 +122,10 @@ HTTPRequest::HTTPRequest(HTTPRequest const &copy) :	_method(copy._method),
 													_path(copy._path),
 													_version(copy._version),
 													_headers(copy._headers),
+													_body(copy._body),
 													_bodySize(copy._bodySize),
 													_sConf(copy._sConf)
-{
-	_body.str(copy._body.str());
-}
+{}
 
 HTTPRequest::~HTTPRequest()
 {}
@@ -144,7 +138,7 @@ HTTPRequest &HTTPRequest::operator=(HTTPRequest const &rhs)
 		_path = rhs._path;
 		_version = rhs._version;
 		_headers = rhs._headers;
-		_body.str(rhs._body.str());
+		_body = rhs._body;
 		_bodySize = rhs._bodySize;
 	}
 	return (*this);
@@ -181,14 +175,13 @@ const std::string	HTTPRequest::createPath(const std::string& path, const std::st
 		}
 	}
 
-	if (loc.getRoot().empty()) {
-		if (attrib)
-			HTTPResponse::generateResponse(405, allowedMethods, "", *this);
-		else
-			for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
-				if (iter->second.isDefault())
-					loc = iter->second;
-	}
+	if (loc.getRoot().empty() && loc.getReturnURL().empty())
+		for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
+			if (iter->second.isDefault())
+				loc = iter->second;
+
+	if (attrib && !loc.acceptsUploads())
+		HTTPResponse::generateResponse(405, allowedMethods, "", *this);
 
 	locReq = loc.getPath();
 
@@ -201,6 +194,9 @@ const std::string	HTTPRequest::createPath(const std::string& path, const std::st
 
 	if (!allowedMethod)
 		HTTPResponse::generateResponse(405, allowedMethods, "", *this);
+
+	if (!loc.getReturnURL().empty())
+		HTTPResponse::generateResponse(302, loc.getReturnURL(), this->isKeepAlive(), *this);
 
 	else {
 		if (loc.getRoot()[0] == '/')
@@ -221,6 +217,7 @@ const std::string	HTTPRequest::createPath(const std::string& path, const std::st
 	}
 	return returnPath;
 }
+
 /*
 	---------------------------------------------
 			Getters because I love OOP
@@ -247,7 +244,7 @@ const std::string&	HTTPRequest::getVersion() const
 	return (_version);
 }
 
-std::stringstream&	HTTPRequest::getBody()
+const std::string&	HTTPRequest::getBody()
 {
 	return (_body);
 }

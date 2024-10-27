@@ -173,7 +173,8 @@ bool	Location::isDefault(void) const{
 void	Location::checkAttribut(void) const{
 	std::vector<std::string>::const_iterator it;
 
-	if (this->_root.empty() && (this->_fastcgiPass.empty() || this->_fastcgiIndex.empty()))
+	if ((this->_returnURL.empty() && this->_root.empty()) &&
+		(this->_fastcgiPass.empty() || this->_fastcgiIndex.empty()))
 		throw MissingArgsException();
 	if (!_allowMethods.empty()){
 		for (it = _allowMethods.begin(); it != _allowMethods.end(); ++it){
@@ -181,6 +182,8 @@ void	Location::checkAttribut(void) const{
 				throw InvalidMethodsException();
 		}
 	}
+	else
+		throw MissingArgsException();
 	return ;
 }
 

@@ -6,7 +6,7 @@
 //   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/10/24 13:58:01 by lmedrano          #+#    #+#             //
-/*   Updated: 2024/10/27 00:09:49 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/10/27 23:23:04 by fclivaz          ###   LAUSANNE.ch       */
 //                                                                            //
 // ************************************************************************** //
 
@@ -45,7 +45,7 @@ const std::string urlDecode(const std::string& str)
 static const std::string	uploadRequest(HTTPRequest& request)
 {
 	std::map<std::string, std::string>	headers = request.getHeaders();
-	const std::string&					shift = request.getBody().str();
+	const std::string&					shift = request.getBody();
 	std::string							fileName, line, path;
 
 	if (DEBUG)
@@ -53,7 +53,7 @@ static const std::string	uploadRequest(HTTPRequest& request)
 	if (shift.find("filename=\"") == std::string::npos) {
 		std::cout << "FILENAME WAS NOT FOUND!! HERE'S WHAT WE GOT:\n";
 		std::string tej;
-		std::stringstream& bodyStream(request.getBody());
+		std::stringstream bodyStream(request.getBody());
 		while (tej != "\r") {
 			std::getline(bodyStream, tej);
 			std::cout << tej << "\n";
@@ -61,7 +61,8 @@ static const std::string	uploadRequest(HTTPRequest& request)
 	}
 	fileName = shift.substr(shift.find("filename=\"") + 10);
 	fileName = fileName.substr(0, fileName.find_first_of("\""));
-	path = request.createPath(request.getPath() + fileName, "POST", true);
+	path = request.getPath();
+	path = request.createPath(path + (*(path.end() - 1) == '/' ? "" : "/") + fileName, "POST", true);
 	if (DEBUG)
 		std::cout << "POST: Created path: " << path << RESET << std::endl;
 
@@ -86,7 +87,7 @@ static const std::string	uploadRequest(HTTPRequest& request)
 static const std::string	formRequest(HTTPRequest& request)
 {
 	std::map<std::string, std::string> formData;
-	std::stringstream& bodyStream(request.getBody());
+	std::stringstream bodyStream(request.getBody());
 	std::string keyValue, username, email, message;
 
 	if (DEBUG)
@@ -139,7 +140,7 @@ static std::map<std::string, std::string> createCGIEnv(HTTPRequest& request)
 
     env["REQUEST_METHOD"] = "GET";
     env["CONTENT_TYPE"] = request.getHeaders().at("Content-Type");
-    env["CONTENT_LENGTH"] = intToString(request.getBody().tellp());
+    env["CONTENT_LENGTH"] = intToString(request.getBody().size());
     env["SCRIPT_NAME"] = request.getPath();
     env["REQUEST_URI"] = request.getPath();
 	env["QUERY_STRING"] = "";
@@ -159,14 +160,14 @@ const std::string	processPostRequest(HTTPRequest& request)
 {
 	std::map<std::string, std::string> headers(request.getHeaders());
 
-	std::cout << "BLABLA " << std::endl;
-	std::cout << "REQUEST: " << request.getPath() << std::endl;
+	std::cout << "POST REQUEST: " << request.getPath() << std::endl;
+//	(void)request.createPath(request.getPath(), "POST", false);
 	if (isCGIRequest(request.getPath()))
 	{
 		std::string cgiPath = "/cgi-bin/script.py";
         	std::map<std::string, std::string> env = createCGIEnv(request);
 		CGIExec cgiExec(cgiPath, env);;
-		return (cgiExec.execute(request.getBody().str()));
+		return (cgiExec.execute(request.getBody()));
 	}
 	if (headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos)
 		return (formRequest(request));
