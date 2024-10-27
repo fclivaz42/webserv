@@ -2,6 +2,7 @@
 
 #include "Network/ConnectManager.hpp"
 #include "Requests/HTTPResponse.hpp"
+#include <algorithm>
 #include <string>
 
 /*
@@ -22,16 +23,20 @@ ConnectManager::ConnectManager(const Servers& ServerList) : _serverFds(0), _serv
 {
 	struct	sockaddr_in	servAddrin;
 	std::vector<ushort>	vecPort;
+	std::vector<ushort>	usedPorts;
 
 	for (int i = 0; i < ServerList.getAmountOfServers(); i++) {
 		vecPort = ServerList.getServConf(i).getPort();
 		for (size_t j = 0; j < vecPort.size(); j++) {
+			if (std::find(usedPorts.begin(), usedPorts.end(), vecPort[j]) != usedPorts.end())
+				continue;
 			ft_bzero(&servAddrin, sizeof(struct sockaddr_in));
 			servAddrin.sin_family = AF_INET;
 			servAddrin.sin_addr.s_addr = htonl(INADDR_ANY);
 			servAddrin.sin_port = htons(vecPort[j]);
 			_serverPorts.push_back(servAddrin);
 			_port.push_back(vecPort[j]);
+			usedPorts.push_back(vecPort[j]);
 		}
 	}
 }
@@ -195,7 +200,7 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 			if (request.getContentLength() <= serverConf.getMaxBodySize())
 				response = HTTPResponse::generateResponse(100, "", request.isKeepAlive(), request);
 			else
-				HTTPResponse::generateResponse(417, serverConf.getErrorPath(), request.isKeepAlive(), request);
+				HTTPResponse::generateResponse(417, serverConf.getErrorPath(), "Connection: close", request);
 		}
 		else if (request.getContentLength() > serverConf.getMaxBodySize())
 				HTTPResponse::generateResponse(413, serverConf.getErrorPath(), request.isKeepAlive(), request);
@@ -314,7 +319,7 @@ void	ConnectManager::start()
 								fds.erase(fds.begin() + i);
 								--i;
 							}
-							message.clear();
+							message = "";
 							break ;
 						}
 					}

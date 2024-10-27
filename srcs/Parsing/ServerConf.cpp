@@ -60,7 +60,7 @@ ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAd
 			line.erase(0, line.find_first_not_of("location"));
 			ptrim(line);
 			locationPath = line.substr(0, line.find_first_of(WHITESPACES));
-			while (!(line.find('}') == 4 && configStream.peek() != EOF)) {
+			while (!((line == "\t}" || line == "    }") && configStream.peek() != EOF)) {
 				if (std::getline(configStream, line).eof())
 					throw UnexpectedEOFException();
 				locationString += line + '\n';
@@ -68,7 +68,7 @@ ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAd
 			this->_location[locationPath] = Location(locationPath, locationString.substr(0, locationString.find_last_of('}')));
 			locationString.clear();
 		}
-		else if (line.empty())
+		else if (line.empty() || line[0] == '#')
 			continue ;
 		else
 			throw InvalidServerConfException();
