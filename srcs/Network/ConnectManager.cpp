@@ -2,6 +2,7 @@
 
 #include "Network/ConnectManager.hpp"
 #include "Requests/HTTPResponse.hpp"
+#include "CGI/CGIExec.hpp"
 #include <algorithm>
 #include <string>
 
@@ -185,6 +186,20 @@ ssize_t	ConnectManager::readMessage(int clientFd, std::string *message)
 	return bytesRead;
 }
 
+bool	isCGI(HTTPRequest &request){
+	size_t pos = request.getCreatedPath().find("?");
+	if (pos == std::string::npos) {
+    return false;
+	}
+	std::string subPath = request.getCreatedPath().substr(0, pos);
+	request.setCreatedPath(subPath);
+	
+	
+	if (request.getCreatedPath().rfind(request.getLoc().getFastcgiIndex()) == request.getCreatedPath().size() - request.getLoc().getFastcgiIndex().size())
+		return (true);
+	else
+		return (false);
+}
 //FUNCTION TO STORE REQUEST FROM CLIENT INTO HTTPREQUEST CLASS
 bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serverConf, std::string& message)
 {
@@ -193,14 +208,29 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 	try
 	{
 		HTTPRequest request(message, serverConf, _continue);
+		request.createPath(request.getPath(), "GET", false);
 		std::map<std::string, std::string>	headers = request.getHeaders();
-		std::cout << "REQUEST : " << request.getPath() << std::endl;
-
 		if (headers["Expect"] == "100-continue") {
 			if (request.getContentLength() <= serverConf.getMaxBodySize())
 				response = HTTPResponse::generateResponse(100, "", request.isKeepAlive(), request);
 			else
 				HTTPResponse::generateResponse(417, serverConf.getErrorPath(), "Connection: close", request);
+		}
+		else if (isCGI(request) == true){
+
+			CGIExec cgi(request);
+			int status = cgi.execute();
+			std::cout << "STAT: " << status << std::endl; 
+			if (status == 500)
+				HTTPResponse::generateResponse(500, serverConf.getErrorPath(), request.isKeepAlive(), request);
+			else{
+				std::string test = cgi.getCgiContentType();
+				request.setHeaders("Content-Type", cgi.getCgiContentType());
+				request.setHeaders("Content-Length", std::to_string(cgi.getBody().size()));
+				request.setBody(cgi.getBody());
+				HTTPResponse::generateResponse(200, request.getCreatedPath(), request.isKeepAlive(), request);
+			}
+			
 		}
 		else if (request.getContentLength() > serverConf.getMaxBodySize())
 				HTTPResponse::generateResponse(413, serverConf.getErrorPath(), request.isKeepAlive(), request);

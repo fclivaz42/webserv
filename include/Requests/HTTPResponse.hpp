@@ -35,7 +35,7 @@ class HTTPResponse
 		static std::string	generateResponse(unsigned int statusCode,
 												const std::string& path,
 												const std::string& alive,
-												const HTTPRequest& request);
+												HTTPRequest& request);
 
 		class ErrorCode : public std::exception {
 			private:

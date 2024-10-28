@@ -46,6 +46,7 @@ class ConnectManager
 		void				start();
 		bool				startSocketListen(int backlog = SOMAXCONN);
 		static std::string	readFile(const std::string& filePath);
+		
 
 		class TooManyFailures : public std::exception{
 			public:
@@ -54,5 +55,5 @@ class ConnectManager
 				}
 		};
 };
-
+bool	isCGI(HTTPRequest &request);
 #endif // CONNECTMANAGER_HPP

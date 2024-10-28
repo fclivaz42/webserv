@@ -3,7 +3,7 @@
 #include "Requests/HTTPRequest.hpp"
 #include "Requests/HTTPResponse.hpp"
 
-std::string processDeleteRequest(const HTTPRequest& request)
+std::string processDeleteRequest(HTTPRequest& request)
 {
 	std::cout << "PATH BEFORE: " << request.getPath() << std::endl;
 	std::string	delPath = request.createPath(request.getPath(), "DELETE", false);

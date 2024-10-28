@@ -11,7 +11,7 @@ std::string	updatePath(const std::string &path)
 	return (path);
 }
 
-void	fileCheck(const std::string& localPath, const HTTPRequest& request)
+void	fileCheck(const std::string& localPath, HTTPRequest& request)
 {
 	struct stat	fileInfo;
 
@@ -46,7 +46,7 @@ bool	checkRedir(const std::string& path, const ServerConf& sConf)
 	return (false);
 }
 
-std::string	processGetRequest(const HTTPRequest& request)
+std::string	processGetRequest(HTTPRequest& request)
 {
 	std::map<std::string, std::string>	headers = request.getHeaders();
 	std::string		localPath;

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hey Sexy...</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+	<nav>
+		<a class="black request_button" href="/index.html">Welcome Page</a>
+		<a class="request_button" href="/formulaire.html">Get in Touch !</a>
+		<a class="request_button" href="/upload.html">Upload a picture</a>
+		<a class="request_button" href="/delete.html">Delete some shitty files</a>
+		<a class="request_button" href="/calculator.html">% * + -</a>
+	</nav>
+	<h1>One, two, testing</h1>
+	<h3>EL SERVIDOR DEL WEEEEEB 2!</h3>
+	<div class="requests selfie">
+		<p style="margin:0;">La team des GOATs:D</p>
+		<img class="selfie-img" src="/images/team.jpg" alt="Team Webserv">
+	    	<button class="request_button" id="heartButton">Send Love</button>
+		<div id="heartContainer"></div>
+	</div>
+
+    	<script>
+		const button = document.getElementById('heartButton');
+		const heartContainer = document.getElementById('heartContainer');
+
+		function createHeart()
+		{
+			const heart = document.createElement('span');
+			heart.classList.add('heart');
+			heart.innerHTML = '❤️';
+			
+			const randomLeft = Math.random() * 100;
+			heart.style.left = `${randomLeft}%`;
+
+			heartContainer.appendChild(heart);
+
+			setTimeout(() => {
+				heart.remove();
+			}, 2000);
+		}
+		button.addEventListener('click', createHeart);
+	</script>
+
+</body>
+</html>

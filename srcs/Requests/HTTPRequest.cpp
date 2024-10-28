@@ -144,7 +144,7 @@ HTTPRequest &HTTPRequest::operator=(HTTPRequest const &rhs)
 	return (*this);
 }
 
-const std::string	HTTPRequest::createPath(const std::string& path, const std::string& method, bool attrib) const
+std::string	HTTPRequest::createPath(const std::string& path, const std::string& method, bool attrib)
 {
 	std::map<std::string, Location>	locationMap = this->_sConf.getLocation();
 	std::string						returnPath, locReq, allowedMethods;
@@ -183,6 +183,8 @@ const std::string	HTTPRequest::createPath(const std::string& path, const std::st
 	if (attrib && !loc.acceptsUploads())
 		HTTPResponse::generateResponse(405, allowedMethods, "", *this);
 
+	this->_loc = loc;
+
 	locReq = loc.getPath();
 
 	const	std::vector<std::string>& methods = loc.getAllowMethods();
@@ -215,6 +217,7 @@ const std::string	HTTPRequest::createPath(const std::string& path, const std::st
 					HTTPResponse::generateResponse(403, "", this->isKeepAlive(), *this);
 			}
 	}
+	this->_createdPath = returnPath;
 	return returnPath;
 }
 
@@ -265,6 +268,22 @@ const ServerConf&	HTTPRequest::getSConf() const
 	return (_sConf);
 }
 
+const std::string&	HTTPRequest::getCreatedPath() const{
+	return (_createdPath);
+}
+
+const Location&	HTTPRequest::getLoc() const{
+	return (_loc);
+}
+
+const std::string HTTPRequest::getContent(std::string wich) const{
+	std::map<std::string, std::string>::const_iterator it;
+	for (it = _headers.begin(); it != _headers.end(); it++){
+		if (it->first == wich)
+			return (it->second);
+	}
+	return ("");
+}
 /*
 	---------------------------------------------
 			Setters because I love OOP
@@ -275,8 +294,30 @@ void	HTTPRequest::setQuery(std::string query){
 	this->_query = query;
 }
 
+void	HTTPRequest::setCreatedPath(std::string path){
+	this->_createdPath = path;
+}
 void	HTTPRequest::setFileName(std::string name){
 	this->_fileName = name;
+}
+
+void	HTTPRequest::setHeaders(std::string wich, std::string content){
+	std::map<std::string, std::string>::iterator it;
+	bool found = false;
+
+	for (it = _headers.begin(); it != _headers.end(); it++){
+		if (it->first == wich){
+			it->second = content;
+			found = true;
+			break;
+		}
+	}
+	if (!found)
+		_headers[wich] = content;
+}
+
+void	HTTPRequest::setBody(std::string body){
+	this->_body = body;
 }
 
 const std::string	HTTPRequest::isKeepAlive() const

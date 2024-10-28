@@ -12,6 +12,7 @@
 
 #include "Requests/HTTPResponse.hpp"
 #include "Requests/HTTPRequest.hpp"
+#include "Network/ConnectManager.hpp"
 
 std::string	HTTPResponse::listDirectory(const std::string& path, const std::string& refPath)
 {
@@ -30,7 +31,7 @@ std::string	HTTPResponse::listDirectory(const std::string& path, const std::stri
 	return html;
 }
 
-std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::string& path, const std::string& alive, const HTTPRequest& request)
+std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::string& path, const std::string& alive, HTTPRequest& request)
 {
 	struct stat			s;
 	std::string			contentType;
@@ -44,6 +45,11 @@ std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::s
 		std::cout << RED << "Error " << statusCode << " occured. " << RESET << "Sending page " << errorPage << std::endl;
 		contentType = HTTPResponse::getContentType(errorPage);
 		content = HTTPResponse::readFile(errorPage);
+	}
+	else if (statusCode == 200){
+		contentType = request.getContent("Content-Type");
+		content = HTTPResponse::readFile(request.getCreatedPath());
+		std::cout << "CONTENTTUPE : " << contentType << std::endl << "Content  : " << content << std::endl;
 	}
 	else if (statusCode >= 200 && statusCode != 204 && statusCode < 300) {
 		stat(path.c_str(), &s);

@@ -6,6 +6,6 @@
 #include "Requests/HTTPRequest.hpp"
 #include "Requests/HTTPResponse.hpp"
 
-std::string			processGetRequest(const HTTPRequest& request);
+std::string			processGetRequest(HTTPRequest& request);
 
 #endif
