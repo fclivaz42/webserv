@@ -21,36 +21,38 @@ std::string CGIExec::getHeader(void){
 
 std::string CGIExec::getCgiContentType() const
 {
-	std::istringstream headerStream(_header); // Crée flux à partir de _header pour lire ligne par ligne
+	std::istringstream headerStream(_header);
 	std::string line;
 
 	while (std::getline(headerStream, line))
 	{
-		//std::cout << "je print la ligne" << line << std::endl;
-		//std::cout << "" << std::endl;
 		if (line.find("Content-Type") != std::string::npos)
 		{
-			size_t startPos = line.find(":") + 1; // Trouvez la position du début du type de contenu
-			// Supprimez les espaces blancs au début
+			size_t startPos = line.find(":") + 1;
 			while (startPos < line.length() && isspace(line[startPos]))
 			{
 				startPos++;
 			}
-			return line.substr(startPos); // Retournez le type de contenu
+			return line.substr(startPos);
 		}
 	}
-	return ""; // Retournez une chaîne vide si le type de contenu n'est pas trouvé
+	return "";
 }
 
 int CGIExec::execute(void){
 	int pid;
-	int fd[2];
-	std::string lol = _request.getLoc().getFastcgiPass();
-	const char *args[] = {lol.c_str(), _request.getCreatedPath().c_str(), NULL};
+	int fdoutput[2];
+	int fdinput[2];
+	std::string index = _request.getLoc().getFastcgiPass();
+	const char *args[] = {index.c_str(), _request.getCreatedPath().c_str(), NULL};
 	int exitStatus = 0;
 
-	std::cout << "------------ARG0 : " << args[0] << std::endl;
-	if(pipe(fd) == -1)
+	if(pipe(fdoutput) == -1)
+	{
+		perror("Pipe");
+		exit(-1);
+	}
+	if(pipe(fdinput) == -1)
 	{
 		perror("Pipe");
 		exit(-1);
@@ -65,63 +67,74 @@ int CGIExec::execute(void){
 	}
 	if(pid == 0)
 	{
-		launchChild(fd, args);
+		launchChild(fdoutput, fdinput, args);
 	}
 	else
 	{
-		exitStatus = launchParent(fd, pid);
+		exitStatus = launchParent(fdoutput, fdinput, pid);
 	}
+
 	return(exitStatus);
 }
 
-int CGIExec::launchChild(int *fd, const char** args)
+int CGIExec::launchChild(int *fdoutput, int *fdinput, const char** args)
 {
-		const char *envp[] = {
-    "GATEWAY_INTERFACE=CGI/1.1", 
-    "REQUEST_METHOD=GET", 
-    "QUERY_STRING=nbr1=1&operation=%2B&nbr2=1",
-    NULL
+	std::string gatewayInterface = "GATEWAY_INTERFACE=CGI/1.1";
+    std::string requestMethod = "REQUEST_METHOD=" + _request.getMethod();
+    std::string queryStringEnv = "QUERY_STRING=" + _request.getQuery();
+	const char *envp[] = {
+    	const_cast<char*>(gatewayInterface.c_str()),
+        const_cast<char*>(requestMethod.c_str()),
+        const_cast<char*>(queryStringEnv.c_str()),
+    	NULL
 	};
-	std::cout << "ARG0 : " << args[0] << std::endl;
-	close(fd[0]);
-	dup2(fd[1], STDOUT_FILENO);
-	close(fd[1]);
-	
+
+	close(fdoutput[0]);
+	dup2(fdoutput[1], STDOUT_FILENO);
+	close(fdoutput[1]);
+
+	close(fdinput[1]);
+	dup2(fdinput[0], STDIN_FILENO);
+	close(fdinput[0]);
+
 	execve(args[0], const_cast<char**>(args), const_cast<char**>(envp));
 	perror("execve");
 	exit(-1);
 }
 
-int CGIExec::launchParent(int *fd, int pid)
+int CGIExec::launchParent(int *fdoutput, int *fdinput, int pid)
 {
 	int status;
 	int reading = 0;
 	char tmp[BUFFERSIZE];
 	int exitStatus;
 
+	close(fdinput[0]);
+	ssize_t writing = write(fdinput[1], _request.getBody().c_str(), _request.getBody().size());
+	(void) writing;
+	close(fdinput[1]);
+
 	waitpid(pid, &status, 0);
 	if(WIFEXITED(status))
 	{
-		exitStatus = WEXITSTATUS(status); // tout c est bien passe, enfant a quitte meme si excve a echoue
-		std::cout << exitStatus << std::endl;
+		exitStatus = WEXITSTATUS(status);
 		if (exitStatus != 0)
 			return(500);
 	}
-	close(fd[1]);
-	dup2(fd[0], STDIN_FILENO);
+	close(fdoutput[1]);
 	std::string buf;
 	do
 	{
 		memset(tmp, 0, sizeof(tmp));
-		ssize_t reading = read(fd[0], tmp, sizeof(tmp) - 1); // Utilisez sizeof(tmp) pour éviter de lire au-delà de la taille du tampon
-		if (reading > 0)
+		ssize_t reading = read(fdoutput[0], tmp, sizeof(tmp) - 1);
 		{
 			buf.append(tmp, reading);
 		}
 	}
 	while (reading > 0);
+
 	findHeadAndBody(buf);
-	close(fd[0]);
+	close(fdoutput[0]);
 
 	return (exitStatus);
 }
@@ -150,7 +163,10 @@ int CGIExec::findHeadAndBody(std::string buf)
         _header = _body.substr(0, pos);
         _body = _body.substr(pos + 1);
     }
-	std::cout << "Headers CGI: " << _header << std::endl;
-	std::cout << "Body CGI: " << _body << std::endl;
+	if (DEBUG){
+		std::cout << "Headers CGI: " << _header << std::endl;
+		std::cout << "Body CGI: " << _body << std::endl;
+	}
+
     return 0;
 }

@@ -77,11 +77,6 @@ if (res != None):
 print (f"<br><br>")
 
 
-print("Historique<br>")
-for i in histo:
-   print(i)
-   print("<br>")
-
 
 print ("</body>")
 print ("</html>")

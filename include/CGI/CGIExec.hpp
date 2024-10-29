@@ -17,10 +17,10 @@ class CGIExec
 	public:
 		CGIExec(HTTPRequest &request);
 		~CGIExec();
-		int	execute();
-		int launchChild(int *fd, const char** args);
-		int launchParent(int *fd, int pid);
-		int findHeadAndBody(std::string buf);
+		int			execute();
+		int 		launchChild(int *fdoutput, int *fdinput, const char** args);
+		int 		launchParent(int *fdoutput, int *fdinput, int pid);
+		int 		findHeadAndBody(std::string buf);
 		std::string getCgiContentType() const;
 		std::string getBody(void);
 		std::string getHeader(void);

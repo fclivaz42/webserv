@@ -188,15 +188,7 @@ ssize_t	ConnectManager::readMessage(int clientFd, std::string *message)
 
 bool	isCGI(HTTPRequest &request){
 	
-	if (request.getMethod() == "GET"){
-		size_t pos = request.getCreatedPath().find("?");
-		if (pos == std::string::npos) {
-    	return false;
-		}
-		std::string subPath = request.getCreatedPath().substr(0, pos);
-		request.setCreatedPath(subPath);
-	}
-	std::cout << "CREATED PATH: " << request.getCreatedPath() << " FILENAME : " << request.getFileName() << std::endl;
+	
 	if (request.getLoc().getFastcgiIndex().size() == 0)
 		return (false);
 	if (request.getCreatedPath().rfind(request.getLoc().getFastcgiIndex()) == request.getCreatedPath().size() - request.getLoc().getFastcgiIndex().size())
@@ -204,9 +196,9 @@ bool	isCGI(HTTPRequest &request){
 	else
 		return (false);
 }
-//FUNCTION TO STORE REQUEST FROM CLIENT INTO HTTPREQUEST CLASS
+
 bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serverConf, std::string& message)
-{2
+{
 	std::string response;
 	
 	try
@@ -221,20 +213,23 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 				HTTPResponse::generateResponse(417, serverConf.getErrorPath(), "Connection: close", request);
 		}
 		else if (isCGI(request) == true){
-
 			CGIExec cgi(request);
 			int status = cgi.execute();
-			std::cout << "STAT: " << status << std::endl; 
+
 			if (status == 500)
 				HTTPResponse::generateResponse(500, serverConf.getErrorPath(), request.isKeepAlive(), request);
 			else{
 				std::string contentType = cgi.getCgiContentType();
                 std::string body = cgi.getBody();
-                
-				response = "HTTP/1.1 200 OK\r\n" + cgi.getHeader() + "\r\n";
-				response += "Content-Length: " + std::to_string(cgi.getBody().size()) + "\r\n\r\n";
+                std::string test = cgi.getHeader();
+				response = "HTTP/1.1 200 OK\r\n" + cgi.getHeader();
+				std::stringstream truc;
+				truc << cgi.getBody().size();
+				response += "Content-Length: " + truc.str() + "\r\n\r\n";
 				response += cgi.getBody();
-				std::cout << "Final Response:\n" << response << std::endl;
+
+				if (DEBUG)
+					std::cout << "Final Response:\n" << response << std::endl;
 			}
 			
 		}

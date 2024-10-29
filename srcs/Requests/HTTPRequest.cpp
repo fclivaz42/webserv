@@ -33,6 +33,11 @@ HTTPRequest::HTTPRequest(std::string& request, const ServerConf& sConf, bool con
 	std::istringstream requestLine(request.substr(0, delim - 2));
 	requestLine >> _method >> _path >> _version;
 
+	size_t pos1 = _path.find("?");
+	if (pos1 != std::string::npos){
+		_query = _path.substr(pos1 + 1);
+		_path = _path.substr(0, pos1);
+	}
 	_path = urlDecode(_path);
 
 	if (DEBUG) {
@@ -86,18 +91,6 @@ HTTPRequest::HTTPRequest(std::string& request, const ServerConf& sConf, bool con
 		}
 		else
 			HTTPResponse::generateResponse(400, "", this->isKeepAlive(), *this);
-	}
-	if (_headers.find("Referer") != _headers.end()) {
-    	size_t pos = _headers.find("Referer")->second.find("?");
-    	if (pos != std::string::npos) {
-       		std::string name = _headers.find("Referer")->second;
-        	std::string _query = name.substr(pos + 1);
-			size_t lastPos = name.find_last_of("/", pos);
-			if (lastPos != std::string::npos)
-            	_fileName = name.substr(lastPos + 1, pos - lastPos - 1);
-        	std::cout << "QUERY: " << _query << std::endl;
-			std::cout << "FILE: " << _fileName << std::endl;
-    	}
 	}
 	if (_version == "HTTP/1.1" && (_headers.find("Host") == _headers.end()))
 		HTTPResponse::generateResponse(400, "", this->isKeepAlive(), *this);
