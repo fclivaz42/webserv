@@ -137,7 +137,6 @@ HTTPRequest::HTTPRequest(HTTPRequest const &copy) :	_method(copy._method),
 													_headers(copy._headers),
 													_createdPath(copy._createdPath),
 													_query(copy._query),
-													_fileName(copy._fileName),
 													_body(copy._body),
 													_bodySize(copy._bodySize),
 													_sConf(copy._sConf),
@@ -240,12 +239,6 @@ const std::string&	HTTPRequest::getQuery() const
 	return (_query);
 }
 
-const std::string&	HTTPRequest::getFileName() const
-{
-	return (_fileName);
-}
-
-
 const ServerConf&	HTTPRequest::getSConf() const
 {
 	return (_sConf);
@@ -259,10 +252,6 @@ const ServerConf&	HTTPRequest::getSConf() const
 
 void	HTTPRequest::setQuery(const std::string& query){
 	this->_query = query;
-}
-
-void	HTTPRequest::setFileName(const std::string& name){
-	this->_fileName = name;
 }
 
 void	HTTPRequest::setBodySize(size_t size)

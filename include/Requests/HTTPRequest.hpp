@@ -22,7 +22,6 @@ class	HTTPRequest
 		const std::map<std::string, std::string>	_headers;
 		std::string									_createdPath;
 		std::string									_query;
-		std::string									_fileName;
 		std::string									_body;
 		size_t										_bodySize;
 		const ServerConf&							_sConf;
@@ -47,11 +46,9 @@ class	HTTPRequest
 		const std::string&							getVersion() const;
 		const std::string&							getBody() const;
 		const std::string&							getQuery() const;
-		const std::string&							getFileName() const;
 		const ServerConf&							getSConf() const;
 		const Location&								getLoc() const;
 		void										setQuery(const std::string& query);
-		void										setFileName(const std::string& name);
 		void										setBodySize(size_t size);
 		void										setCreatedPath(const std::string& cPath);
 		const std::string							isKeepAlive() const;
