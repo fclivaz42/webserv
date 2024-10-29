@@ -244,6 +244,11 @@ const ServerConf&	HTTPRequest::getSConf() const
 	return (_sConf);
 }
 
+const Location&	HTTPRequest::getLoc() const
+{
+	return (_loc);
+}
+
 /*
 	---------------------------------------------
 			Setters because I love OOP

@@ -275,6 +275,7 @@ void	ConnectManager::start()
 				catch (const std::exception& error) {
 					fdResponseMap[fds[i].fd] = error.what();
 				}
+				std::cout << "Sending to client...\n";
 				writeToClient(fdResponseMap[fds[i].fd], fds[i].fd);
 				delete fdRequestMap[fds[i].fd];
 				it = std::find(readFds.begin(), readFds.end(), fds[i].fd);

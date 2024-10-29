@@ -38,6 +38,7 @@ class ConnectManager
 		void				closErase(size_t index);
 		void				initializeRequest(int clientFd, const std::string& message, std::map<int, HTTPRequest*>& fdRequestMap);
 		void				writeToClient(const std::string& response, int clientFd);
+		void				redirectPath(const ServerConf& sConf,const Location& loc, std::string& path);
 		const std::string	handleClient(HTTPRequest& request);
 		const ServerConf&	findSconfFromHost(std::map<std::string, std::string>& headers);
 		const Location&		findLocationFromSConf(const ServerConf& sConf, const std::string& path);

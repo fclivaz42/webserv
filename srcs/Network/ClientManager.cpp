@@ -1,5 +1,6 @@
 #include "Network/ConnectManager.hpp"
 #include "CGI/CGIExec.hpp"
+#include "Parsing/ServerConf.hpp"
 
 bool	isCGI(HTTPRequest &request){
 	
@@ -67,6 +68,30 @@ void	ConnectManager::writeToClient(const std::string& response, int clientFd)
 	close(clientFd);
 }
 
+void	ConnectManager::redirectPath(const ServerConf& sConf,const Location& loc, std::string& path)
+{
+	const std::map<std::string, Location>&	locationMap = sConf.getLocation();
+	std::string						locReq;
+	Location						oldLoc;
+	size_t							pos;
+
+	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++) {
+		locReq = iter->second.getPath();
+		pos = -1;
+		while (!(locReq.c_str()[++pos] == 0 || path.c_str()[pos] == 0))
+			if (locReq.c_str()[pos] != path.c_str()[pos])
+				break;
+		if (locReq.c_str()[pos] == 0 && (path.c_str()[pos] == 0 || path.c_str()[pos] == '/')) {
+			oldLoc = iter->second;
+		}
+	}
+
+	if (oldLoc.getPath() != loc.getPath()) {
+		std::cout << "switching paths...\n";
+		path.replace(path.find(oldLoc.getPath()), oldLoc.getPath().length(), loc.getPath());
+	}
+}
+
 /*
 	initializeRequest va generer les serverConf, Location et method/path/version pour avoir une HTTPRequest prete.
 */
@@ -103,14 +128,13 @@ const Location&	ConnectManager::findLocationFromSConf(const ServerConf& sConf, c
 			if (locReq.c_str()[pos] != path.c_str()[pos])
 				break;
 		if (locReq.c_str()[pos] == 0 && (path.c_str()[pos] == 0 || path.c_str()[pos] == '/')) {
-				return iter->second;
-		/*	if (iter->second.getReturnURL().empty())
+			if (iter->second.getReturnURL().empty())
 				return iter->second;
 			else if (iter->second.getReturnURL().find("http://") != std::string::npos || iter->second.getReturnURL().find("https://") != std::string::npos)
 				return iter->second;
 			else
 				return findLocationFromSConf(sConf, iter->second.getReturnURL());
-	*/	}
+		}
 	}
 
 	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
@@ -198,7 +222,7 @@ void	ConnectManager::initializeRequest(int clientFd, const std::string& message,
 
 	const ServerConf& sConf = findSconfFromHost(headers);
 	const Location&	loc = findLocationFromSConf(sConf, attribs["path"]);
-//	attribs["path"].replace(0, attribs["path"].length(), loc.getPath());
+	redirectPath(sConf, loc, attribs["path"]);
 
 	fdRequestMap[clientFd] = new HTTPRequest(attribs, headers, sConf, loc);
 

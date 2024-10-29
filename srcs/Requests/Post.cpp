@@ -6,7 +6,7 @@
 //   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/10/24 13:58:01 by lmedrano          #+#    #+#             //
-/*   Updated: 2024/10/29 12:08:42 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/10/29 16:32:28 by fclivaz          ###   LAUSANNE.ch       */
 //                                                                            //
 // ************************************************************************** //
 
@@ -46,24 +46,19 @@ static const std::string	uploadRequest(const HTTPRequest& request)
 {
 	std::map<std::string, std::string>	headers = request.getHeaders();
 	const std::string&					shift = request.getBody();
+	const Location&						loc = request.getLoc();
 	std::string							fileName, line, path;
 
 	if (DEBUG)
 		std::cout << GREEN << "POST: File being uploaded." << std::endl;
-	if (shift.find("filename=\"") == std::string::npos) {
-		std::cout << "FILENAME WAS NOT FOUND!! HERE'S WHAT WE GOT:\n";
-		std::string tej;
-		std::stringstream bodyStream(request.getBody());
-		while (tej != "\r") {
-			std::getline(bodyStream, tej);
-			std::cout << tej << "\n";
-		}
-	}
+	if (!loc.acceptsUploads())
+		HTTPResponse::generateResponse(405, "POST", request.isKeepAlive(), request);
+	if (shift.find("filename=\"") == std::string::npos)
+		HTTPResponse::generateResponse(400, "", request.isKeepAlive(), request);
 	fileName = shift.substr(shift.find("filename=\"") + 10);
 	fileName = fileName.substr(0, fileName.find_first_of("\""));
-	path = request.getPath();
-	exit(0);
-//	path = request.createPath(path + (*(path.end() - 1) == '/' ? "" : "/") + fileName, "POST");
+	path = request.getCreatedPath();
+	path += (*(path.end() - 1) == '/' ? "" : "/") + fileName;
 	if (DEBUG)
 		std::cout << "POST: Created path: " << path << RESET << std::endl;
 
@@ -82,6 +77,7 @@ static const std::string	uploadRequest(const HTTPRequest& request)
 	}
 	else
 		HTTPResponse::generateResponse(500, "", request.isKeepAlive(), request);
+	std::cout << "file written.\n";
 	return HTTPResponse::generateResponse(201, path, request.isKeepAlive(), request);
 }
 
