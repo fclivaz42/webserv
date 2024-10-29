@@ -16,6 +16,7 @@
 std::string	HTTPResponse::listDirectory(const std::string& path, const std::string& refPath)
 {
 	std::string		html = HEADERS;
+
 	struct dirent	*dent;
 	DIR				*lst = opendir(path.c_str());
 
@@ -29,6 +30,41 @@ std::string	HTTPResponse::listDirectory(const std::string& path, const std::stri
 	html += "<hr width='100%' size='2' color='black'>\n\t<p>webserv</p>\n</body>\n</html>";
 	closedir(lst);
 	return html;
+}
+
+std::string generateHtml(int statusCode)
+{
+		std::string		html = ERRORS;
+		std::stringstream iss;
+		iss << statusCode;
+		std::string res = iss.str();
+
+		html.replace(html.find("++PATH++"), 8, res);
+		switch (statusCode)
+			{
+				case 400:
+					return html += "\t<h1>400 Bad Request</h1>\n</body>\n</html>";
+				case 403:
+					return html += "\t<h1>403 Forbidden</h1>\n</body>\n</html>";
+				case 404:
+					return html += "\t<h1>404 Not Found</h1>\n</body>\n</html>";
+				case 405:
+					return html += "\t<h1>405 Method Not Allowed</h1>\n</body>\n</html>";
+				case 411:
+					return html += "\t<h1>411 Length Required</h1>\n</body>\n</html>";
+				case 413:
+					return html += "\t<h1>413 Content Too Large</h1>\n</body>\n</html>";
+				case 414:
+					return html += "\t<h1>414 URI Too Long/h1>\n</body>\n</html>";
+				case 415:
+					return html += "\t<h1>415 Unsupported Media Type</h1>\n</body>\n</html>";
+				case 417:
+					return html += "\t<h1>417 Expectation Failed</h1>\n</body>\n</html>";
+				case 418:
+					return html += "\t<h1>418 I'm a teapot</h1>\n</body>\n</html>";
+				case 505:
+					return html += "\t<h1>505 HTTP Version Not Supported/h1>\n</body>\n</html>";
+			}
 }
 
 std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::string& path, const std::string& alive, const HTTPRequest& request)
@@ -45,6 +81,8 @@ std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::s
 		std::cout << RED << "Error " << statusCode << " occured. " << RESET << "Sending page " << errorPage << std::endl;
 		contentType = HTTPResponse::getContentType(errorPage);
 		content = HTTPResponse::readFile(errorPage);
+		if (content.empty())
+			content = generateHtml(statusCode);
 	}
 	else if (statusCode >= 200 && statusCode != 204 && statusCode < 300) {
 		stat(path.c_str(), &s);
