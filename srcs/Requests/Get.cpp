@@ -59,7 +59,7 @@ std::string	processGetRequest(const HTTPRequest& request)
 	if (DEBUG)
 		std::cout << GREEN << "GET: PATH IS: " << path << RESET << std::endl;
 
-	localPath = request.createPath(path, "GET", false);
+	localPath = request.getCreatedPath();
 
 	if (DEBUG)
 		std::cout << GREEN << "GET: Created Local Path: " << localPath << RESET << std::endl;

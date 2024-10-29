@@ -1,9 +1,13 @@
 // Pas de header pour eviter les conflicts :)
 
 #include "Network/ConnectManager.hpp"
+#include "Parsing/Location.hpp"
+#include "Parsing/ServerConf.hpp"
 #include "Requests/HTTPResponse.hpp"
 #include <algorithm>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 /*
 	c tipar pour le construiseur d'une manager de connect
@@ -167,65 +171,218 @@ bool	ConnectManager::startSocketListen(int backlog)
 }
 
 /*
+		handleClient launches the actual request after HTTPRequest has been parsed.
+*/
+const std::string	ConnectManager::handleClient(HTTPRequest& request)
+{
+	request.createPath();
+	std::map<std::string, std::string>	headers = request.getHeaders();
+	std::cout << "REQUEST : " << request.getPath() << std::endl;
+
+	if (headers["Expect"] == "100-continue") {
+		if (request.getContentLength() <= request.getSConf().getMaxBodySize())
+			return HTTPResponse::generateResponse(100, "", request.isKeepAlive(), request);
+		else
+			HTTPResponse::generateResponse(417, request.getSConf().getErrorPath(), "Connection: close", request);
+	}
+	else if (request.getContentLength() > request.getSConf().getMaxBodySize())
+			HTTPResponse::generateResponse(413, request.getSConf().getErrorPath(), request.isKeepAlive(), request);
+	else if (request.getMethod() == "GET")
+		return processGetRequest(request);
+	else if (request.getMethod() == "POST")
+		return processPostRequest(request);
+	else if (request.getMethod() == "DELETE")
+		return processDeleteRequest(request);
+	return HTTPResponse::generateResponse(500, "", request.isKeepAlive(), request);
+}
+
+void	ConnectManager::writeToClient(const std::string& response, int clientFd)
+{
+	ssize_t bytesWritten = write(clientFd, response.c_str(), response.length());
+	if (bytesWritten == -1)
+		std::cerr << RED << "ERROR:" << RESET << " write() failure.";
+	else if (bytesWritten != static_cast<ssize_t>(response.length()))
+		std::cerr << ORANGE << "WARN:" << RESET << " Failure to write entire response.";
+	close(clientFd);
+}
+
+/*
+	initializeRequest va generer les serverConf, Location et method/path/version pour avoir une HTTPRequest prete.
+*/
+
+const ServerConf&	ConnectManager::findSconfFromHost(std::map<std::string, std::string>& headers)
+{
+	std::string			fnbr;
+	
+	if (headers.find("Host") != headers.end()) {
+		for (int i = 0; i < _serverList.getAmountOfServers(); i++) {
+			const std::vector<ushort>& cPorts= _serverList.getServConf(i).getPort();
+			for (std::vector<ushort>::const_iterator it = cPorts.begin(); it != cPorts.end(); it++) {
+				std::stringstream	nbr;
+				nbr << *it;
+				fnbr = _serverList.getServConf(i).getServerName() + ":" + nbr.str();
+				if (headers["Host"] == fnbr)
+					return _serverList.getServConf(i);
+			}
+		}
+	}
+	return _serverList.getServConf(0);
+}
+
+const Location&	ConnectManager::findLocationFromSConf(const ServerConf& sConf, const std::string& path)
+{
+	const std::map<std::string, Location>&	locationMap = sConf.getLocation();
+	std::string						locReq;
+	size_t							pos;
+
+	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++) {
+		locReq = iter->second.getPath();
+		pos = -1;
+		while (!(locReq.c_str()[++pos] == 0 || path.c_str()[pos] == 0))
+			if (locReq.c_str()[pos] != path.c_str()[pos])
+				break;
+		if (locReq.c_str()[pos] == 0 && (path.c_str()[pos] == 0 || path.c_str()[pos] == '/'))
+			return iter->second;
+	}
+
+	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
+		if (iter->second.isDefault())
+			return iter->second;
+	return locationMap.begin()->second;
+}
+
+void	ConnectManager::initializeRequest(int clientFd, const std::string& message, std::map<int, HTTPRequest*>& fdRequestMap)
+{
+	std::map<std::string, std::string>	headers;
+	std::map<std::string, std::string>	attribs;
+	std::string	line, key, value, body;
+	const std::string&	alive ="Connection: close\r\n";
+	size_t		pos, delim, tmp;
+
+	fdRequestMap[clientFd] = NULL;
+	delim = message.find("\r\n") + 2;
+	std::istringstream requestLine(message.substr(0, delim - 2));
+	requestLine >> attribs["method"] >> attribs["path"] >> attribs["version"];
+
+	if (DEBUG) {
+		std::stringstream	stRequest(message.substr(0, message.find_first_not_of(PRINTABLES) - 1));
+		std::string			prRequest;
+		std::cout << "\n┌────────── NEW REQUEST ──────────\n";
+		while (std::getline(stRequest, prRequest))
+			if (stRequest.peek() != EOF)
+				std::cout << "│ " << prRequest << std::endl;
+	}
+
+	attribs["path"] = urlDecode(attribs["path"]);
+
+	if (DEBUG) {
+		std::cout << "├────────── REQUEST METADATA ──────────\n";
+		std::cout << "│ Method: " << attribs["method"] << "" << std:: endl;
+		std::cout << "│ Path: " << attribs["path"] << std:: endl;
+		std::cout << "│ Version: " << attribs["version"] << "\n└────────── END REQUEST  ──────────\n";
+	}
+
+	while (delim < message.length())
+	{
+		tmp = message.find("\r\n", delim) + 2;
+		if (delim >= message.length() || tmp >= message.length())
+			break;
+		line = message.substr(delim, tmp - delim - 1);
+		delim = tmp;
+		pos = line.find(":");
+		if (pos != std::string::npos)
+		{
+			key = trim(line.substr(0, pos));
+			value = trim(line.substr(pos + 1, line.length() - (pos + 1) - 1));
+			if (key != "Content-Type")
+				headers[key] = value;
+			else if (value == "application/x-www-form-urlencoded")
+				headers[key] = value;
+			else if (value.find("multipart") != std::string::npos)
+			{
+				headers["boundary"] = value.substr(value.find("boundary=") + 9);
+				headers[key] = value.substr(0, value.find(';'));
+			}
+		}
+		else if (line == "\r")
+			if (headers["Content-Type"] == "application/x-www-form-urlencoded") {
+				body = message.substr(delim);
+				break;
+			}
+			else
+				continue;
+		else if (line.find(headers["boundary"]) != std::string::npos)
+		{
+			body = message.substr(delim);
+			break ;
+		}
+		else
+			continue;
+	}
+/*
+	if (headers.find("Referer") != headers.end()) {
+    	size_t pos = headers.find("Referer")->second.find("?");
+    	if (pos != std::string::npos) {
+       		std::string name = headers.find("Referer")->second;
+        	std::string _query = name.substr(pos + 1);
+			size_t lastPos = name.find_last_of("/", pos);
+			if (lastPos != std::string::npos)
+            	attribs["fileName"] = name.substr(lastPos + 1, pos - lastPos - 1);
+        	std::cout << "QUERY: " << _query << std::endl;
+			std::cout << "FILE: " << _fileName << std::endl;
+    	}
+	}
+*/
+
+
+	const ServerConf& sConf = findSconfFromHost(headers);
+	const Location&	loc = findLocationFromSConf(sConf, attribs["path"]);
+
+	fdRequestMap[clientFd] = new HTTPRequest(attribs["method"], attribs["path"], attribs["version"], headers, sConf, loc);
+
+	if (attribs["method"] != "GET" && attribs["method"] != "POST" && attribs["method"] != "DELETE")
+		HTTPResponse::generateResponse(405, "GET, POST, DELETE", alive, *fdRequestMap[clientFd]);
+
+	if (attribs["path"].empty() || attribs["path"][0] != '/')
+		HTTPResponse::generateResponse(400, "", alive, *fdRequestMap[clientFd]);
+
+	if (attribs["version"] != "HTTP/1.1" && attribs["version"] != "HTTP/1.0")
+		HTTPResponse::generateResponse(505, "", alive, *fdRequestMap[clientFd]);
+
+	if (attribs["method"] == "POST")
+	{
+		if (headers.find("Content-Length") == headers.end())
+			HTTPResponse::generateResponse(411, "", alive, *fdRequestMap[clientFd]);
+		if (headers.find("Content-Type") == headers.end())
+			HTTPResponse::generateResponse(415, "", alive, *fdRequestMap[clientFd]);
+	}
+		char	*ptr;
+		long	testsize = strtol(headers["Content-Length"].c_str(), &ptr, 10);
+		if (testsize < 0 || ptr[0] != 0)
+			HTTPResponse::generateResponse(418, "", alive, *fdRequestMap[clientFd]);
+
+		fdRequestMap[clientFd]->setBodySize(strtoul(headers["Content-Length"].c_str(), NULL, 10));
+}
+
+/*
 	readMessage va etre appele par start() tant revents de clientFd est sur POLLIN.
 	Il va write ce qu'il a lu dans la stringstream message.
  */
 
-ssize_t	ConnectManager::readMessage(int clientFd, std::string *message)
+ssize_t	ConnectManager::readMessage(int clientFd, std::string& message)
 {
 	char		buffer[BUFFER_SIZE];
 	ssize_t		bytesRead;
 
 	ft_bzero(buffer, BUFFER_SIZE);
 	bytesRead = read(clientFd, buffer, BUFFER_SIZE);
-	if (bytesRead > 0) {}
-		message->append(buffer, bytesRead);
+	if (bytesRead > 0)
+		message.append(buffer, bytesRead);
 	if (bytesRead < 0)
-		std::cerr << RED << "ERROR: read() failure" << RESET << std::endl;
+		std::cerr << RED << "ERROR:" << RESET << " read() failure! Disconnecting...\n";
+	if (bytesRead == 0)
+		std::cerr << ORANGE << "WARN:" << RESET << " Nothing to read! Disconnecting...\n";
 	return bytesRead;
-}
-
-//FUNCTION TO STORE REQUEST FROM CLIENT INTO HTTPREQUEST CLASS
-bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serverConf, std::string& message)
-{
-	std::string response;
-	
-	try
-	{
-		HTTPRequest request(message, serverConf, _continue);
-		std::map<std::string, std::string>	headers = request.getHeaders();
-		std::cout << "REQUEST : " << request.getPath() << std::endl;
-
-		if (headers["Expect"] == "100-continue") {
-			if (request.getContentLength() <= serverConf.getMaxBodySize())
-				response = HTTPResponse::generateResponse(100, "", request.isKeepAlive(), request);
-			else
-				HTTPResponse::generateResponse(417, serverConf.getErrorPath(), "Connection: close", request);
-		}
-		else if (request.getContentLength() > serverConf.getMaxBodySize())
-				HTTPResponse::generateResponse(413, serverConf.getErrorPath(), request.isKeepAlive(), request);
-		else if (request.getMethod() == "GET")
-			response = processGetRequest(request);
-		else if (request.getMethod() == "POST")
-			response = processPostRequest(request);
-		else if (request.getMethod() == "DELETE")
-			response = processDeleteRequest(request);
-	}
-	catch (const std::exception& error) {
-		response = error.what();
-	}
-	ssize_t bytesWritten = write(clientFd.fd, response.c_str(), response.length());
-	if (bytesWritten == -1) {
-		std::cerr << RED << "ERROR: write() failure" << RESET << std::endl;
-		return(close(clientFd.fd));
-	}
-	else if (bytesWritten != static_cast<ssize_t>(response.length())) {
-		std::cerr << RED << "ERROR: Failure to write entire response" << RESET << std::endl;
-		return(close(clientFd.fd));
-	}
-	if (response != "HTTP/1.1 100 Continue\r\nConnection: keep-alive\r\nContent-Length: 0\r\n\r\n")
-		return(close(clientFd.fd));
-	return (true);
 }
 
 /*
@@ -243,26 +400,24 @@ bool	ConnectManager::handleClient(struct pollfd clientFd, const ServerConf& serv
 	Une fois que cela est fait, on lance handleClient() avec le clientFd ainsi que le serverConfig correct.
 */
 
-void	ConnectManager::acceptConnection(int serverFd, std::vector<struct pollfd>& fdList, std::map<int, ushort>& fdMap)
+void	ConnectManager::acceptConnection(int serverFd, std::vector<struct pollfd>& fdList, std::map<int, std::string>& fdMap)
 {
 	struct sockaddr_in	clientAddress;
-	struct sockaddr_in	serverPort;
 	socklen_t clientLen = sizeof(clientAddress);
-	socklen_t portLen = sizeof(serverPort);
 	struct pollfd		clientPfd;
 
 	clientPfd.fd = accept(serverFd, (struct sockaddr*)&clientAddress, &clientLen);
-	if (clientPfd.fd == -1 || getsockname(serverFd, (struct sockaddr*)&serverPort, &portLen) == -1) {
+	if (clientPfd.fd == -1) {
 		std::cerr << RED << "\nERROR : Connection failure" << RESET << std::endl;
 		return ;
 	}
 	if (clientPfd.fd > 0)
 		std::cerr << GREEN << "\n┌──────────\n│ New connection from: " \
 			<< inet_ntoa(clientAddress.sin_addr) << "\n└──────────" << RESET << std::endl;
-	clientPfd.events = POLLIN;
+	clientPfd.events = POLLIN | POLLOUT;
 	clientPfd.revents = 0;
 	fdList.push_back(clientPfd);
-	fdMap[(fdList.end() - 1)->fd] = ntohs(serverPort.sin_port);
+	fdMap[(fdList.end() - 1)->fd] = "";
 }
 
 /*
@@ -279,9 +434,11 @@ void	ConnectManager::start()
 {
 	std::vector<struct pollfd>	fds(0);
 	std::vector<int>			readFds(0);
-	std::map<int, ushort>		fdMap;
+	std::map<int, std::string>	fdMessageMap;
+	std::map<int, std::string>	fdResponseMap;
+	std::map<int, HTTPRequest*>	fdRequestMap;
+	std::vector<int>::iterator	it;
 	int							pollResult;
-	std::string					message;
 
 	for (size_t i = 0; i < _serverFds.size(); i++)
 	{
@@ -292,40 +449,46 @@ void	ConnectManager::start()
 		fds.push_back(serverPollFd);
 	}
 	_continue = false;
-	while ((pollResult = poll(fds.data(), fds.size(), 10)) >= 0)
+	while ((pollResult = poll(fds.data(), fds.size(), -1)) >= 0)
 	{
 		for (size_t i = 0; i < _serverFds.size(); i++)
 			if (fds[i].revents & POLLIN)
-				acceptConnection(_serverFds[i], fds, fdMap);
+				acceptConnection(_serverFds[i], fds, fdMessageMap);
 		for (size_t i = _serverFds.size(); i < fds.size(); i++)
 		{
 			if (fds[i].revents & POLLIN) {
-				readMessage(fds[i].fd, &message);
-				if (std::find(readFds.begin(), readFds.end(), fds[i].fd) == readFds.end()) {
+				if (readMessage(fds[i].fd, fdMessageMap[fds[i].fd]) <= 0) {
+					close(fds[i].fd);
+					it = std::find(readFds.begin(), readFds.end(), fds[i].fd);
+					if (it != readFds.end())
+						readFds.erase(it);
+					fds.erase(fds.begin() + i);
+					--i;
+				}
+				else if (std::find(readFds.begin(), readFds.end(), fds[i].fd) == readFds.end())
 					readFds.push_back(fds[i].fd);
-				}
 			}
-			else {
-				if (std::find(readFds.begin(), readFds.end(), fds[i].fd) != readFds.end()) {
-					for (int n = 0; n < this->_serverList.getAmountOfServers(); n++)
-					{
-						const ServerConf&	currentSConf = _serverList.getServConf(n);
-						if (std::find(currentSConf.getPort().begin(), currentSConf.getPort().end(), fdMap[fds[i].fd]) != currentSConf.getPort().end())
-						{
-							std::cout << "CLIENT " << fds[i].fd << " ON PORT " << fdMap[fds[i].fd] << " IS USING SERVER " << currentSConf.getServerName() << "\n";
-							if (!(_continue = handleClient(fds[i], currentSConf, message)))
-							{
-								readFds.erase(std::find(readFds.begin(), readFds.end(), fds[i].fd));
-								fds.erase(fds.begin() + i);
-								--i;
-							}
-							message = "";
-							break ;
-						}
-					}
+			else if (fds[i].revents & POLLOUT && std::find(readFds.begin(), readFds.end(), fds[i].fd) != readFds.end()) {
+				try {
+					initializeRequest(fds[i].fd, fdMessageMap[fds[i].fd], fdRequestMap);
+					std::cout << "CLIENT " << fds[i].fd << " IS USING SERVER " << fdRequestMap[fds[i].fd]->getSConf().getServerName() << "\n";
+					fdResponseMap[fds[i].fd] = handleClient(*fdRequestMap[fds[i].fd]);
 				}
+				catch (const std::exception& error) {
+					fdResponseMap[fds[i].fd] = error.what();
+				}
+				writeToClient(fdResponseMap[fds[i].fd], fds[i].fd);
+				delete fdRequestMap[fds[i].fd];
+				close(fds[i].fd);
+				it = std::find(readFds.begin(), readFds.end(), fds[i].fd);
+				if (it != readFds.end())
+					readFds.erase(it);
+				fds.erase(fds.begin() + i);
+				--i;
 			}
+			else
+				continue;
 		}
 	}
-	std::cerr << RED << "ERROR: poll() failure" << RESET << std::endl;
+	throw std::runtime_error("poll() failed!\n");
 }

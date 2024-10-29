@@ -6,7 +6,7 @@
 //   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/10/24 13:58:01 by lmedrano          #+#    #+#             //
-/*   Updated: 2024/10/27 23:23:04 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/10/29 05:08:14 by fclivaz          ###   LAUSANNE.ch       */
 //                                                                            //
 // ************************************************************************** //
 
@@ -42,7 +42,7 @@ const std::string urlDecode(const std::string& str)
 	return result;
 }
 
-static const std::string	uploadRequest(HTTPRequest& request)
+static const std::string	uploadRequest(const HTTPRequest& request)
 {
 	std::map<std::string, std::string>	headers = request.getHeaders();
 	const std::string&					shift = request.getBody();
@@ -62,7 +62,8 @@ static const std::string	uploadRequest(HTTPRequest& request)
 	fileName = shift.substr(shift.find("filename=\"") + 10);
 	fileName = fileName.substr(0, fileName.find_first_of("\""));
 	path = request.getPath();
-	path = request.createPath(path + (*(path.end() - 1) == '/' ? "" : "/") + fileName, "POST", true);
+	exit(0);
+//	path = request.createPath(path + (*(path.end() - 1) == '/' ? "" : "/") + fileName, "POST");
 	if (DEBUG)
 		std::cout << "POST: Created path: " << path << RESET << std::endl;
 
@@ -84,7 +85,7 @@ static const std::string	uploadRequest(HTTPRequest& request)
 	return HTTPResponse::generateResponse(201, path, request.isKeepAlive(), request);
 }
 
-static const std::string	formRequest(HTTPRequest& request)
+static const std::string	formRequest(const HTTPRequest& request)
 {
 	std::map<std::string, std::string> formData;
 	std::stringstream bodyStream(request.getBody());
@@ -107,7 +108,7 @@ static const std::string	formRequest(HTTPRequest& request)
 	email = formData["email"];
 	message = formData["message"];
 
-	std::string			path(request.createPath(request.getPath(), "POST", false)), line, response;
+	std::string			path(request.getCreatedPath()), line, response;
 	std::stringstream	genRes(HTTPResponse::generateResponse(200, path, request.isKeepAlive(), request));
 	std::size_t			pos;
 
@@ -128,6 +129,7 @@ static const std::string	formRequest(HTTPRequest& request)
 	return (response);
 }
 
+/*
 static std::string intToString(int value) {
     std::ostringstream oss;
     oss << value;
@@ -155,13 +157,14 @@ static bool		isCGIRequest(const std::string& path)
 		std::string cgiPath = "/calculator.html";
 	return (path.find(cgiPath) == 0);
 }
-
-const std::string	processPostRequest(HTTPRequest& request)
+*/
+const std::string	processPostRequest(const HTTPRequest& request)
 {
 	std::map<std::string, std::string> headers(request.getHeaders());
 
 	std::cout << "POST REQUEST: " << request.getPath() << std::endl;
-//	(void)request.createPath(request.getPath(), "POST", false);
+/*
+	(void)request.createPath(request.getPath(), "POST", false);
 	if (isCGIRequest(request.getPath()))
 	{
 		std::string cgiPath = "/cgi-bin/script.py";
@@ -169,9 +172,11 @@ const std::string	processPostRequest(HTTPRequest& request)
 		CGIExec cgiExec(cgiPath, env);;
 		return (cgiExec.execute(request.getBody()));
 	}
+*/
 	if (headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos)
 		return (formRequest(request));
 	else if (headers["Content-Type"].find("multipart") != std::string::npos)
 		return (uploadRequest(request));
+	std::cout << "bnruh? " << headers["Content-Type"];
 	return HTTPResponse::generateResponse(415, "", request.isKeepAlive(), request);
 }

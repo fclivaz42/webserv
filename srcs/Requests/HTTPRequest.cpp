@@ -7,7 +7,20 @@
 	---------------------------------------------
 */
 
-HTTPRequest::HTTPRequest(std::string& request, const ServerConf& sConf, bool cont) :_method(""), _path(""), _query(""), _fileName(""), _version(""), _body(""), _bodySize(0), _sConf(sConf)
+HTTPRequest::HTTPRequest(	const std::string& method,
+							const std::string& path,
+							const std::string& version,
+							const std::map<std::string, std::string> headers,
+							const ServerConf& sConf,
+							const Location& loc) : _method(method),
+													_path(path),
+													_version(version),
+													_headers(headers),
+													_sConf(sConf),
+													_loc(loc)
+{}
+/*
+void	HTTPRequest::fillRequest(std::string& request, bool cont)
 {
 	std::string	line, key, value;
 	size_t		pos, delim, tmp;
@@ -117,14 +130,18 @@ HTTPRequest::HTTPRequest(std::string& request, const ServerConf& sConf, bool con
 		_bodySize = strtoul(_headers["Content-Length"].c_str(), NULL, 10);
 	request.clear();
 }
-
+*/
 HTTPRequest::HTTPRequest(HTTPRequest const &copy) :	_method(copy._method),
 													_path(copy._path),
 													_version(copy._version),
 													_headers(copy._headers),
+													_createdPath(copy._createdPath),
+													_query(copy._query),
+													_fileName(copy._fileName),
 													_body(copy._body),
 													_bodySize(copy._bodySize),
-													_sConf(copy._sConf)
+													_sConf(copy._sConf),
+													_loc(copy._loc)
 {}
 
 HTTPRequest::~HTTPRequest()
@@ -134,61 +151,25 @@ HTTPRequest &HTTPRequest::operator=(HTTPRequest const &rhs)
 {
 	if (this != &rhs)
 	{
-		_method = rhs._method;
-		_path = rhs._path;
-		_version = rhs._version;
-		_headers = rhs._headers;
 		_body = rhs._body;
 		_bodySize = rhs._bodySize;
 	}
 	return (*this);
 }
 
-const std::string	HTTPRequest::createPath(const std::string& path, const std::string& method, bool attrib) const
+void	HTTPRequest::createPath()
 {
-	std::map<std::string, Location>	locationMap = this->_sConf.getLocation();
-	std::string						returnPath, locReq, allowedMethods;
-	struct stat						s;
-	Location						loc;
-	bool							allowedMethod = false;
-	size_t							pos;
-
-	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++) {
-		locReq = iter->second.getPath();
-		pos = -1;
-		while (!(locReq.c_str()[++pos] == 0 || path.c_str()[pos] == 0))
-			if (locReq.c_str()[pos] != path.c_str()[pos])
-				break;
-		if (locReq.c_str()[pos] == 0 && (path.c_str()[pos] == 0 || path.c_str()[pos] == '/')) {
-			if (attrib) {
-				if (iter->second.acceptsUploads()) {
-					loc = iter->second;
-					break;
-				}
-				else
-					continue;
-			}
-			else {
-				loc = iter->second;
-				break;
-			}
-		}
-	}
-
-	if (loc.getRoot().empty() && loc.getReturnURL().empty())
-		for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
-			if (iter->second.isDefault())
-				loc = iter->second;
-
-	if (attrib && !loc.acceptsUploads())
-		HTTPResponse::generateResponse(405, allowedMethods, "", *this);
+	std::string		returnPath, locReq, allowedMethods;
+	struct stat		s;
+	const Location&	loc = this->_loc;
+	bool			allowedMethod = false;
 
 	locReq = loc.getPath();
 
 	const	std::vector<std::string>& methods = loc.getAllowMethods();
 	for (std::vector<std::string>::const_iterator it = methods.begin(); it != methods.end(); it++) {
 		allowedMethods += *it + (it + 1 != methods.end() ? ", " : "");
-		if ((allowedMethod = (it->compare(method) ? false : true)))
+		if ((allowedMethod = (it->compare(this->_method) ? false : true)))
 			break;
 	}
 
@@ -200,22 +181,22 @@ const std::string	HTTPRequest::createPath(const std::string& path, const std::st
 
 	else {
 		if (loc.getRoot()[0] == '/')
-			returnPath = this->_sConf.getRoot() + loc.getRoot() + path.substr(locReq.length());
+			returnPath = this->_sConf.getRoot() + loc.getRoot() + this->_path.substr(locReq.length());
 		else
-			returnPath = this->_sConf.getRoot() + "/" + loc.getRoot() + path.substr(locReq.length());
+			returnPath = this->_sConf.getRoot() + "/" + loc.getRoot() + this->_path.substr(locReq.length());
 		if (DEBUG)
 			std::cout << "RETURN PATH IS " << returnPath << std::endl;
 		if (stat(returnPath.c_str(), &s) == 0)
 			if (s.st_mode & S_IFDIR) {
 				if (loc.getIndex().size() > 0)
 					returnPath += loc.getIndex();
-				else if (loc.hasAutoIndex())
+				else if (loc.hasAutoIndex() || this->_method == "POST")
 					;
 				else
 					HTTPResponse::generateResponse(403, "", this->isKeepAlive(), *this);
 			}
 	}
-	return returnPath;
+	this->_createdPath = returnPath;
 }
 
 /*
@@ -239,12 +220,17 @@ const std::string&	HTTPRequest::getPath() const
 	return (_path);
 }
 
+const std::string&	HTTPRequest::getCreatedPath() const
+{
+	return (_createdPath);
+}
+
 const std::string&	HTTPRequest::getVersion() const
 {
 	return (_version);
 }
 
-const std::string&	HTTPRequest::getBody()
+const std::string&	HTTPRequest::getBody() const
 {
 	return (_body);
 }
@@ -271,12 +257,22 @@ const ServerConf&	HTTPRequest::getSConf() const
 	---------------------------------------------
 */
 
-void	HTTPRequest::setQuery(std::string query){
+void	HTTPRequest::setQuery(const std::string& query){
 	this->_query = query;
 }
 
-void	HTTPRequest::setFileName(std::string name){
+void	HTTPRequest::setFileName(const std::string& name){
 	this->_fileName = name;
+}
+
+void	HTTPRequest::setBodySize(size_t size)
+{
+	this->_bodySize = size;
+}
+
+void	HTTPRequest::setCreatedPath(const std::string& cPath)
+{
+	this->_createdPath = cPath;
 }
 
 const std::string	HTTPRequest::isKeepAlive() const

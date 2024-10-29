@@ -16,38 +16,46 @@
 class	HTTPRequest
 {
 	private:
-		std::string							_method;
-		std::string							_path;
-		std::string							_query;
-		std::string							_fileName;
-		std::string							_version;
-		std::map<std::string, std::string>	_headers;
-		std::string							_body;
-		size_t								_bodySize;
-		const ServerConf&					_sConf;
+		const std::string							_method;
+		const std::string							_path;
+		const std::string							_version;
+		const std::map<std::string, std::string>	_headers;
+		std::string									_createdPath;
+		std::string									_query;
+		std::string									_fileName;
+		std::string									_body;
+		size_t										_bodySize;
+		const ServerConf&							_sConf;
+		const Location&								_loc;
 
 	public:
-		HTTPRequest(std::string& request, const ServerConf& sConf, bool cont);
+		HTTPRequest(const std::string& method,
+					const std::string& path,
+					const std::string& version,
+					const std::map<std::string, std::string> headers,
+					const ServerConf& sConf,
+					const Location& loc);
+		HTTPRequest(const std::string&line, const ServerConf& sConf, const Location& loc);
 		HTTPRequest(HTTPRequest const &copy);
 		HTTPRequest &operator=(HTTPRequest const &rhs);
 		~HTTPRequest();
 
-		const std::string	createPath(const std::string& path,
-										const std::string& method,
-										bool attrib) const;
-		void 				checkRedir(const std::string& path,
-										const std::string& method) const;
+		void	createPath();
 
 		const std::map<std::string, std::string>&	getHeaders() const;
 		const std::string&							getMethod() const;
 		const std::string&							getPath() const;
+		const std::string&							getCreatedPath() const;
 		const std::string&							getVersion() const;
-		const std::string&							getBody();
+		const std::string&							getBody() const;
 		const std::string&							getQuery() const;
 		const std::string&							getFileName() const;
 		const ServerConf&							getSConf() const;
-		void										setQuery(std::string query);
-		void										setFileName(std::string name);
+		const Location&								getLoc() const;
+		void										setQuery(const std::string& query);
+		void										setFileName(const std::string& name);
+		void										setBodySize(size_t size);
+		void										setCreatedPath(const std::string& cPath);
 		const std::string							isKeepAlive() const;
 		size_t										getContentLength() const;
 

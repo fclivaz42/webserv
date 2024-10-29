@@ -6,7 +6,7 @@
 std::string processDeleteRequest(const HTTPRequest& request)
 {
 	std::cout << "PATH BEFORE: " << request.getPath() << std::endl;
-	std::string	delPath = request.createPath(request.getPath(), "DELETE", false);
+	const std::string&	delPath = request.getCreatedPath();
 	struct stat	s;
 	std::cout << ORANGE << "Requested DELETE path: " << delPath << RESET << std::endl;
 	

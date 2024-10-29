@@ -10,7 +10,7 @@
 #include "Requests/HTTPRequest.hpp"
 #include "Requests/HTTPResponse.hpp"
 
-const std::string	processPostRequest(HTTPRequest& request);
+const std::string	processPostRequest(const HTTPRequest& request);
 const std::string	urlDecode(const std::string& str);
 
 #endif
