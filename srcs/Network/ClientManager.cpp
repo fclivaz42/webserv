@@ -1,4 +1,16 @@
 #include "Network/ConnectManager.hpp"
+#include "CGI/CGIExec.hpp"
+
+bool	isCGI(HTTPRequest &request){
+	
+	
+	if (request.getLoc().getFastcgiIndex().size() == 0)
+		return (false);
+	if (request.getCreatedPath().rfind(request.getLoc().getFastcgiIndex()) == request.getCreatedPath().size() - request.getLoc().getFastcgiIndex().size())
+		return (true);
+	else
+		return (false);
+}
 
 /*
 		handleClient launches the actual request after HTTPRequest has been parsed.
@@ -10,12 +22,30 @@ const std::string	ConnectManager::handleClient(HTTPRequest& request)
 	std::map<std::string, std::string>	headers = request.getHeaders();
 	std::cout << "REQUEST : " << request.getPath() << std::endl;
 
-	if (headers["Expect"] == "100-continue") {
-		if (request.getContentLength() <= request.getSConf().getMaxBodySize())
-			return HTTPResponse::generateResponse(100, "", request.isKeepAlive(), request);
-		else
-			HTTPResponse::generateResponse(417, request.getSConf().getErrorPath(), "Connection: close", request);
-	}
+	if (isCGI(request) == true){
+			CGIExec cgi(request);
+			int status = cgi.execute();
+
+			if (status == 500)
+				HTTPResponse::generateResponse(500, request.getSConf().getErrorPath(), request.isKeepAlive(), request);
+			else{
+				std::string contentType = cgi.getCgiContentType();
+                std::string body = cgi.getBody();
+                std::string test = cgi.getHeader();
+				std::string response = "HTTP/1.1 200 OK\r\n" + cgi.getHeader();
+				std::stringstream truc;
+				
+				truc << cgi.getBody().size();
+				response += "Content-Length: " + truc.str() + "\r\n\r\n";
+				response += cgi.getBody();
+
+				if (DEBUG)
+					std::cout << "Final Response:\n" << response << std::endl;
+				
+				return (response);
+			}
+			
+		}
 	else if (request.getContentLength() > request.getSConf().getMaxBodySize())
 			HTTPResponse::generateResponse(413, request.getSConf().getErrorPath(), request.isKeepAlive(), request);
 	else if (request.getMethod() == "GET")
@@ -103,7 +133,11 @@ void	ConnectManager::initializeRequest(int clientFd, const std::string& message,
 			if (stRequest.peek() != EOF)
 				std::cout << "│ " << prRequest << std::endl;
 	}
-
+	size_t pos1 = attribs["path"].find("?");
+	if (pos1 != std::string::npos){
+		attribs["query"] = attribs["path"].substr(pos1 + 1);
+		attribs["path"] = attribs["path"].substr(0, pos1);
+	}
 	attribs["path"] = urlDecode(attribs["path"]);
 
 	if (DEBUG) {

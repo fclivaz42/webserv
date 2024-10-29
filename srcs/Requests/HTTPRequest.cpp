@@ -16,6 +16,11 @@ HTTPRequest::HTTPRequest(	const std::string& method,
 													_path(path),
 													_version(version),
 													_headers(headers),
+													_createdPath(""),
+													_query(""),
+													_fileName(""),
+													_body(""),
+													_bodySize(0),
 													_sConf(sConf),
 													_loc(loc)
 {}

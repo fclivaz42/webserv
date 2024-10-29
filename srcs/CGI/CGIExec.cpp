@@ -6,86 +6,167 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-CGIExec::CGIExec(const std::string& cgiPath, const std::map<std::string, std::string>& env)
-	: _cgiPath(cgiPath), _env(env) {}
+CGIExec::CGIExec(HTTPRequest &request) : _request(request){}
 
 CGIExec::~CGIExec()
 {}
 
-void	CGIExec::setupEnvVars()
-{
-	for (std::map<std::string, std::string>::const_iterator iter = _env.begin(); iter != _env.end(); iter++)
-		setenv(iter->first.c_str(), iter->second.c_str(), 1);
+std::string	CGIExec::getBody(void){
+	return (this->_body);
 }
 
-std::string	CGIExec::runCGIProcess(const std::string& input)
+std::string CGIExec::getHeader(void){
+	return (this->_header);
+}
+
+std::string CGIExec::getCgiContentType() const
 {
-	int	pipefd[2];
-	int	inputPipe[2];
+	std::istringstream headerStream(_header);
+	std::string line;
 
-	if (pipe(pipefd) == -1) {
-			std::cerr << "Error creating pipe for CGI output: " << strerror(errno) << std::endl;
-			return "Internal Server Error";
+	while (std::getline(headerStream, line))
+	{
+		if (line.find("Content-Type") != std::string::npos)
+		{
+			size_t startPos = line.find(":") + 1;
+			while (startPos < line.length() && isspace(line[startPos]))
+			{
+				startPos++;
+			}
+			return line.substr(startPos);
 		}
-	if (pipe(inputPipe) == -1) {
-			std::cerr << "Error creating pipe for CGI input: " << strerror(errno) << std::endl;
-			return "Internal Server Error";
-		}
+	}
+	return "";
+}
 
-	pid_t	pid = fork();
-	
-	if (pid == -1) {
-		std::cerr << "Fork failed: " << strerror(errno) << std::endl;
-		return "Internal Server Error";
+int CGIExec::execute(void){
+	int pid;
+	int fdoutput[2];
+	int fdinput[2];
+	std::string index = _request.getLoc().getFastcgiPass();
+	const char *args[] = {index.c_str(), _request.getCreatedPath().c_str(), NULL};
+	int exitStatus = 0;
+
+	if(pipe(fdoutput) == -1)
+	{
+		perror("Pipe");
+		exit(-1);
+	}
+	if(pipe(fdinput) == -1)
+	{
+		perror("Pipe");
+		exit(-1);
 	}
 
-	if (pid == 0)
-	{
-		//dup2(pipefd[1], STDOUT_FILENO);
-		//close(pipefd[0]);
-		//close(pipefd[1]);
+	pid = fork();
 
-		//dup2(inputPipe[0], STDIN_FILENO);
-		//close(inputPipe[1]);
-		//close(inputPipe[0]);
-		
-		execl(_cgiPath.c_str(), _cgiPath.c_str(), NULL);
-		std::cout << "COUOCOUUUUUU " << std::endl;
-		exit(1);
+	if (pid == -1)
+	{
+		perror("Fork");
+		exit(-1);
+	}
+	if(pid == 0)
+	{
+		launchChild(fdoutput, fdinput, args);
 	}
 	else
 	{
-		close(pipefd[1]);
-		close(inputPipe[0]);
-
-		if (write(inputPipe[1], input.c_str(), input.size()) == -1) {
-			std::cerr << "Error writing to CGI input pipe: " << strerror(errno) << std::endl;
-			return "Internal Server Error";
-		}
-
-		close(inputPipe[1]);
-
-		char buffer[1024];
-		std::string output;
-		ssize_t nbytes;
-
-		while ((nbytes = read(pipefd[0], buffer, sizeof(buffer))) > 0)
-			output.append(buffer, nbytes);
-		close(pipefd[0]);
-
-		int status;
-		waitpid(pid, &status, 0);
-		if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
-			std::cerr << "CGI script exited with error status: " << WEXITSTATUS(status) << std::endl;
-			return "Internal Server Error";
-		}
-
-		return (output);
+		exitStatus = launchParent(fdoutput, fdinput, pid);
 	}
+
+	return(exitStatus);
 }
 
-std::string	CGIExec::execute(const std::string &input)
+int CGIExec::launchChild(int *fdoutput, int *fdinput, const char** args)
 {
-	setupEnvVars();
-	return (runCGIProcess(input));
+	std::string gatewayInterface = "GATEWAY_INTERFACE=CGI/1.1";
+    std::string requestMethod = "REQUEST_METHOD=" + _request.getMethod();
+    std::string queryStringEnv = "QUERY_STRING=" + _request.getQuery();
+	const char *envp[] = {
+    	const_cast<char*>(gatewayInterface.c_str()),
+        const_cast<char*>(requestMethod.c_str()),
+        const_cast<char*>(queryStringEnv.c_str()),
+    	NULL
+	};
+
+	close(fdoutput[0]);
+	dup2(fdoutput[1], STDOUT_FILENO);
+	close(fdoutput[1]);
+
+	close(fdinput[1]);
+	dup2(fdinput[0], STDIN_FILENO);
+	close(fdinput[0]);
+
+	execve(args[0], const_cast<char**>(args), const_cast<char**>(envp));
+	perror("execve");
+	exit(-1);
+}
+
+int CGIExec::launchParent(int *fdoutput, int *fdinput, int pid)
+{
+	int status;
+	int reading = 0;
+	char tmp[BUFFERSIZE];
+	int exitStatus;
+
+	close(fdinput[0]);
+	ssize_t writing = write(fdinput[1], _request.getBody().c_str(), _request.getBody().size());
+	(void) writing;
+	close(fdinput[1]);
+
+	waitpid(pid, &status, 0);
+	if(WIFEXITED(status))
+	{
+		exitStatus = WEXITSTATUS(status);
+		if (exitStatus != 0)
+			return(500);
+	}
+	close(fdoutput[1]);
+	std::string buf;
+	do
+	{
+		memset(tmp, 0, sizeof(tmp));
+		ssize_t reading = read(fdoutput[0], tmp, sizeof(tmp) - 1);
+		{
+			buf.append(tmp, reading);
+		}
+	}
+	while (reading > 0);
+
+	findHeadAndBody(buf);
+	close(fdoutput[0]);
+
+	return (exitStatus);
+}
+
+int CGIExec::findHeadAndBody(std::string buf)
+{
+	std::istringstream stream(buf);
+    std::string line;
+    bool headerEnded = false;
+
+    while (std::getline(stream, line)) {
+        if (line == "\r" || line == "") {
+            headerEnded = true; 
+            continue;
+        }
+        
+        if (!headerEnded) {
+            _header += line + "\r\n";
+        } else {
+            _body += line + "\n";
+        }
+    }
+
+    if (_header.empty() && _body.find("Content-Type") != std::string::npos) {
+        size_t pos = _body.find("\n");
+        _header = _body.substr(0, pos);
+        _body = _body.substr(pos + 1);
+    }
+	if (DEBUG){
+		std::cout << "Headers CGI: " << _header << std::endl;
+		std::cout << "Body CGI: " << _body << std::endl;
+	}
+
+    return 0;
 }

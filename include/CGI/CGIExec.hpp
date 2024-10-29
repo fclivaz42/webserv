@@ -1,22 +1,29 @@
 #ifndef CGIExec_HPP
 
 # define CGIExec_HPP
+#define BUFFERSIZE 20000
 
 #include <string>
 #include <map>
+#include "Requests/HTTPRequest.hpp"
 
 class CGIExec
 {
-	public:
-		CGIExec(const std::string& cgiPath, const std::map<std::string, std::string>& env);
-		~CGIExec();
-		std::string	execute(const std::string &input);
-
 	private:
-		std::string 				_cgiPath;
-		std::map<std::string, std::string>	_env;
-		void					setupEnvVars();
-		std::string				runCGIProcess(const std::string& input);
+		HTTPRequest		&_request;
+		std::string		_header;
+		std::string		_body;
+	
+	public:
+		CGIExec(HTTPRequest &request);
+		~CGIExec();
+		int			execute();
+		int 		launchChild(int *fdoutput, int *fdinput, const char** args);
+		int 		launchParent(int *fdoutput, int *fdinput, int pid);
+		int 		findHeadAndBody(std::string buf);
+		std::string getCgiContentType() const;
+		std::string getBody(void);
+		std::string getHeader(void);
 
 };
 
