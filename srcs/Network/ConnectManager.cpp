@@ -269,13 +269,13 @@ void	ConnectManager::start()
 			else if (fds[i].revents & POLLOUT && std::find(readFds.begin(), readFds.end(), fds[i].fd) != readFds.end()) {
 				try {
 					initializeRequest(fds[i].fd, fdMessageMap[fds[i].fd], fdRequestMap);
-					std::cout << "CLIENT " << fds[i].fd << " IS USING SERVER " << fdRequestMap[fds[i].fd]->getSConf().getServerName() << "\n";
+					if (DEBUG)
+						std::cout << "CLIENT " << fds[i].fd << " IS USING SERVER " << fdRequestMap[fds[i].fd]->getSConf().getServerName() << "\n";
 					fdResponseMap[fds[i].fd] = handleClient(*fdRequestMap[fds[i].fd]);
 				}
 				catch (const std::exception& error) {
 					fdResponseMap[fds[i].fd] = error.what();
 				}
-				std::cout << "Sending to client...\n";
 				writeToClient(fdResponseMap[fds[i].fd], fds[i].fd);
 				delete fdRequestMap[fds[i].fd];
 				it = std::find(readFds.begin(), readFds.end(), fds[i].fd);

@@ -6,7 +6,7 @@
 /*   By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 22:01:35 by fclivaz           #+#    #+#             */
-/*   Updated: 2024/10/29 17:03:04 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/10/29 18:27:28 by fclivaz          ###   LAUSANNE.ch       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,30 +41,32 @@ std::string generateHtml(int statusCode)
 
 		html.replace(html.find("++PATH++"), 8, res);
 		switch (statusCode)
-			{
-				case 400:
-					return html += "\t<h1>400 Bad Request</h1>\n</body>\n</html>";
-				case 403:
-					return html += "\t<h1>403 Forbidden</h1>\n</body>\n</html>";
-				case 404:
-					return html += "\t<h1>404 Not Found</h1>\n</body>\n</html>";
-				case 405:
-					return html += "\t<h1>405 Method Not Allowed</h1>\n</body>\n</html>";
-				case 411:
-					return html += "\t<h1>411 Length Required</h1>\n</body>\n</html>";
-				case 413:
-					return html += "\t<h1>413 Content Too Large</h1>\n</body>\n</html>";
-				case 414:
-					return html += "\t<h1>414 URI Too Long/h1>\n</body>\n</html>";
-				case 415:
-					return html += "\t<h1>415 Unsupported Media Type</h1>\n</body>\n</html>";
-				case 417:
-					return html += "\t<h1>417 Expectation Failed</h1>\n</body>\n</html>";
-				case 418:
-					return html += "\t<h1>418 I'm a teapot</h1>\n</body>\n</html>";
-				case 505:
-					return html += "\t<h1>505 HTTP Version Not Supported/h1>\n</body>\n</html>";
-			}
+		{
+			case 400:
+				return html += "\t<h1>400 Bad Request</h1>\n</body>\n</html>";
+			case 403:
+				return html += "\t<h1>403 Forbidden</h1>\n</body>\n</html>";
+			case 404:
+				return html += "\t<h1>404 Not Found</h1>\n</body>\n</html>";
+			case 405:
+				return html += "\t<h1>405 Method Not Allowed</h1>\n</body>\n</html>";
+			case 411:
+				return html += "\t<h1>411 Length Required</h1>\n</body>\n</html>";
+			case 413:
+				return html += "\t<h1>413 Content Too Large</h1>\n</body>\n</html>";
+			case 414:
+				return html += "\t<h1>414 URI Too Long</h1>\n</body>\n</html>";
+			case 415:
+				return html += "\t<h1>415 Unsupported Media Type</h1>\n</body>\n</html>";
+			case 417:
+				return html += "\t<h1>417 Expectation Failed</h1>\n</body>\n</html>";
+			case 418:
+				return html += "\t<h1>418 I'm a teapot</h1>\n</body>\n</html>";
+			case 505:
+				return html += "\t<h1>505 HTTP Version Not Supported</h1>\n</body>\n</html>";
+			default:
+				return html += "\t<h1>500 Internal Server Error</h1>\n</body>\n</html>";
+		}
 }
 
 std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::string& path, const std::string& alive, const HTTPRequest& request)

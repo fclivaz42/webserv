@@ -6,7 +6,7 @@
 //   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/10/24 13:58:01 by lmedrano          #+#    #+#             //
-/*   Updated: 2024/10/29 16:32:28 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/10/29 17:53:37 by fclivaz          ###   LAUSANNE.ch       */
 //                                                                            //
 // ************************************************************************** //
 
@@ -134,6 +134,5 @@ const std::string	processPostRequest(const HTTPRequest& request)
 		return (formRequest(request));
 	else if (headers["Content-Type"].find("multipart") != std::string::npos)
 		return (uploadRequest(request));
-	std::cout << "bnruh? " << headers["Content-Type"];
 	return HTTPResponse::generateResponse(415, "", request.isKeepAlive(), request);
 }

@@ -31,7 +31,7 @@ const std::string	ConnectManager::handleClient(HTTPRequest& request)
 
 		if (status == 500)
 			HTTPResponse::generateResponse(500, request.getSConf().getErrorPath(), request.isKeepAlive(), request);
-		else{
+		else {
 			std::string contentType = cgi.getCgiContentType();
 			std::string body = cgi.getBody();
 			std::string test = cgi.getHeader();
@@ -86,8 +86,14 @@ void	ConnectManager::redirectPath(const ServerConf& sConf,const Location& loc, s
 		}
 	}
 
+	if (oldLoc.getReturnURL().empty() && oldLoc.getRoot().empty())
+		for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
+			if (iter->second.isDefault())
+				oldLoc = iter->second;
+
 	if (oldLoc.getPath() != loc.getPath()) {
-		std::cout << "switching paths...\n";
+		if (DEBUG)
+			std::cout << "switching paths from " << oldLoc.getPath() << " to " << loc.getPath() << std::endl;
 		path.replace(path.find(oldLoc.getPath()), oldLoc.getPath().length(), loc.getPath());
 	}
 }
@@ -220,6 +226,8 @@ void	ConnectManager::initializeRequest(int clientFd, const std::string& message,
 			continue;
 	}
 
+	if (*(attribs["path"].end() - 1) == '/' && attribs["path"].size() > 1)
+		attribs["path"].erase(attribs["path"].end() - 1);
 	const ServerConf& sConf = findSconfFromHost(headers);
 	const Location&	loc = findLocationFromSConf(sConf, attribs["path"]);
 	redirectPath(sConf, loc, attribs["path"]);

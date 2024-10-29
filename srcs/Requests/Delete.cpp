@@ -5,11 +5,8 @@
 
 std::string processDeleteRequest(const HTTPRequest& request)
 {
-	std::cout << "PATH BEFORE: " << request.getPath() << std::endl;
 	const std::string&	delPath = request.getCreatedPath();
 	struct stat	s;
-	std::cout << ORANGE << "Requested DELETE path: " << delPath << RESET << std::endl;
-	
 
 	if (access(delPath.c_str(), F_OK) != 0) {
 		std::cerr << RED << "DELETE: File not found: " << delPath << RESET << std::endl;

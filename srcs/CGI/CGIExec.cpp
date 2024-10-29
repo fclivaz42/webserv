@@ -65,14 +65,10 @@ int CGIExec::execute(void){
 		perror("Fork");
 		exit(-1);
 	}
-	if(pid == 0)
-	{
+	if (pid == 0)
 		launchChild(fdoutput, fdinput, args);
-	}
 	else
-	{
 		exitStatus = launchParent(fdoutput, fdinput, pid);
-	}
 
 	return(exitStatus);
 }
@@ -150,7 +146,6 @@ int CGIExec::findHeadAndBody(std::string buf)
             headerEnded = true; 
             continue;
         }
-        
         if (!headerEnded) {
             _header += line + "\r\n";
         } else {
