@@ -1,4 +1,5 @@
 #include "Network/ConnectManager.hpp"
+#include "Parsing/Location.hpp"
 
 /*
 		handleClient launches the actual request after HTTPRequest has been parsed.
@@ -43,7 +44,7 @@ void	ConnectManager::writeToClient(const std::string& response, int clientFd)
 
 const ServerConf&	ConnectManager::findSconfFromHost(std::map<std::string, std::string>& headers)
 {
-	std::string			fnbr;
+	std::string	fnbr;
 	
 	if (headers.find("Host") != headers.end()) {
 		for (int i = 0; i < _serverList.getAmountOfServers(); i++) {
@@ -72,8 +73,15 @@ const Location&	ConnectManager::findLocationFromSConf(const ServerConf& sConf, c
 		while (!(locReq.c_str()[++pos] == 0 || path.c_str()[pos] == 0))
 			if (locReq.c_str()[pos] != path.c_str()[pos])
 				break;
-		if (locReq.c_str()[pos] == 0 && (path.c_str()[pos] == 0 || path.c_str()[pos] == '/'))
-			return iter->second;
+		if (locReq.c_str()[pos] == 0 && (path.c_str()[pos] == 0 || path.c_str()[pos] == '/')) {
+				return iter->second;
+		/*	if (iter->second.getReturnURL().empty())
+				return iter->second;
+			else if (iter->second.getReturnURL().find("http://") != std::string::npos || iter->second.getReturnURL().find("https://") != std::string::npos)
+				return iter->second;
+			else
+				return findLocationFromSConf(sConf, iter->second.getReturnURL());
+	*/	}
 	}
 
 	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
@@ -87,7 +95,7 @@ void	ConnectManager::initializeRequest(int clientFd, const std::string& message,
 	std::map<std::string, std::string>	headers;
 	std::map<std::string, std::string>	attribs;
 	std::string	line, key, value, body;
-	const std::string&	alive ="Connection: close\r\n";
+	const std::string&	alive = "Connection: close\r\n";
 	size_t		pos, delim, tmp;
 
 	fdRequestMap[clientFd] = NULL;
@@ -137,42 +145,31 @@ void	ConnectManager::initializeRequest(int clientFd, const std::string& message,
 		}
 		else if (line == "\r")
 			if (headers["Content-Type"] == "application/x-www-form-urlencoded") {
-				body = message.substr(delim);
+				attribs["body"] = message.substr(delim);
 				break;
 			}
 			else
 				continue;
 		else if (line.find(headers["boundary"]) != std::string::npos)
 		{
-			body = message.substr(delim);
+			attribs["body"] = message.substr(delim);
 			break ;
 		}
 		else
 			continue;
 	}
-/*
-	if (headers.find("Referer") != headers.end()) {
-    	size_t pos = headers.find("Referer")->second.find("?");
-    	if (pos != std::string::npos) {
-       		std::string name = headers.find("Referer")->second;
-        	std::string _query = name.substr(pos + 1);
-			size_t lastPos = name.find_last_of("/", pos);
-			if (lastPos != std::string::npos)
-            	attribs["fileName"] = name.substr(lastPos + 1, pos - lastPos - 1);
-        	std::cout << "QUERY: " << _query << std::endl;
-			std::cout << "FILE: " << _fileName << std::endl;
-    	}
-	}
-*/
-
 
 	const ServerConf& sConf = findSconfFromHost(headers);
 	const Location&	loc = findLocationFromSConf(sConf, attribs["path"]);
+//	attribs["path"].replace(0, attribs["path"].length(), loc.getPath());
 
-	fdRequestMap[clientFd] = new HTTPRequest(attribs["method"], attribs["path"], attribs["version"], headers, sConf, loc);
+	fdRequestMap[clientFd] = new HTTPRequest(attribs, headers, sConf, loc);
 
 	if (attribs["method"] != "GET" && attribs["method"] != "POST" && attribs["method"] != "DELETE")
 		HTTPResponse::generateResponse(405, "GET, POST, DELETE", alive, *fdRequestMap[clientFd]);
+
+	if (attribs["Expect"] == "100 Continue")
+		HTTPResponse::generateResponse(400, "", alive, *fdRequestMap[clientFd]);
 
 	if (attribs["path"].empty() || attribs["path"][0] != '/')
 		HTTPResponse::generateResponse(400, "", alive, *fdRequestMap[clientFd]);

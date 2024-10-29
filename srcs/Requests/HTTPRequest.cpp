@@ -7,15 +7,15 @@
 	---------------------------------------------
 */
 
-HTTPRequest::HTTPRequest(	const std::string& method,
-							const std::string& path,
-							const std::string& version,
-							const std::map<std::string, std::string> headers,
+HTTPRequest::HTTPRequest(	std::map<std::string, std::string>& attribs,
+							const std::map<std::string, std::string>& headers,
 							const ServerConf& sConf,
-							const Location& loc) : _method(method),
-													_path(path),
-													_version(version),
+							const Location& loc) : _method(attribs["method"]),
+													_path(attribs["path"]),
+													_version(attribs["version"]),
 													_headers(headers),
+													_query(attribs["query"]),
+													_body(attribs["body"]),
 													_sConf(sConf),
 													_loc(loc)
 {}

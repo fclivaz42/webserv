@@ -6,7 +6,7 @@
 /*   By: fclivaz <fclivaz@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/20 22:01:35 by fclivaz           #+#    #+#             */
-/*   Updated: 2024/10/27 20:39:02 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/10/29 14:52:14 by fclivaz          ###   LAUSANNE.ch       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ std::string	HTTPResponse::listDirectory(const std::string& path, const std::stri
 		html += "\t<li><a href='" + refPath + (*refPath.end() - 1 == '/' ? "" : "/") + static_cast<std::string>(dent->d_name) + "'>" +
 			static_cast<std::string>(dent->d_name) + "</a></li>\n";
 	html += "<hr width='100%' size='2' color='black'>\n\t<p>webserv</p>\n</body>\n</html>";
+	closedir(lst);
 	return html;
 }
 

@@ -29,10 +29,8 @@ class	HTTPRequest
 		const Location&								_loc;
 
 	public:
-		HTTPRequest(const std::string& method,
-					const std::string& path,
-					const std::string& version,
-					const std::map<std::string, std::string> headers,
+		HTTPRequest(std::map<std::string, std::string>& attribs,
+					const std::map<std::string, std::string>& headers,
 					const ServerConf& sConf,
 					const Location& loc);
 		HTTPRequest(const std::string&line, const ServerConf& sConf, const Location& loc);

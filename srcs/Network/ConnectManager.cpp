@@ -247,7 +247,6 @@ void	ConnectManager::start()
 		serverPollFd.revents = 0;
 		fds.push_back(serverPollFd);
 	}
-	_continue = false;
 	while ((pollResult = poll(fds.data(), fds.size(), -1)) >= 0)
 	{
 		for (size_t i = 0; i < _serverFds.size(); i++)
@@ -278,7 +277,6 @@ void	ConnectManager::start()
 				}
 				writeToClient(fdResponseMap[fds[i].fd], fds[i].fd);
 				delete fdRequestMap[fds[i].fd];
-				close(fds[i].fd);
 				it = std::find(readFds.begin(), readFds.end(), fds[i].fd);
 				if (it != readFds.end())
 					readFds.erase(it);
