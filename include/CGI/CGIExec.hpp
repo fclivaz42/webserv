@@ -23,6 +23,7 @@ class CGIExec
 		int findHeadAndBody(std::string buf);
 		std::string getCgiContentType() const;
 		std::string getBody(void);
+		std::string getHeader(void);
 
 };
 

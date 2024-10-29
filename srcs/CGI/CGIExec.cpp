@@ -15,6 +15,10 @@ std::string	CGIExec::getBody(void){
 	return (this->_body);
 }
 
+std::string CGIExec::getHeader(void){
+	return (this->_header);
+}
+
 std::string CGIExec::getCgiContentType() const
 {
 	std::istringstream headerStream(_header); // Crée flux à partir de _header pour lire ligne par ligne
@@ -124,15 +128,29 @@ int CGIExec::launchParent(int *fd, int pid)
 
 int CGIExec::findHeadAndBody(std::string buf)
 {
-	size_t headerEndPos = buf.find("\n\n");
-	if (headerEndPos != std::string::npos)
-	{
-		_header = buf.substr(0, headerEndPos);
-		_body = buf.substr(headerEndPos + 2); // +2 pour passer \n\n
-	}
-	else
-	{
-		_body = buf;
-	}
-	return(0);
+	std::istringstream stream(buf);
+    std::string line;
+    bool headerEnded = false;
+
+    while (std::getline(stream, line)) {
+        if (line == "\r" || line == "") {
+            headerEnded = true; 
+            continue;
+        }
+        
+        if (!headerEnded) {
+            _header += line + "\r\n";
+        } else {
+            _body += line + "\n";
+        }
+    }
+
+    if (_header.empty() && _body.find("Content-Type") != std::string::npos) {
+        size_t pos = _body.find("\n");
+        _header = _body.substr(0, pos);
+        _body = _body.substr(pos + 1);
+    }
+	std::cout << "Headers CGI: " << _header << std::endl;
+	std::cout << "Body CGI: " << _body << std::endl;
+    return 0;
 }

@@ -46,11 +46,11 @@ std::string	HTTPResponse::generateResponse(unsigned int statusCode, const std::s
 		contentType = HTTPResponse::getContentType(errorPage);
 		content = HTTPResponse::readFile(errorPage);
 	}
-	else if (statusCode == 200){
-		contentType = request.getContent("Content-Type");
-		content = HTTPResponse::readFile(request.getCreatedPath());
-		std::cout << "CONTENTTUPE : " << contentType << std::endl << "Content  : " << content << std::endl;
-	}
+	//else if (statusCode == 200){
+	//	contentType = request.getContent("Content-Type");
+	//	content = HTTPResponse::readFile(request.getCreatedPath());
+	//	std::cout << "CONTENTTUPE : " << contentType << std::endl << "Content  : " << content << std::endl;
+	//}
 	else if (statusCode >= 200 && statusCode != 204 && statusCode < 300) {
 		stat(path.c_str(), &s);
 		if (s.st_mode & S_IFDIR) {
