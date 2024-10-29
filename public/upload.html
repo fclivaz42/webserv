@@ -19,5 +19,35 @@
 	    <input type="file" name="image" />
 	    <button class="request_button" type="submit">Upload</button>
 	</form>
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            //event.preventDefault();
+            
+            const formData = new FormData(this);
+
+            fetch(this.action, {
+                method: this.method,
+                body: formData
+            })
+            .then(response => {
+                console.log('Response Status:', response.status);
+
+                return response.text();
+            })
+            .then(data => {
+                console.log('Response Body:', data);
+
+                if (response.status === 200) {
+                    window.location.href = 'success.html';
+                } else {
+                    window.location.href = 'failure.html';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.location.href = 'failure.html';
+	    });
+        });
+    </script>
 </body>
 </html>
