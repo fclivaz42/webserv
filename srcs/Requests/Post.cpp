@@ -6,7 +6,7 @@
 //   By: lmedrano <lmedrano@student.42lausanne.ch>  +#+  +:+       +#+        //
 //                                                +#+#+#+#+#+   +#+           //
 //   Created: 2024/10/24 13:58:01 by lmedrano          #+#    #+#             //
-/*   Updated: 2024/10/29 05:08:14 by fclivaz          ###   LAUSANNE.ch       */
+/*   Updated: 2024/10/29 12:08:42 by fclivaz          ###   LAUSANNE.ch       */
 //                                                                            //
 // ************************************************************************** //
 
@@ -129,50 +129,11 @@ static const std::string	formRequest(const HTTPRequest& request)
 	return (response);
 }
 
-/*
-static std::string intToString(int value) {
-    std::ostringstream oss;
-    oss << value;
-    return oss.str();
-}
-
-static std::map<std::string, std::string> createCGIEnv(HTTPRequest& request)
-{
-    std::map<std::string, std::string> env;
-
-    env["REQUEST_METHOD"] = "GET";
-    env["CONTENT_TYPE"] = request.getHeaders().at("Content-Type");
-    env["CONTENT_LENGTH"] = intToString(request.getBody().size());
-    env["SCRIPT_NAME"] = request.getPath();
-    env["REQUEST_URI"] = request.getPath();
-	env["QUERY_STRING"] = "";
-	env["PATH_INFO"] = request.getPath();
-	env["PATH TRANSLATED"] = request.getPath();
-
-    return (env);
-}
-
-static bool		isCGIRequest(const std::string& path)
-{
-		std::string cgiPath = "/calculator.html";
-	return (path.find(cgiPath) == 0);
-}
-*/
 const std::string	processPostRequest(const HTTPRequest& request)
 {
 	std::map<std::string, std::string> headers(request.getHeaders());
 
 	std::cout << "POST REQUEST: " << request.getPath() << std::endl;
-/*
-	(void)request.createPath(request.getPath(), "POST", false);
-	if (isCGIRequest(request.getPath()))
-	{
-		std::string cgiPath = "/cgi-bin/script.py";
-        	std::map<std::string, std::string> env = createCGIEnv(request);
-		CGIExec cgiExec(cgiPath, env);;
-		return (cgiExec.execute(request.getBody()));
-	}
-*/
 	if (headers["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos)
 		return (formRequest(request));
 	else if (headers["Content-Type"].find("multipart") != std::string::npos)

@@ -23,6 +23,7 @@ DEPS	=	${INCL}/webserv.hpp\
 
 SRCS	=	${SUBDIR}/webserv.cpp\
 			${SUBDIR}/Network/ConnectManager.cpp\
+			${SUBDIR}/Network/ClientManager.cpp\
 			${SUBDIR}/Parsing/Servers.cpp\
 			${SUBDIR}/Parsing/ServerConf.cpp\
 			${SUBDIR}/Parsing/Location.cpp\
