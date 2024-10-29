@@ -59,6 +59,7 @@ class	HTTPRequest
 		const std::string							isKeepAlive() const;
 		size_t										getContentLength() const;
 
+
 };
 
 std::string	trim(const std::string& str);

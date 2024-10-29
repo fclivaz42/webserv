@@ -37,6 +37,7 @@ class HTTPResponse
 												const std::string& alive,
 												const HTTPRequest& request);
 
+
 		class ErrorCode : public std::exception {
 			private:
 				std::string	_str;
@@ -59,5 +60,6 @@ class HTTPResponse
 };
 
 #define HEADERS "<html lang ='en'>\n<head>\n\t<title>Listing ++PATH++</title>\n</head>\n<body>\n"
+#define ERRORS "<html lang ='en'>\n<head>\n\t<title>Error ++PATH++</title>\n</head>\n<body>\n"
 
 #endif
