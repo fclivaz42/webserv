@@ -1,22 +1,35 @@
 #include "Requests/Get.hpp"
 #include "Requests/Delete.hpp"
-#include "Requests/HttpRequest.hpp"
+#include "Requests/HTTPRequest.hpp"
+#include "Requests/HTTPResponse.hpp"
 
-std::string	processDeleteRequest(const HttpRequest& request)
+std::string processDeleteRequest(const HTTPRequest& request)
 {
-	std::string path = request.getPath();
-	std::cout << ORANGE << path << RESET << std::endl;
+	const std::string&	delPath = request.getCreatedPath();
+	struct stat	s;
 
-	path = updatePath(path);
-	std::cout << path << std::endl;
-
-	std::string fileContent = SocketManager::readFile("." + path);
-	std::cout << PURPLE << "fileContent is: " << fileContent << RESET << std::endl; 
-
-	std::string contentType = getMimeType(path);
-	std::cout << PURPLE << "contentType is: " << contentType << RESET << std::endl; 
-
-	std::string alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
-
-	return ("HTTP/1.1 200 OK\r\nContent-Type: " + contentType + "\r\n" + alive + "\r\n" + fileContent);
+	if (access(delPath.c_str(), F_OK) != 0) {
+		std::cerr << RED << "DELETE: File not found: " << delPath << RESET << std::endl;
+		HTTPResponse::generateResponse(404, "", request.isKeepAlive(), request);
+	}
+	if (access(delPath.c_str(), W_OK) != 0) {
+		std::cerr << RED << "DELETE: No permission to delete file: " << delPath << RESET << std::endl;
+		HTTPResponse::generateResponse(403, "", request.isKeepAlive(), request);
+	}
+	if (stat(delPath.c_str(), &s) != 0) {
+		std::cerr << RED << "DELETE: Failed to delete file: " << delPath << RESET << std::endl;
+		HTTPResponse::generateResponse(500, delPath, request.isKeepAlive(), request);
+	}
+	if (s.st_mode & S_IFDIR) {
+		std::cerr << RED << "DELETE: No permission to delete directories: " << delPath << RESET << std::endl;
+		HTTPResponse::generateResponse(403, "", request.isKeepAlive(), request);
+	}
+	else if (remove(delPath.c_str()) == 0) {
+		std::cout << GREEN << "DELETE: File successfully deleted: " << delPath << RESET << std::endl;
+	}
+	else {
+		std::cerr << RED << "DELETE: Failed to delete file: " << delPath << RESET << std::endl;
+		HTTPResponse::generateResponse(500, delPath, request.isKeepAlive(), request);
+	}
+	return HTTPResponse::generateResponse(204, delPath, request.isKeepAlive(), request);
 }

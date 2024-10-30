@@ -1,11 +1,16 @@
 #ifndef POST_HPP
 # define POST_HPP
 
-#include <string>
 #include <map>
-#include "Sockets/SocketManager.hpp"
-#include "Requests/HttpRequest.hpp"
+#include <string>
+#include <sys/stat.h>
+#include "CGI/CGIExec.hpp"
+#include "Parsing/Location.hpp"
+#include "Parsing/ServerConf.hpp"
+#include "Requests/HTTPRequest.hpp"
+#include "Requests/HTTPResponse.hpp"
 
-std::string	processPostRequest(const HttpRequest& request);
+const std::string	processPostRequest(const HTTPRequest& request);
+const std::string	urlDecode(const std::string& str);
 
 #endif

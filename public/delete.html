@@ -7,42 +7,27 @@
     <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-    <h1>Delete some shitty files</h1>
+	<nav>
+		<a class="request_button" href="/formulaire.html">Get in Touch !</a>
+		<a class="black request_button" href="/index.html">Welcome Page</a>
+		<a class="request_button" href="/upload.html">Upload a picture</a>
+		<a class="request_button" href="/calculator.html">% * + -</a>
+	</nav>
+    	<h1>Delete some shitty files</h1>
 
-    <form id="deleteForm">
-        <label for="filename">Select a file :</label>
-        <select id="filename" name="filename">
-            <option value="fichier1.txt">test.txt</option>
-            <option value="fichier2.txt">ucannotsuppress.txt</option>
-        </select>
-        <button id="delete_button" class="request_button" type="submit">Deleteeeeee ....</button>
-    </form>
+	<form id="deleteForm">
+		<label for="filename">Select a file :</label>
+		<select id="filename" name="filename">
+		    <option value="no_exist.txt">no_exist.txt</option>
+		    <option value="delete_me.txt">delete_me.txt</option>
+		    <option value="no_permission.txt">no_permission.txt</option>
+		</select>
+		<button id="delete_button" class="request_button" type="submit">Deleteeeeee ....</button>
+	</form>
 
-    <p id="responseMessage"></p>
-
-    <script>
-        document.getElementById('deleteForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Empêche le rechargement de la page
-            const currentPort = window.location.port || 80;
-            const filename = document.getElementById('filename').value;
-            const url = `http://localhost:${currentPort}`;
-
-            fetch(url, {
-                method: 'DELETE'
-            })
-            .then(response => {
-                if (response.ok) {
-                    document.getElementById('responseMessage').textContent = `Le fichier ${filename} a été supprimé avec succès.`;
-                } else if (response.status === 404) {
-                    document.getElementById('responseMessage').textContent = `Le fichier ${filename} n'a pas été trouvé.`;
-                } else {
-                    document.getElementById('responseMessage').textContent = `Erreur lors de la suppression du fichier ${filename}.`;
-                }
-            })
-            .catch(error => {
-                document.getElementById('responseMessage').textContent = `Erreur réseau : ${error}`;
-            });
-        });
-    </script>
+	<div id="responseContainer"> 
+	    <p id="responseMessage"></p>
+	    <img id="responseImage" src="" alt="Response Image" style="display: none; max-width: 400px;">
+	</div>
 </body>
 </html>

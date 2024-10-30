@@ -115,7 +115,7 @@ nav a
 	background-color: red;
 }
 
-form
+#deleteForm, .contact-form
 {
 	margin: 50px;
 	font-family: 'courier new', monospace;
@@ -167,4 +167,72 @@ form input
 .error-img
 {
 	margin-bottom: 50px;
+}
+
+.requests.selfie {
+	flex-direction:column;
+	padding: 50px;
+}
+
+.selfie-img {
+	width: 50%;
+	margin: 20px 0px;
+}
+
+#responseContainer {
+    display: flex;          
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 50px;
+    text-align: center;
+}
+
+#responseImage {
+    display: block;
+    margin: 20px auto;
+    max-width: 600px;
+	max-height: 400px;
+	width: 100%;
+	height: auto;
+
+}
+
+#heartContainer {
+	position: relative;
+	margin-top: 20px;
+}
+
+.heart {
+	font-size: 2rem;
+	color: red;
+	position: absolute;	
+	animation: fly 2s ease-out forwards;
+	pointer-events: none;
+}
+
+@keyframes fly {
+	0% {
+		opacity: 1;
+		transform: translate(0,0) scale(1);
+	}
+	20% {
+		opacity: 1;
+		transform: translate(30px, -50px) scale(1.2) rotate(15deg);
+	}
+	40% {
+		opacity: 1;
+		transform: translate(-30px, -100px) scale(1.1) rotate(-10deg);
+	}
+	60% {
+		opacity: 1;
+		transform: translate(20px, -150px) scale(1.4) rotate(5deg);
+	}
+	80% {
+		transform: translate(-20px, -200px) scale(1.2) rotate(-5deg);
+	}
+	100% {
+		opacity: 0;
+		transform: translate(0px, -200px) scale (0.8) rotate(0deg);
+	}
 }

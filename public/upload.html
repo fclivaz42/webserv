@@ -10,37 +10,44 @@
 	<nav>
 		<a class="request_button" href="/formulaire.html">Get in Touch !</a>
 		<a class="black request_button" href="/index.html">Welcome Page</a>
-		<a class="request_button" href="/upload.html">Upload a picture</a>
+		<a class="request_button" href="/delete.html">Delete some shitty files</a>
+		<a class="request_button" href="/calculator.html">% * + -</a>
 	</nav>
 
 	<h1>Upload an Image</h1>
-	<form class="requests" id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
-	<label for="fileInput">Please upload an image:</label>
-	<input type="file" id="fileInput" name="image" accept="image/*" required />
-	<button class="request_button" type="submit">Upload</button>
+	<form class="requests" id="uploadForm" method="POST" action="/uploads/" enctype="multipart/form-data">
+	    <input type="file" name="image" />
+	    <button class="request_button" type="submit">Upload</button>
 	</form>
-
-	<script>
-	// Optional: JavaScript to handle form submission asynchronously
-	document.getElementById('uploadForm').addEventListener('submit', function(event) {
-	    event.preventDefault(); // Prevent the form from submitting the traditional way
-
-	    var formData = new FormData(this);
-	    
-	    fetch('/upload', {
-		method: 'POST',
-		body: formData
-	    })
-	    .then(response => response.json())
-	    .then(result => {
-		console.log('Success:', result);
-		// Optionally update the page to show upload status or result
-	    })
-	    .catch(error => {
-		console.error('Error:', error);
-	    });
-	});
-	</script>
+    <!-- <script> -->
+    <!--     document.getElementById('uploadForm').addEventListener('submit', function(event) { -->
+    <!--         //event.preventDefault(); -->
+    <!---->
+    <!--         const formData = new FormData(this); -->
+    <!---->
+    <!--         fetch(this.action, { -->
+    <!--             method: this.method, -->
+    <!--             body: formData -->
+    <!--         }) -->
+    <!--         .then(response => { -->
+    <!--             console.log('Response Status:', response.status); -->
+    <!---->
+    <!--             return response.text(); -->
+    <!--         }) -->
+    <!--         .then(data => { -->
+    <!--             console.log('Response Body:', data); -->
+    <!---->
+    <!--             if (response.status === 201) { -->
+    <!--                 window.location.href = 'success.html'; -->
+    <!--             } else { -->
+    <!--                 window.location.href = 'failure.html'; -->
+    <!--             } -->
+    <!--         }) -->
+    <!--         .catch(error => { -->
+    <!--             console.error('Error:', error); -->
+    <!--             window.location.href = 'failure.html'; -->
+    <!--  }); -->
+    <!--     }); -->
+    <!-- </script> -->
 </body>
 </html>
-

@@ -1,31 +1,4 @@
 #include "Requests/Get.hpp"
-#include "Requests/HttpRequest.hpp"
-#include "Requests/HttpResponse.hpp"
-#include "Parsing/Location.hpp"
-
-bool		hasExtension(const std::string& path, const std::string& extension)
-{
-	std::string::size_type pos = path.rfind(extension);
-	return ((pos != std::string::npos) && (pos == path.length() - extension.length()));
-}
-
-std::string	getMimeType(const std::string& path)
-{
-	std::cout << "PATH-TYPE: " << path << std::endl;
-	if (hasExtension(path, ".css"))
-		return ("text/css");
-	if (hasExtension(path, ".html"))
-		return ("text/html");
-	if (hasExtension(path, ".js"))
-		return ("application/javascript");
-	if (hasExtension(path, ".png"))
-		return ("image/png");
-	if (hasExtension(path, ".jpg") || hasExtension(path, ".jpeg"))
-		return ("image/jpeg");
-	if (hasExtension(path, ".gif"))
-		return ("image/gif");
-	return ("application/octet-stream");
-}
 
 std::string	updatePath(const std::string &path)
 {
@@ -38,131 +11,60 @@ std::string	updatePath(const std::string &path)
 	return (path);
 }
 
-bool		fileExists(const std::string& localPath)
+void	fileCheck(const std::string& localPath, const HTTPRequest& request)
 {
-	bool isOpen;
-	std::ifstream file(localPath.c_str());
-
-	std::cout << localPath.c_str() << "\n";
-	if (file.good()) {
-		isOpen = true;
-		std::cout << "FILE IS OPEN\n";
-	}
-	else {
-		isOpen = false;
-		std::cout << "FILE IS NOT OPEn\n";
-	}
-	file.close();
-	return isOpen;
-}
-
-bool		hasAccess(std::string localPath)
-{
-	struct stat	fileInfo;;
+	struct stat	fileInfo;
 
 	if (stat(localPath.c_str(), &fileInfo) != 0)
 	{
-		std::cerr << RED << "ERROR: file does not exist." << RESET << std::endl;
-		return (false);
+		std::cerr << RED << "GET: ERROR: File not found: " << localPath << RESET << std::endl;
+		HTTPResponse::generateResponse(404, "", request.isKeepAlive(), request);
 	}
 	else if (access(localPath.c_str(), R_OK) != 0)
 	{
-		std::cerr << RED << "ERROR: No access to file." << RESET << std::endl;
-		return (false);
+		std::cerr << RED << "GET: ERROR: Access denied to file: " << localPath << RESET << std::endl;
+		HTTPResponse::generateResponse(403, "", request.isKeepAlive(), request);
 	}
-	else if (!S_ISREG(fileInfo.st_mode))
+	else if (!(S_ISREG(fileInfo.st_mode) || S_ISDIR(fileInfo.st_mode)))
 	{
-		std::cerr << RED << "ERROR: Not a regualr file." << RESET << std::endl;
-		return (false);
+		std::cerr << RED << "GET: ERROR: Not a regular file." << RESET << std::endl;
+		HTTPResponse::generateResponse(500, "", request.isKeepAlive(), request);
 	}
-	return (true);
 }
 
-bool	checkRedir(const std::string& path, const ServerConf& serverConf)
+bool	checkRedir(const std::string& path, const ServerConf& sConf)
 {
-	std::map<std::string, Location> locationMap = serverConf.getLocation();
+	std::map<std::string, Location> locationMap = sConf.getLocation();
 
 	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++)
 	{
 		const	Location& loc = iter->second;
 		std::string ret = loc.getReturnURL();
 		if (!ret.empty() && ret == path)
-		{
 			return (true);
-		}
 	}
 	return (false);
 }
 
-
-const std::string createPath(const std::string& path, const ServerConf& serverConf)
+std::string	processGetRequest(const HTTPRequest& request)
 {
-	std::map<std::string, Location> locationMap = serverConf.getLocation();
-	std::string	returnPath;
-	struct stat	s;
-	bool		getFlag = false;
+	std::map<std::string, std::string>	headers = request.getHeaders();
+	std::string		localPath;
 
-	for (std::map<std::string, Location>::const_iterator iter = locationMap.begin(); iter != locationMap.end(); iter++) {
-		const	Location& loc = iter->second;
-		const	std::vector<std::string>& methods = loc.getAllowMethods();
-		for (std::vector<std::string>::const_iterator it = methods.begin(); it != methods.end(); it++) {
-			std::string cmp = *it;
-			if (!cmp.compare("GET")) {
-				getFlag = true;
-				break;
-			}
-		}
-		if (getFlag) {
-			if (loc.getRoot().empty())
-				returnPath = loc.getPath() + path;
-			else
-				returnPath = loc.getRoot() + path;
-			if (stat(returnPath.c_str(), &s) == 0)
-			{
-				if (s.st_mode & S_IFDIR)
-					returnPath += loc.getIndex();
-				break;
-			}
-		}
-		getFlag = false;
-	}
-	return returnPath;
-}
-
-std::string	processGetRequest(const HttpRequest& request, const ServerConf& serverConf)
-{
-	HttpResponse	ret(serverConf);
-	std::string alive = request.isKeepAlive() ? "Connection: keep-alive\r\n" : "Connection: close\r\n";
-	std::string vide = "";
-	std::string localPath;
-
-	if (request.getBody().size() > serverConf.getMaxBodySize())
-		return (ret.generateResponse("413", vide, alive));
-	//TODO send http error response instead
+	if (static_cast<size_t>(strtol(headers["Content-Length"].c_str(), NULL, 10)) > request.getSConf().getMaxBodySize())
+		HTTPResponse::generateResponse(413, "", request.isKeepAlive(), request);
 	
-	std::string path = request.getPath();
+	const std::string& path = request.getPath();
 
-	if (checkRedir(path, serverConf))
-		return (ret.generateResponse("302", path, alive));
+	if (DEBUG)
+		std::cout << GREEN << "GET: PATH IS: " << path << RESET << std::endl;
 
-	std::cout << GREEN << "PATH IS: " << path << RESET << std::endl;
-	localPath = createPath(path, serverConf);
+	localPath = request.getCreatedPath();
 
-	std::cout << GREEN << "Created Local Path: " << localPath << RESET << std::endl;
+	if (DEBUG)
+		std::cout << GREEN << "GET: Created Local Path: " << localPath << RESET << std::endl;
 
+	fileCheck(localPath, request);
 
-	if (!fileExists(localPath))
-	{
-		localPath = serverConf.getErrorPage();
-		std::cerr << RED << "ERROR: File not found: " << localPath << RESET << std::endl;
-		return (ret.generateResponse("404", localPath, alive));
-	}
-	if (!hasAccess(localPath))
-	{
-		localPath = serverConf.getErrorPage();
-		std::cerr << RED << "ERROR: Access denied to file: " << localPath << RESET << std::endl;
-		return (ret.generateResponse("403", localPath, alive));
-	}
-	return (ret.generateResponse("200", localPath , alive));
-	
+	return (HTTPResponse::generateResponse(200, localPath, request.isKeepAlive(), request));
 }

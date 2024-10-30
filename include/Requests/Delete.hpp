@@ -2,10 +2,9 @@
 # define DELETE_HPP
 
 #include <string>
-#include <map>
-#include "Sockets/SocketManager.hpp"
-#include "Requests/HttpRequest.hpp"
+#include "Network/ConnectManager.hpp"
+#include "Requests/HTTPRequest.hpp"
 
-std::string	processDeleteRequest(const HttpRequest& request);
+std::string	processDeleteRequest(const HTTPRequest& request);
 
 #endif

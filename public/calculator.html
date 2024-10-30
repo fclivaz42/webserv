@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+	<nav>
+		<a class="black request_button" href="/index.html">Welcome Page</a>
+		<a class="request_button" href="/formulaire.html">Get in Touch !</a>
+		<a class="request_button" href="/upload.html">Upload a picture</a>
+		<a class="request_button" href="/delete.html">Delete some shitty files</a>
+	</nav>
+
+	<form style="text-align:center;" action="/cgi/calculator.py" method="GET">
+		<h1 style="margin:50px 0px;">Calculator py get</h1>
+		<input style="padding:20px;" type="text" required minlength="1" size="20" id="name" name="nbr1">
+		<select class="request_button" name="operation" id="name">
+			<option value="+">+</option>
+			<option value="-">-</option>
+			<option value="*">*</option>
+			<option value="/">/</option>
+		</select>
+		<input style="padding:20px;" type="text" required minlength="1" size="20" id="name" name="nbr2">
+		<button class="request_button" type="submit">Submit</button>
+	</form>
+
+	<form style="text-align:center;" action="/cgi/calculator.py" method="POST">
+		<h1 style="margin: 50px 0px;">Calculator py post</h1>
+		<input style="padding:20px;" type="text" required minlength="1" size="20" id="name" name="nbr1">
+		<select class="request_button" name="operation" id="name">
+			<option value="+">+</option>
+			<option value="-">-</option>
+			<option value="*">*</option>
+			<option value="/">/</option>
+		</select>
+		<input style="padding:20px;" type="text" required minlength="1" size="20" id="name" name="nbr2">
+		<button class="request_button" type="submit">Submit</button>
+	</form>
+
+</body>
+
+</html>

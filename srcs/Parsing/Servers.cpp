@@ -1,13 +1,14 @@
 #include "Parsing/Servers.hpp"
 #include "Parsing/ServerConf.hpp"
+#include "Parsing/Location.hpp"
 #include "webserv.hpp"
 
 /* ------------------- CONSTRUCTORS ----------------------*/
 Servers::Servers() {}
 
 Servers::Servers(const std::string &conf_file){
-	std::ifstream		confFile;
-	std::string 		line, configString;
+	std::ifstream	confFile;
+	std::string 	line, configString;
 
 	confFile.open(conf_file.c_str(), std::ios::in);
 	if (!confFile.is_open()) {
@@ -15,8 +16,7 @@ Servers::Servers(const std::string &conf_file){
 		throw AlreadyPrintedException();
 	}
 	while (std::getline(confFile, line)){
-		line.erase(0, line.find_first_not_of(WHITESPACES));
-		line.erase(line.find_last_not_of(WHITESPACES) + 1);
+		ptrim(line);
 		if (line.empty() || line[0] == '#')
 			continue;
 		else if (line.find("server {") != std::string::npos) {
@@ -50,15 +50,16 @@ Servers::~Servers(){}
 
 /* ------------------- SURCHARGED OPERATOR ----------------------*/
 Servers &Servers::operator=(Servers const &rhs){
-	this->_servConf = rhs._servConf;
+	if (this != &rhs)
+		this->_servConf = rhs._servConf;
 	return (*this);
 }
 
 /* ------------------- GETTER ----------------------*/
-ServerConf	Servers::getServConf(int lequel) const{
+const ServerConf&	Servers::getServConf(int lequel) const{
 	std::vector<ServerConf>::const_iterator it;
-	int i = 1;
-	if (lequel <= 0){
+	int i = 0;
+	if (lequel < 0){
 		std::cerr << "Error: Invalid config number." << std::endl;
 	}
 	for (it = _servConf.begin(); it != _servConf.end(); it++){
@@ -72,12 +73,17 @@ ServerConf	Servers::getServConf(int lequel) const{
 	return (*it);
 }
 
+int	Servers::getAmountOfServers(void) const
+{
+	return (this->_servConf.size());
+}
+
 /* ------------------- MEMBERS FUNCTIONS ----------------------*/
 void	Servers::printConfigs() const {
-    std::vector<ServerConf>::const_iterator it = _servConf.begin();
-    for (; it != _servConf.end(); ++it) {
-        it->print();
-    }
+	std::vector<ServerConf>::const_iterator it = _servConf.begin();
+	for (; it != _servConf.end(); ++it) {
+		it->print();
+	}
 }
 
 bool	Servers::isConfigured() const {

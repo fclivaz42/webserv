@@ -8,64 +8,41 @@
 </head>
 <body>
 	<nav>
-		<a class="request_button" href="/formulaire.html">Get in Touch !</a>
 		<a class="black request_button" href="/index.html">Welcome Page</a>
+		<a class="request_button" href="/formulaire.html">Get in Touch !</a>
 		<a class="request_button" href="/upload.html">Upload a picture</a>
-		<a class="request_button" href="/complex.html">Testing a more complex page</a>
+		<a class="request_button" href="/delete.html">Delete some shitty files</a>
+		<a class="request_button" href="/calculator.html">% * + -</a>
 	</nav>
 	<h1>One, two, testing</h1>
-	<h3>Like a queeeeeen</h3>
-	<p>Le bloc en dessous sert plus a grand chose en faite maintenant...</p>
-	<p>Je le laisse au cas ou c'est utile pour un debug :)</p>
-	<div class="requests">
-	    	<button class="request_button" onclick="sendGetRequest()">send get request</button>
-	    	<button class="request_button" onclick="sendPostRequest()">send post request</button>
-	    	<button class="request_button" onclick="sendDeleteRequest()">send delete request</button>
+	<h3>EL SERVIDOR DEL WEEEEEB !</h3>
+	<div class="requests selfie">
+		<p style="margin:0;">La team des GOATs:D</p>
+		<img class="selfie-img" src="/images/team.jpg" alt="Team Webserv">
+	    	<button class="request_button" id="heartButton">Send Love</button>
+		<div id="heartContainer"></div>
 	</div>
 
     	<script>
-		const currentPort = window.location.port || 80;
-		function sendGetRequest() {
-		    fetch(`http://localhost:${currentPort}`, {
-			method: 'GET',
-		    })
-		    .then(response => {
-			console.log(`Response status from port ${currentPort}:`, response.status);
-			return response.text();
-		    })
-		    .then(data => {
-			console.log(`GET Response from port ${currentPort}:`, data);
-		    })
-		    .catch(error => console.error('Error:', error));
-		}
+		const button = document.getElementById('heartButton');
+		const heartContainer = document.getElementById('heartContainer');
 
-		 function sendPostRequest() {
-		    fetch(`http://localhost:${currentPort}`, {
-			method: 'POST',
-			headers: {
-			    'Content-Type': 'application/x-www-form-urlencoded',
-			},
-			body: new URLSearchParams({
-			    'body': 'This is a POST request body',
-			}),
-		    })
-		    .then(response => response.text())
-		    .then(data => {
-			console.log(`POST response from port ${currentPort}:`, data);
-		    })
-		    .catch(error => console.error('Error:', error));
-		}
+		function createHeart()
+		{
+			const heart = document.createElement('span');
+			heart.classList.add('heart');
+			heart.innerHTML = '❤️';
+			
+			const randomLeft = Math.random() * 100;
+			heart.style.left = `${randomLeft}%`;
 
-		function sendDeleteRequest() {
-		    fetch(`http://localhost:${currentPort}`, {
-			method: 'DELETE',
-		    })
-		    .then(response => response.text())
-		    .then(data => {
-			console.log(`DELETE response from port ${currentPort}:`, data);
-		    })
-		    .catch(error => console.error('Error:', error));
+			heartContainer.appendChild(heart);
+
+			setTimeout(() => {
+				heart.remove();
+			}, 2000);
 		}
+		button.addEventListener('click', createHeart);
 	</script>
 
 </body>

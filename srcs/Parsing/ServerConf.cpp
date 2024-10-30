@@ -17,36 +17,30 @@ ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAd
 	while(!configStream.eof())
 	{
 		std::getline(configStream, line);
-		line.erase(0, line.find_first_not_of(WHITESPACES));
-		line.erase(line.find_last_not_of(WHITESPACES) + 1);
+		ptrim(line);
 		if (!line.find("server_name")) {
 			line.erase(0, line.find_first_not_of("server_name"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			this->_serverName = line;
 		}
 		else if (!line.find("root")) {
 			line.erase(0, line.find_first_not_of("root"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			this->_root = line;
 		}
 		else if (!line.find("index")) {
 			line.erase(0, line.find_first_not_of("index"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			this->_index = line;
 		}
-		else if (!line.find("error_page")) {
-			line.erase(0, line.find_first_not_of("error_page"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
-			this->_errorPage = line;
+		else if (!line.find("error_path")) {
+			line.erase(0, line.find_first_not_of("error_path"));
+			ptrim(line);
+			this->_errorPath = line;
 		}
 		else if (!line.find("listen")) {
 			line.erase(0, line.find_first_not_of("listen"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			port = strtol(line.c_str(), &ptr, 10);
 			bigPortCheck = strtol(line.c_str(), &ptr, 10);
 			if (ptr[0] != 0 || port != bigPortCheck || port == 0)
@@ -55,8 +49,7 @@ ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAd
 		}
 		else if (!line.find("max_body_size")){
 			line.erase(0, line.find_first_not_of("max_body_size"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
-			line.erase(line.find_last_not_of(WHITESPACES) + 1);
+			ptrim(line);
 			maxBodySize = strtoul(line.c_str(), &ptr, 10);
 			bigPortCheck = strtol(line.c_str(), &ptr, 10);
 			if (ptr[0] != 0 || bigPortCheck < 1)
@@ -65,9 +58,9 @@ ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAd
 		}
 		else if (!line.find("location ")) {
 			line.erase(0, line.find_first_not_of("location"));
-			line.erase(0, line.find_first_not_of(WHITESPACES));
+			ptrim(line);
 			locationPath = line.substr(0, line.find_first_of(WHITESPACES));
-			while (!(line.find('}') == 4 && configStream.peek() != EOF)) {
+			while (!((line == "\t}" || line == "    }") && configStream.peek() != EOF)) {
 				if (std::getline(configStream, line).eof())
 					throw UnexpectedEOFException();
 				locationString += line + '\n';
@@ -75,7 +68,7 @@ ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAd
 			this->_location[locationPath] = Location(locationPath, locationString.substr(0, locationString.find_last_of('}')));
 			locationString.clear();
 		}
-		else if (line.empty())
+		else if (line.empty() || line[0] == '#')
 			continue ;
 		else
 			throw InvalidServerConfException();
@@ -85,7 +78,7 @@ ServerConf::ServerConf(const std::string& configString) : _maxBodySize(0), _ipAd
 
 /* ------------------- COPY CONSTRUCTOR ----------------------*/
 ServerConf::ServerConf(ServerConf const &cpy){
-    *this = cpy;
+	*this = cpy;
 }
 
 /* ------------------- DESTRUCTOR ----------------------*/
@@ -93,71 +86,90 @@ ServerConf::~ServerConf(){}
 
 /* ------------------- SURCHARGED OPERATOR ----------------------*/
 ServerConf  &ServerConf::operator=(ServerConf const &rhs){
-    this->_serverName = rhs._serverName;
-    this->_port = rhs._port;
-    this->_root = rhs._root;
-    this->_index = rhs._index;
-	this->_maxBodySize = rhs._maxBodySize;
-    this->_errorPage = rhs._errorPage;
-	this->_ipAddr = rhs._ipAddr;
-    this->_location = rhs._location;
-    return (*this);
+	if (this != &rhs) {
+		this->_serverName = rhs._serverName;
+		this->_port = rhs._port;
+		this->_root = rhs._root;
+		this->_index = rhs._index;
+		this->_maxBodySize = rhs._maxBodySize;
+		this->_errorPath = rhs._errorPath;
+		this->_ipAddr = rhs._ipAddr;
+		this->_location = rhs._location;
+	}
+	return (*this);
 }
 
 /* ------------------- GETTERS ----------------------*/
-std::string ServerConf::getServerName(void) const{
-    return (this->_serverName);
+const std::string&	ServerConf::getServerName(void) const{
+	return (this->_serverName);
 }
 
-std::vector<unsigned short> ServerConf::getPort(void) const{
-    return (this->_port);
+const std::vector<unsigned short>&	ServerConf::getPort(void) const{
+	return (this->_port);
 }
 
-std::string ServerConf::getRoot(void) const{
-    return (this->_root);
+const std::string&	ServerConf::getRoot(void) const{
+	return (this->_root);
 }
 
-std::string ServerConf::getIndex(void) const{
-    return (this->_index);
+const std::string&	ServerConf::getIndex(void) const{
+	return (this->_index);
 }
 
-std::size_t ServerConf::getMaxBodySize(void) const{
+size_t	ServerConf::getMaxBodySize(void) const{
 	return (this->_maxBodySize);
 }
 
-std::string	ServerConf::getErrorPage(void) const{
-	return (this->_errorPage);
+const std::string&	ServerConf::getErrorPath(void) const{
+	return (this->_errorPath);
 }
-std::map<std::string, Location> ServerConf::getLocation(void) const{
-    return (this->_location);
+const std::map<std::string, Location>&	ServerConf::getLocation(void) const{
+	return (this->_location);
 }
 
-std::string ServerConf::getIpAddr(void)	const{
-    return (this->_ipAddr);
+const std::string&	ServerConf::getIpAddr(void) const{
+	return (this->_ipAddr);
 }
 
 /* ------------------- MEMBERS FUNCTIONS ----------------------*/
-void     ServerConf::checkAttribut(void) const {
-    std::vector<unsigned short>::const_iterator it;
-
-	if (_serverName.empty() || _port.empty() || _errorPage.empty() || _maxBodySize == 0 || _location.empty())
+void	 ServerConf::checkAttribut(void) const
+{
+	if (_serverName.empty() || _port.empty() || _errorPath.empty() || _maxBodySize == 0 || _location.empty())
 		throw MissingArgsException();
-    return ;
+
+	for (std::map<std::string, Location>::const_iterator iter = _location.begin(); iter != _location.end(); iter++) {
+		if (iter->second.isDefault()) {
+			for (std::map<std::string, Location>::const_iterator iter2 = _location.begin(); iter2 != _location.end(); iter2++) {
+				if (iter2 == iter)
+					continue;
+				else if (iter2->second.isDefault())
+					throw MoreThanOneDefaultException();
+			}
+			return;
+		}
+	}
+	throw NoDefaultException();
 }
 
-void    ServerConf::print(void) const {
-        std::cout << "  Server: " << this->_serverName << std::endl;
-        std::vector<unsigned short>::const_iterator it = _port.begin();
-        for (; it != _port.end(); ++it){
-           std::cout << "  Port: " << *it << std::endl;
-        }
-        std::cout << "  Root: " << this->_root << std::endl;
-        std::cout << "  Index: " << this->_index << std::endl;
-		std::cout << "  MaxBodySize: " << this->_maxBodySize << std::endl;
-        std::cout << "  Error Page: " << this->_errorPage << std::endl;
-		std::cout << "  IP Address: " << this->_ipAddr << std::endl;
-        std::map<std::string, Location>::const_iterator it2 = _location.begin();
-        for (; it2 != _location.end(); ++it2) {
-            it2->second.print();
-        }
+void	ServerConf::print(void) const {
+		std::cout << BGREEN << "\n┌────────── SERVER ──────────\n";
+		std::cout << BGREEN << "│ " << YELLOW << "Server: " << RESET << this->_serverName << std::endl;
+		std::cout << BGREEN << "│ " << YELLOW << "Ports: " << RESET;
+		std::vector<unsigned short>::const_iterator it = _port.begin();
+		for (; it != _port.end(); ++it){
+			if (it + 1 == _port.end())
+				std::cout << *it << std::endl;
+			else
+				std::cout << *it << ", ";
+		}
+		std::cout << BGREEN << "│ " << YELLOW << "Root: " << RESET << this->_root << std::endl;
+		std::cout << BGREEN << "│ " << YELLOW << "Index: " << RESET << this->_index << std::endl;
+		std::cout << BGREEN << "│ " << YELLOW << "MaxBodySize: " << RESET << this->_maxBodySize << std::endl;
+		std::cout << BGREEN << "│ " << YELLOW << "Error Path: " << RESET << this->_errorPath << std::endl;
+		std::cout << BGREEN << "│ " << YELLOW << "IP Address: " << RESET << this->_ipAddr;
+		std::map<std::string, Location>::const_iterator it2 = _location.begin();
+		for (; it2 != _location.end(); ++it2) {
+			it2->second.print();
+		}
+		std::cout << BGREEN << "\n└────────────────────────────\n\n" << RESET;
 }

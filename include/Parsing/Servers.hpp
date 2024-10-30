@@ -12,7 +12,7 @@ class Location;
 
 class Servers{
 	private:
-		std::vector<ServerConf> _servConf;
+		std::vector<ServerConf>	_servConf;
 
 	public: 
 		/* CONSTRUCTORS */
@@ -29,12 +29,13 @@ class Servers{
 		Servers &operator=(Servers const &rhs);
 
 		/* GETTERS */
-		ServerConf 				getServConf(int lequel) const;
+		const ServerConf&	getServConf(int lequel) const;
+		int					getAmountOfServers(void) const;
 		
 		/* MEMBERS FUNCTIONS */
-		void					loadConfig(const std::string &confFile);
-		void 					printConfigs(void) const;
-		bool					isConfigured(void) const;
+		void				loadConfig(const std::string &confFile);
+		void				printConfigs(void) const;
+		bool				isConfigured(void) const;
 
 		/* EXCEPTIONS */
 		class InvalidServersException : public std::exception{

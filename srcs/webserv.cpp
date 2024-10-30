@@ -1,7 +1,18 @@
 
 #include "Parsing/Servers.hpp"
 #include "Parsing/ServerConf.hpp"
-#include "Sockets/SocketManager.hpp"
+#include "Network/ConnectManager.hpp"
+
+void	ft_bzero(void *s, size_t len)
+{
+	size_t	x;
+	char	*str;
+
+	x = -1;
+	str = (char *)s;
+	while (++x != len)
+		str[x] = 0;
+}
 
 int main (int ac, char **av)
 {
@@ -26,13 +37,13 @@ int main (int ac, char **av)
 	}
 	try {
 		serv = Servers(config_file);
-		SocketManager socket(serv.getServConf(1));
-
 		serv.printConfigs();
-		socket.setHost(serv.getServConf(1).getIpAddr());
-		if (!socket.createSocket() || !socket.bindSocket() || !socket.startListening())
+
+		ConnectManager ServerLoop(serv);
+
+		if (!ServerLoop.startSocketListen())
 			return (-1);
-		socket.start(serv.getServConf(1));
+		ServerLoop.start();
 	}
 	catch (const Servers::AlreadyPrintedException &e) {
 		(void)e;

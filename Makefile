@@ -9,27 +9,30 @@ SHELL	= /bin/bash
 CXX	= c++
 
 DEPS	=	${INCL}/webserv.hpp\
-			${INCL}/Sockets/SocketManager.hpp\
+			${INCL}/Network/ConnectManager.hpp\
 			${INCL}/Parsing/Location.hpp\
 			${INCL}/Parsing/ServerConf.hpp\
 			${INCL}/Parsing/Servers.hpp\
 			${INCL}/Requests/Get.hpp\
 			${INCL}/Requests/Post.hpp\
 			${INCL}/Requests/Delete.hpp\
-			${INCL}/Requests/HttpRequest.hpp\
-			${INCL}/Requests/HttpResponse.hpp\
+			${INCL}/Requests/HTTPRequest.hpp\
+			${INCL}/Requests/HTTPResponse.hpp\
+			${INCL}/CGI/CGIExec.hpp\
 			${SRCS}
 
 SRCS	=	${SUBDIR}/webserv.cpp\
-			${SUBDIR}/Sockets/SocketManager.cpp\
+			${SUBDIR}/Network/ConnectManager.cpp\
+			${SUBDIR}/Network/ClientManager.cpp\
 			${SUBDIR}/Parsing/Servers.cpp\
 			${SUBDIR}/Parsing/ServerConf.cpp\
 			${SUBDIR}/Parsing/Location.cpp\
 			${SUBDIR}/Requests/Get.cpp\
 			${SUBDIR}/Requests/Post.cpp\
 			${SUBDIR}/Requests/Delete.cpp\
-			${SUBDIR}/Requests/HttpRequest.cpp\
-			${SUBDIR}/Requests/HttpResponse.cpp\
+			${SUBDIR}/Requests/HTTPRequest.cpp\
+			${SUBDIR}/Requests/HTTPResponse.cpp\
+			${SUBDIR}/CGI/CGIExec.cpp\
 
 
 SUBDIR	= srcs
